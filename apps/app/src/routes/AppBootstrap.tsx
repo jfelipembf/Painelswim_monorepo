@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { clearAuth, setAuthError, setAuthLoading, setAuthUser } from "../redux/slices/authSlice";
 import {
@@ -16,9 +17,10 @@ import {
 } from "../redux/slices/permissionsSlice";
 import { setTenant, setTenantError, setTenantLoading } from "../redux/slices/tenantSlice";
 import { startAuthListener } from "../services/auth";
-import { fetchBranchesForUser } from "../services/branches";
+import { fetchBranchesForUser, findBranchBySlug } from "../services/branches";
 import { fetchUserPermissions } from "../services/permissions";
 import { resolveTenantBySlug } from "../services/tenants";
+import { getBranchSlugFromPath } from "../utils/branchResolver";
 
 type AppBootstrapProps = {
   children: JSX.Element;
@@ -52,6 +54,7 @@ const writeStoredBranchId = (idTenant: string, idBranch: string): void => {
 
 const AppBootstrap = ({ children }: AppBootstrapProps) => {
   const dispatch = useAppDispatch();
+  const location = useLocation();
   const { slug, idTenant } = useAppSelector((state) => state.tenant);
   const { user } = useAppSelector((state) => state.auth);
   const { idBranch } = useAppSelector((state) => state.branch);
@@ -138,7 +141,7 @@ const AppBootstrap = ({ children }: AppBootstrapProps) => {
     dispatch(setBranchLoading());
 
     fetchBranchesForUser(idTenant, user.uid)
-      .then((branches) => {
+      .then(async (branches) => {
         if (!active) {
           return;
         }
@@ -148,8 +151,27 @@ const AppBootstrap = ({ children }: AppBootstrapProps) => {
           return;
         }
 
+        // Tentar resolver branch slug da URL
+        const branchSlugFromUrl = getBranchSlugFromPath(location.pathname);
+        let branchFromUrl = null;
+
+        if (branchSlugFromUrl) {
+          // Primeiro tentar encontrar nas branches do usuário
+          branchFromUrl = branches.find((b) => b.slug === branchSlugFromUrl);
+          
+          // Se não encontrar, buscar no Firestore (pode ser que o usuário tenha acesso mas não está na lista)
+          if (!branchFromUrl) {
+            try {
+              branchFromUrl = await findBranchBySlug(idTenant, branchSlugFromUrl);
+            } catch (error) {
+              console.warn("Erro ao buscar branch por slug:", error);
+            }
+          }
+        }
+
         const storedBranchId = readStoredBranchId(idTenant);
         const preferred =
+          branchFromUrl ||
           branches.find((branch) => branch.idBranch === idBranch) ||
           (storedBranchId
             ? branches.find((branch) => branch.idBranch === storedBranchId)

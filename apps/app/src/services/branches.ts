@@ -1,4 +1,4 @@
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import type { BillingStatus, Branch } from "../redux/slices/branchSlice";
 import { getFirebaseDb } from "./firebase";
 
@@ -29,13 +29,39 @@ export const fetchBranchesForUser = async (idTenant: string, uid: string): Promi
   return branchSnaps
     .filter((snap) => snap.exists())
     .map((snap) => {
-      const data = snap.data() as { name?: string; billingStatus?: BillingStatus };
+      const data = snap.data() as { name?: string; slug?: string; billingStatus?: BillingStatus };
       return {
         idBranch: snap.id,
         name: data.name || snap.id,
+        slug: data.slug,
         billingStatus: data.billingStatus ?? "unknown",
       };
     });
+};
+
+export const findBranchBySlug = async (idTenant: string, branchSlug: string): Promise<Branch | null> => {
+  if (!idTenant || !branchSlug) {
+    return null;
+  }
+
+  const db = getFirebaseDb();
+  const branchesRef = collection(db, "tenants", idTenant, "branches");
+  const q = query(branchesRef, where("slug", "==", branchSlug));
+  const snapshot = await getDocs(q);
+
+  if (snapshot.empty) {
+    return null;
+  }
+
+  const doc = snapshot.docs[0];
+  const data = doc.data() as { name?: string; slug?: string; billingStatus?: BillingStatus };
+  
+  return {
+    idBranch: doc.id,
+    name: data.name || doc.id,
+    slug: data.slug,
+    billingStatus: data.billingStatus ?? "unknown",
+  };
 };
 
 export const fetchBranchBillingStatus = async (

@@ -6,6 +6,7 @@ export type BranchStatus = "idle" | "loading" | "ready" | "error";
 export type Branch = {
   idBranch: string;
   name: string;
+  slug?: string;
   billingStatus?: BillingStatus;
 };
 
