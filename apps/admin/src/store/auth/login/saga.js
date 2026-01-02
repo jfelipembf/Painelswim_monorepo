@@ -15,14 +15,20 @@ const fireBaseBackend = getFirebaseBackend();
 
 function* loginUser({ payload: { user, history } }) {
   try {
+    console.log("[Admin Login] Iniciando login...", { email: user.email });
+    console.log("[Admin Login] REACT_APP_DEFAULTAUTH:", process.env.REACT_APP_DEFAULTAUTH);
+    
     if (process.env.REACT_APP_DEFAULTAUTH === "firebase") {
+      console.log("[Admin Login] Usando Firebase auth");
       const response = yield call(
         fireBaseBackend.loginUser,
         user.email,
         user.password
       );
+      console.log("[Admin Login] ✅ Resposta do Firebase:", response);
       yield put(loginSuccess(response));
     } else if (process.env.REACT_APP_DEFAULTAUTH === "jwt") {
+      console.log("[Admin Login] Usando JWT auth");
       const response = yield call(postJwtLogin, {
         email: user.email,
         password: user.password,
@@ -30,6 +36,7 @@ function* loginUser({ payload: { user, history } }) {
       localStorage.setItem("authUser", JSON.stringify(response));
       yield put(loginSuccess(response));
     } else if (process.env.REACT_APP_DEFAULTAUTH === "fake") {
+      console.log("[Admin Login] Usando Fake auth");
       const response = yield call(postFakeLogin, {
         email: user.email,
         password: user.password,
@@ -37,8 +44,10 @@ function* loginUser({ payload: { user, history } }) {
       localStorage.setItem("authUser", JSON.stringify(response));
       yield put(loginSuccess(response));
     }
+    console.log("[Admin Login] ✅ Redirecionando para /dashboard");
     history('/dashboard');
   } catch (error) {
+    console.error("[Admin Login] ❌ Erro no login:", error);
     yield put(apiError(error));
   }
 }

@@ -40,21 +40,33 @@ export const fetchBranchesForUser = async (idTenant: string, uid: string): Promi
 };
 
 export const findBranchBySlug = async (idTenant: string, branchSlug: string): Promise<Branch | null> => {
+  console.log("[findBranchBySlug] Buscando branch:", { idTenant, branchSlug });
+  
   if (!idTenant || !branchSlug) {
+    console.log("[findBranchBySlug] ❌ Parâmetros inválidos");
     return null;
   }
 
   const db = getFirebaseDb();
   const branchesRef = collection(db, "tenants", idTenant, "branches");
   const q = query(branchesRef, where("slug", "==", branchSlug));
+  
+  console.log("[findBranchBySlug] Executando query no Firestore...");
   const snapshot = await getDocs(q);
 
   if (snapshot.empty) {
+    console.log("[findBranchBySlug] ❌ Nenhuma branch encontrada com esse slug");
     return null;
   }
 
   const doc = snapshot.docs[0];
   const data = doc.data() as { name?: string; slug?: string; billingStatus?: BillingStatus };
+  
+  console.log("[findBranchBySlug] ✅ Branch encontrada:", {
+    idBranch: doc.id,
+    name: data.name,
+    slug: data.slug,
+  });
   
   return {
     idBranch: doc.id,

@@ -90,12 +90,16 @@ class FirebaseAuthBackend {
    * Login user with given details
    */
   loginUser = (email, password) => {
+    console.log("[Firebase Helper] loginUser chamado", { email });
     return new Promise((resolve, reject) => {
+      console.log("[Firebase Helper] Tentando signInWithEmailAndPassword...");
       signInWithEmailAndPassword(this.auth, email, password).then(
         () => {
+          console.log("[Firebase Helper] ✅ Login bem-sucedido, currentUser:", this.auth.currentUser);
           resolve(this.auth.currentUser);
         },
         (error) => {
+          console.error("[Firebase Helper] ❌ Erro no signInWithEmailAndPassword:", error);
           reject(this._handleError(error));
         }
       );
