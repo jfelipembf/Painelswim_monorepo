@@ -29,7 +29,7 @@
     "@types/react": "18.2.6",
     "@types/react-dom": "18.2.4",
     "ajv": "8.17.1",
-    "chart.js": "3.0.1",
+    "chart.js": "3.9.1",
     "chroma-js": "2.4.2",
     "draft-convert": "^2.1.13",
     "draft-js": "^0.11.7",
