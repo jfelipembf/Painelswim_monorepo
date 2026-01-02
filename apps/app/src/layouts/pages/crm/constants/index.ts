@@ -1,0 +1,10 @@
+export {
+  CRM_ACTIVITIES,
+  CRM_AGREEMENTS,
+  CRM_CONSULTANTS,
+  CRM_CONTRACTS,
+  CRM_EVALUATIONS,
+  CRM_INSTRUCTORS,
+  CRM_TESTS,
+  type Option,
+} from "./options";

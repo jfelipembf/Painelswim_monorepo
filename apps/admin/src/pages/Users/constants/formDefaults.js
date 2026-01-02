@@ -1,0 +1,15 @@
+export const NEW_USER_INITIAL_VALUES = {
+  firstName: "",
+  lastName: "",
+  gender: "",
+  birthDate: "",
+  email: "",
+  phone: "",
+  role: "",
+  status: "active",
+  cep: "",
+  estado: "",
+  cidade: "",
+  bairro: "",
+  numero: "",
+};

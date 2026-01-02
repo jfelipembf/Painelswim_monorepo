@@ -1,0 +1,10 @@
+**/node_modules/
+**/.env
+**/.env.*
+**/build/
+**/dist/
+**/.cache/
+**/.firebase/
+**/*.log
+apps/app/serviceAccountKey.json
+.DS_Store
