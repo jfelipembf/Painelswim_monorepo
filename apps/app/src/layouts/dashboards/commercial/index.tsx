@@ -19,9 +19,6 @@ import MDTypography from "components/MDTypography";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 
-// Comercial components
-import KanbanBoard from "layouts/dashboards/commercial/components/kanban";
-
 import MDDatePicker from "components/MDDatePicker";
 
 import { Portuguese } from "flatpickr/dist/l10n/pt";
@@ -364,13 +361,6 @@ function Commercial(): JSX.Element {
           </Card>
         </MDBox>
 
-        <MDBox mb={12}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={12}>
-              <KanbanBoard />
-            </Grid>
-          </Grid>
-        </MDBox>
       </MDBox>
     </DashboardLayout>
   );
