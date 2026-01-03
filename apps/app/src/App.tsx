@@ -253,33 +253,6 @@ export default function App(): JSX.Element {
           {layout === "vr" && <Configurator />}
 
           <Routes>
-            {/* Rota para /{tenantSlug}/{branchSlug} - DEVE VIR ANTES das rotas estáticas */}
-            <Route
-              path="/:tenantSlug/:branchSlug"
-              element={
-                (() => {
-                  console.log("[App.tsx] Rota /:tenantSlug/:branchSlug foi matcheada!");
-                  console.log("[App.tsx] pathname:", window.location.pathname);
-                  return (
-                    <RequireAuth>
-                      <RequireBranch>
-                        <RequireSubscription>
-                          <Navigate
-                            to={
-                              allowAll ||
-                              (permissionsStatus === "ready" && permissions.dashboards_management_view)
-                                ? "/dashboards/management"
-                                : "/dashboards/operational"
-                            }
-                            replace
-                          />
-                        </RequireSubscription>
-                      </RequireBranch>
-                    </RequireAuth>
-                  );
-                })()
-              }
-            />
             {getRoutes(routes)}
             {/* Rota catch-all para outras URLs */}
             <Route

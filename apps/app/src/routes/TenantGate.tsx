@@ -1,7 +1,9 @@
 import { useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAppDispatch } from "../redux/hooks";
 import { setTenantSlug } from "../redux/slices/tenantSlice";
 import { normalizeTenantSlug, resolveTenantSlugFromLocation } from "utils/tenantResolver";
+import { getBranchSlugFromPath } from "utils/branchResolver";
 
 type TenantGateProps = {
   children: JSX.Element;
@@ -29,6 +31,8 @@ const writeStoredSlug = (slug: string): void => {
 
 const TenantGate = ({ children }: TenantGateProps) => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     console.log("[TenantGate] Resolvendo tenant slug...");
@@ -37,6 +41,31 @@ const TenantGate = ({ children }: TenantGateProps) => {
       pathname: window.location.pathname,
       search: window.location.search,
     });
+    
+    // Verificar se a URL é do padrão /{tenantSlug}/{branchSlug}
+    const pathname = location.pathname;
+    const match = pathname.match(/^\/([^/]+)\/([^/]+)$/);
+    
+    if (match) {
+      const [, possibleTenant, possibleBranch] = match;
+      console.log("[TenantGate] Detectado padrão /{tenant}/{branch}:", { possibleTenant, possibleBranch });
+      
+      // Verificar se não é uma rota reservada (ex: /dashboards/operational)
+      const reservedPrefixes = ['dashboards', 'pages', 'authentication', 'applications', 'ecommerce'];
+      if (!reservedPrefixes.includes(possibleTenant)) {
+        console.log("[TenantGate] ✅ Padrão válido detectado, salvando tenant e redirecionando...");
+        
+        // Salvar o tenant slug
+        const normalized = normalizeTenantSlug(possibleTenant);
+        writeStoredSlug(normalized);
+        dispatch(setTenantSlug(normalized));
+        
+        // Redirecionar para o dashboard
+        console.log("[TenantGate] Redirecionando para /dashboards/operational");
+        navigate('/dashboards/operational', { replace: true });
+        return;
+      }
+    }
     
     const fromUrl = resolveTenantSlugFromLocation(window.location);
     console.log("[TenantGate] Tenant slug da URL:", fromUrl);
@@ -67,7 +96,7 @@ const TenantGate = ({ children }: TenantGateProps) => {
       writeStoredSlug(normalized);
     }
     dispatch(setTenantSlug(normalized));
-  }, [dispatch]);
+  }, [dispatch, navigate, location]);
 
   return children;
 };
