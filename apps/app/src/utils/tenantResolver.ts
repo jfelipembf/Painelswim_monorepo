@@ -102,22 +102,38 @@ export const getTenantSlugFromHostname = (hostname: string): string | null => {
 };
 
 export const resolveTenantSlugFromLocation = (location: Location): string | null => {
+  console.log("[resolveTenantSlugFromLocation] Iniciando resolução...");
+  
   const fromPath = getTenantSlugFromPath(location.pathname);
+  console.log("[resolveTenantSlugFromLocation] getTenantSlugFromPath:", fromPath);
   if (fromPath) {
+    console.log("[resolveTenantSlugFromLocation] ✅ Resolvido via /t/ path:", fromPath);
     return fromPath;
   }
 
   const fromRootPath = getTenantSlugFromRootPath(location.pathname);
+  console.log("[resolveTenantSlugFromLocation] getTenantSlugFromRootPath:", fromRootPath);
   if (fromRootPath) {
+    console.log("[resolveTenantSlugFromLocation] ✅ Resolvido via root path:", fromRootPath);
     return fromRootPath;
   }
 
   const fromQuery = getTenantSlugFromQuery(location.search);
+  console.log("[resolveTenantSlugFromLocation] getTenantSlugFromQuery:", fromQuery);
   if (fromQuery) {
+    console.log("[resolveTenantSlugFromLocation] ✅ Resolvido via query:", fromQuery);
     return fromQuery;
   }
 
-  return getTenantSlugFromHostname(location.hostname);
+  const fromHostname = getTenantSlugFromHostname(location.hostname);
+  console.log("[resolveTenantSlugFromLocation] getTenantSlugFromHostname:", fromHostname);
+  if (fromHostname) {
+    console.log("[resolveTenantSlugFromLocation] ✅ Resolvido via hostname:", fromHostname);
+  } else {
+    console.log("[resolveTenantSlugFromLocation] ❌ Nenhum tenant slug encontrado");
+  }
+  
+  return fromHostname;
 };
 
 export const normalizeTenantSlug = (slug: string): string => slug.trim().toLowerCase();
