@@ -57,12 +57,21 @@ const generateBranchSlug = async (db, tenantId) => {
   return `unidade-${count}`;
 };
 
-export const createTenant = async (tenantData, ownerUid) => {
+export const createTenant = async (tenantData, ownerData) => {
   const db = guardDb();
+  const { getFirebaseServices } = require("../../helpers/firebase_helper");
+  const services = getFirebaseServices();
+  const auth = services?.auth;
+
+  if (!auth) {
+    throw new Error("Firebase Auth não inicializado");
+  }
 
   const { name, slug, cnpj, logoUrl, address, status } = tenantData;
-  if (!ownerUid) {
-    throw new Error("Owner UID obrigatório");
+  const { email, password, firstName, lastName } = ownerData;
+
+  if (!email || !password) {
+    throw new Error("Email e senha do owner são obrigatórios");
   }
 
   const slugDocRef = doc(db, "tenantsBySlug", slug);
@@ -70,6 +79,24 @@ export const createTenant = async (tenantData, ownerUid) => {
   if (slugDoc.exists()) {
     throw new Error("Slug já está em uso");
   }
+
+  // Criar usuário no Firebase Authentication
+  const { createUserWithEmailAndPassword } = require("firebase/auth");
+  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  const ownerUid = userCredential.user.uid;
+
+  // Criar documento do usuário em users/{uid}
+  const userRef = doc(db, "users", ownerUid);
+  await setDoc(userRef, {
+    uid: ownerUid,
+    email,
+    firstName: firstName || "",
+    lastName: lastName || "",
+    role: "owner",
+    status: "active",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
 
   const tenantRef = doc(collection(db, TENANTS_COLLECTION));
   const tenantId = tenantRef.id;
@@ -115,12 +142,23 @@ export const createTenant = async (tenantData, ownerUid) => {
     updatedAt: serverTimestamp(),
   });
 
+  // Adicionar owner como member da primeira branch
+  const branchMemberRef = doc(db, TENANTS_COLLECTION, tenantId, "branches", branchId, "members", ownerUid);
+  await setDoc(branchMemberRef, {
+    idUser: ownerUid,
+    email,
+    role: "admin",
+    status: "active",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
   await updateDoc(memberRef, {
     branchIds: [branchId],
     roleByBranch: { [branchId]: "admin" },
   });
 
-  return { tenantId, branchId };
+  return { tenantId, branchId, ownerUid };
 };
 
 export const getTenantBranches = async (tenantId) => {
@@ -188,6 +226,40 @@ export const createBranch = async (tenantId, branchData) => {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+
+  // Buscar todos os owners do tenant e adicioná-los como members da nova branch
+  const membersRef = collection(db, TENANTS_COLLECTION, tenantId, "members");
+  const membersSnapshot = await getDocs(membersRef);
+  
+  const ownerPromises = [];
+  membersSnapshot.forEach((memberDoc) => {
+    const memberData = memberDoc.data();
+    if (memberData.role === "owner") {
+      const branchMemberRef = doc(db, TENANTS_COLLECTION, tenantId, "branches", branchId, "members", memberDoc.id);
+      ownerPromises.push(
+        setDoc(branchMemberRef, {
+          idUser: memberDoc.id,
+          email: memberData.email || "",
+          role: "admin",
+          status: "active",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        })
+      );
+      
+      // Atualizar branchIds e roleByBranch do owner
+      const currentBranchIds = memberData.branchIds || [];
+      const currentRoleByBranch = memberData.roleByBranch || {};
+      ownerPromises.push(
+        updateDoc(memberDoc.ref, {
+          branchIds: [...currentBranchIds, branchId],
+          roleByBranch: { ...currentRoleByBranch, [branchId]: "admin" },
+        })
+      );
+    }
+  });
+
+  await Promise.all(ownerPromises);
 
   return branchId;
 };
