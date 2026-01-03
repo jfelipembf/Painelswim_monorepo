@@ -92,6 +92,9 @@ export default function App(): JSX.Element {
     status: permissionsStatus,
   } = useAppSelector((state) => state.permissions);
 
+  const { status: authStatus } = useAppSelector((state) => state.auth);
+  const { status: tenantStatus } = useAppSelector((state) => state.tenant);
+
   // Cache for RTL
   useMemo(() => {
     const pluginRtl: any = rtlPlugin;
@@ -231,7 +234,7 @@ export default function App(): JSX.Element {
       <ToastProvider>
         <ReferenceDataCacheProvider>
           <CssBaseline />
-          {layout === "dashboard" && (
+          {layout === "dashboard" && authStatus === "authenticated" && tenantStatus === "ready" && (
             <>
               <Sidenav
                 color={sidenavColor}
