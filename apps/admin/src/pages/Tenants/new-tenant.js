@@ -34,6 +34,7 @@ export const NewTenant = () => {
     bairro: "",
     numero: "",
     responsaveis: [{ name: "", email: "", phone: "" }],
+    ownerPassword: "",
   });
 
   const [logoFile, setLogoFile] = useState(null);
@@ -115,6 +116,7 @@ export const NewTenant = () => {
       if (!form.cep) required.cep = "Obrigatório";
       if (!form.numero) required.numero = "Obrigatório";
       if (!form.responsaveis?.[0]?.email) required.resp0email = "Obrigatório";
+      if (!form.ownerPassword) required.ownerPassword = "Obrigatório";
 
       if (Object.keys(required).length) {
         setFieldErrors(required);
@@ -132,6 +134,8 @@ export const NewTenant = () => {
           numero: form.numero,
         },
         adminEmail: form.responsaveis?.[0]?.email || "",
+        ownerName: form.responsaveis?.[0]?.name || "",
+        ownerPassword: form.ownerPassword,
       });
       setSuccess("Academia criada com sucesso.");
       navigate(`/tenants/${created.tenantId}`);
@@ -282,6 +286,21 @@ export const NewTenant = () => {
                         <FormFeedback type="invalid">{fieldErrors.resp0email}</FormFeedback>
                       ) : null}
                     </Col>
+
+                    {index === 0 ? (
+                      <Col md={4}>
+                        <Label>Senha do responsável</Label>
+                        <Input
+                          type="password"
+                          value={form.ownerPassword}
+                          onChange={onChange("ownerPassword")}
+                          invalid={Boolean(fieldErrors.ownerPassword)}
+                        />
+                        {fieldErrors.ownerPassword ? (
+                          <FormFeedback type="invalid">{fieldErrors.ownerPassword}</FormFeedback>
+                        ) : null}
+                      </Col>
+                    ) : null}
 
                     <Col md={3}>
                       <Label>Telefone</Label>

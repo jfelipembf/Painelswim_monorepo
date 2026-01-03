@@ -36,14 +36,6 @@ export const useTenants = () => {
   const create = useCallback(
     async (payload) => {
       const service = guardBackend();
-      
-      // Pegar UID do usuário autenticado
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        throw new Error("Usuário não autenticado");
-      }
-      const ownerUid = currentUser.uid;
 
       const slug = normalizeTenantSlug(payload.slug || payload.name);
       const cnpj = normalizeCnpj(payload.cnpj);
@@ -65,6 +57,16 @@ export const useTenants = () => {
 
       const adminEmail = payload.adminEmail || responsaveis?.[0]?.email || "";
 
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      const createdByEmail = currentUser?.email || "";
+
+      const ownerFullName = (payload.ownerName || responsaveis?.[0]?.name || "").trim();
+      const ownerPassword = payload.ownerPassword || "";
+      const nameParts = ownerFullName ? ownerFullName.split(/\s+/) : [];
+      const firstName = payload.ownerFirstName || nameParts[0] || "";
+      const lastName = payload.ownerLastName || (nameParts.length > 1 ? nameParts.slice(1).join(" ") : "");
+
       const data = {
         ...payload,
         slug,
@@ -72,12 +74,20 @@ export const useTenants = () => {
         logoUrl,
         responsaveis,
         adminEmail,
+        createdByEmail,
       };
 
       const errors = validateTenantPayload(data);
       if (errors.length) throw new Error(errors[0]);
 
-      return createTenant(data, ownerUid);
+      const ownerData = {
+        email: adminEmail,
+        password: ownerPassword,
+        firstName,
+        lastName,
+      };
+
+      return createTenant(data, ownerData);
     },
     [guardBackend]
   );

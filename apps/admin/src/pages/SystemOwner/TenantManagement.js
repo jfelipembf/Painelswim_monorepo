@@ -8,7 +8,14 @@ const TenantManagement = () => {
   const [branches, setBranches] = useState([])
   const [modalOpen, setModalOpen] = useState(false)
   const [branchModalOpen, setBranchModalOpen] = useState(false)
-  const [newTenantData, setNewTenantData] = useState({ name: '', slug: '' })
+  const [newTenantData, setNewTenantData] = useState({
+    name: '',
+    slug: '',
+    ownerEmail: '',
+    ownerPassword: '',
+    ownerFirstName: '',
+    ownerLastName: '',
+  })
   const [newBranchData, setNewBranchData] = useState({ name: '' })
 
   const {
@@ -48,11 +55,28 @@ const TenantManagement = () => {
 
   const handleCreateTenant = async () => {
     try {
-      // TODO: pegar UID do usuário autenticado
-      const ownerUid = 'CURRENT_USER_UID' // Substituir pela auth real
-      await createTenant(newTenantData, ownerUid)
+      const ownerData = {
+        email: newTenantData.ownerEmail,
+        password: newTenantData.ownerPassword,
+        firstName: newTenantData.ownerFirstName,
+        lastName: newTenantData.ownerLastName,
+      }
+
+      const tenantData = {
+        name: newTenantData.name,
+        slug: newTenantData.slug,
+      }
+
+      await createTenant(tenantData, ownerData)
       setModalOpen(false)
-      setNewTenantData({ name: '', slug: '' })
+      setNewTenantData({
+        name: '',
+        slug: '',
+        ownerEmail: '',
+        ownerPassword: '',
+        ownerFirstName: '',
+        ownerLastName: '',
+      })
       loadTenants()
     } catch (err) {
       console.error('Error creating tenant:', err)
@@ -265,6 +289,61 @@ const TenantManagement = () => {
                   URL: app.painelswim.com/{newTenantData.slug || 'slug'}
                 </small>
               </FormGroup>
+
+              <hr />
+
+              <FormGroup>
+                <Label for="ownerEmail">Email do Owner</Label>
+                <Input
+                  type="email"
+                  id="ownerEmail"
+                  value={newTenantData.ownerEmail}
+                  onChange={(e) => setNewTenantData({ ...newTenantData, ownerEmail: e.target.value })}
+                  placeholder="owner@academia.com"
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <Label for="ownerPassword">Senha do Owner</Label>
+                <Input
+                  type="password"
+                  id="ownerPassword"
+                  value={newTenantData.ownerPassword}
+                  onChange={(e) => setNewTenantData({ ...newTenantData, ownerPassword: e.target.value })}
+                  placeholder="Crie uma senha"
+                />
+              </FormGroup>
+
+              <Row>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label for="ownerFirstName">Nome</Label>
+                    <Input
+                      type="text"
+                      id="ownerFirstName"
+                      value={newTenantData.ownerFirstName}
+                      onChange={(e) =>
+                        setNewTenantData({ ...newTenantData, ownerFirstName: e.target.value })
+                      }
+                      placeholder="Nome"
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label for="ownerLastName">Sobrenome</Label>
+                    <Input
+                      type="text"
+                      id="ownerLastName"
+                      value={newTenantData.ownerLastName}
+                      onChange={(e) =>
+                        setNewTenantData({ ...newTenantData, ownerLastName: e.target.value })
+                      }
+                      placeholder="Sobrenome"
+                    />
+                  </FormGroup>
+                </Col>
+              </Row>
             </Form>
           </ModalBody>
           <ModalFooter>

@@ -18,11 +18,11 @@ export const useTenantManagement = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const handleCreateTenant = async (tenantData, ownerUid) => {
+  const handleCreateTenant = async (tenantData, ownerData) => {
     try {
       setLoading(true)
       setError(null)
-      const result = await createTenant(tenantData, ownerUid)
+      const result = await createTenant(tenantData, ownerData)
       setLoading(false)
       return result
     } catch (err) {
