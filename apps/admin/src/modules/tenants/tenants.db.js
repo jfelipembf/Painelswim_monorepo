@@ -85,19 +85,6 @@ export const createTenant = async (tenantData, ownerData) => {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const ownerUid = userCredential.user.uid;
 
-  // Criar documento do usuário em users/{uid}
-  const userRef = doc(db, "users", ownerUid);
-  await setDoc(userRef, {
-    uid: ownerUid,
-    email,
-    firstName: firstName || "",
-    lastName: lastName || "",
-    role: "owner",
-    status: "active",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-
   const tenantRef = doc(collection(db, TENANTS_COLLECTION));
   const tenantId = tenantRef.id;
 

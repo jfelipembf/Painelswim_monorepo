@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Button,
@@ -85,7 +85,7 @@ export const BranchProfile = () => {
     };
   }, [branch?.tenantId, tenantIdFromQuery]);
 
-  const loadBilling = async () => {
+  const loadBilling = useCallback(async () => {
     setBillingLoading(true);
     setError("");
     try {
@@ -96,7 +96,7 @@ export const BranchProfile = () => {
     } finally {
       setBillingLoading(false);
     }
-  };
+  }, [id]);
 
   const handleSave = async (updates) => {
     if (!branch?.tenantId) {
