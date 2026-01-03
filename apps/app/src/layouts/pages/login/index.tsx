@@ -16,6 +16,7 @@ import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import MDInput from "components/MDInput";
 import MDButton from "components/MDButton";
+import MDAlert from "components/MDAlert";
 
 // Material Dashboard 2 PRO React TS examples
 import PageLayout from "examples/LayoutContainers/PageLayout";
@@ -160,22 +161,25 @@ function LoginPage(): JSX.Element {
                 </MDButton>
               </MDBox>
 
-              {error && (
-                <MDTypography variant="caption" color="error" fontWeight="medium">
-                  {error}
-                </MDTypography>
-              )}
-
-              {!error && !idTenant && tenantStatus !== "loading" && (
-                <MDTypography variant="caption" color="error" fontWeight="medium">
-                  Abra usando `/t/a2aquatica` para identificar a academia.
-                </MDTypography>
-              )}
-
-              {!error && tenantStatus === "error" && (
-                <MDTypography variant="caption" color="error" fontWeight="medium">
-                  {tenantError || "Academia não encontrada."}
-                </MDTypography>
+              {(error || (!idTenant && tenantStatus !== "loading") || tenantStatus === "error") && (
+                <MDAlert
+                  color="error"
+                  sx={{
+                    width: "100%",
+                    fontSize: "0.875rem",
+                    "& .MuiBox-root": { alignItems: "flex-start" },
+                  }}
+                >
+                  <MDBox display="flex" flexDirection="column" gap={0.5}>
+                    {error && <span>{error}</span>}
+                    {!error && !idTenant && tenantStatus !== "loading" && (
+                      <span>Não conseguimos identificar a academia. Verifique se o link está correto.</span>
+                    )}
+                    {!error && tenantStatus === "error" && (
+                      <span>{tenantError || "Academia não encontrada."}</span>
+                    )}
+                  </MDBox>
+                </MDAlert>
               )}
 
               <MDButton
