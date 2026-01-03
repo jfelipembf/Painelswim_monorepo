@@ -109,7 +109,7 @@ function MaterialUIControllerProvider({ children }: { children: ReactNode }): JS
   const initialState: StateTypes = {
     miniSidenav: false,
     transparentSidenav: false,
-    whiteSidenav: false,
+    whiteSidenav: true,
     sidenavColor: "info",
     transparentNavbar: true,
     fixedNavbar: true,

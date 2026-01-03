@@ -37,21 +37,15 @@ const firebaseConfig = {
 }
 
 const defaultAuthProvider = process.env.REACT_APP_DEFAULTAUTH || "firebase"
-console.log("[Admin App] defaultAuthProvider:", defaultAuthProvider)
-console.log("[Admin App] firebaseConfig:", firebaseConfig)
 
 if (defaultAuthProvider === "firebase") {
-  console.log("[Admin App] Inicializando Firebase backend...")
-
   const hasConfig =
     firebaseConfig.apiKey &&
     firebaseConfig.authDomain &&
     firebaseConfig.projectId &&
     firebaseConfig.appId
 
-  if (!hasConfig) {
-    console.error("[Admin App] ❌ Configuração do Firebase incompleta!", firebaseConfig)
-  } else {
+  if (hasConfig) {
     initFirebaseBackend(firebaseConfig)
   }
 }

@@ -86,10 +86,6 @@ export default function App(): JSX.Element {
   const [rtlCache, setRtlCache] = useState<any>(null);
   const { pathname } = useLocation();
 
-  console.log("[App.tsx] Componente renderizado");
-  console.log("[App.tsx] pathname atual:", pathname);
-  console.log("[App.tsx] window.location:", window.location.href);
-
   const {
     permissions,
     allowAll,

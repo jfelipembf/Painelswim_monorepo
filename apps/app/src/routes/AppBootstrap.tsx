@@ -146,38 +146,31 @@ const AppBootstrap = ({ children }: AppBootstrapProps) => {
           return;
         }
         
-        console.log("[AppBootstrap] Branches do usuário:", branches);
         dispatch(setBranches(branches));
 
         if (branches.length === 0) {
-          console.log("[AppBootstrap] ❌ Usuário não tem acesso a nenhuma branch");
           return;
         }
 
         // Tentar resolver branch slug da URL
         const branchSlugFromUrl = getBranchSlugFromPath(location.pathname);
-        console.log("[AppBootstrap] Branch slug da URL:", branchSlugFromUrl);
         let branchFromUrl = null;
 
         if (branchSlugFromUrl) {
           // Primeiro tentar encontrar nas branches do usuário
           branchFromUrl = branches.find((b) => b.slug === branchSlugFromUrl);
-          console.log("[AppBootstrap] Branch encontrada na lista do usuário:", branchFromUrl);
           
           // Se não encontrar, buscar no Firestore (pode ser que o usuário tenha acesso mas não está na lista)
           if (!branchFromUrl) {
-            console.log("[AppBootstrap] Branch não encontrada na lista, buscando no Firestore...");
             try {
               branchFromUrl = await findBranchBySlug(idTenant, branchSlugFromUrl);
-              console.log("[AppBootstrap] Resultado da busca no Firestore:", branchFromUrl);
             } catch (error) {
-              console.error("[AppBootstrap] ❌ Erro ao buscar branch por slug:", error);
+              // Silently fail
             }
           }
         }
 
         const storedBranchId = readStoredBranchId(idTenant);
-        console.log("[AppBootstrap] Branch ID armazenado no localStorage:", storedBranchId);
         
         const preferred =
           branchFromUrl ||
@@ -186,12 +179,6 @@ const AppBootstrap = ({ children }: AppBootstrapProps) => {
             ? branches.find((branch) => branch.idBranch === storedBranchId)
             : undefined);
         const nextBranch = preferred ?? branches[0];
-        
-        console.log("[AppBootstrap] ✅ Branch selecionada:", {
-          idBranch: nextBranch.idBranch,
-          name: nextBranch.name,
-          slug: nextBranch.slug,
-        });
         
         writeStoredBranchId(idTenant, nextBranch.idBranch);
         dispatch(

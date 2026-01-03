@@ -9,7 +9,8 @@ import Icon from "@mui/material/Icon";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { useAppSelector } from "../../../redux/hooks";
-import { signInWithEmail } from "../../../services/auth";
+import { signInWithEmail, signOutUser } from "../../../services/auth";
+import { fetchBranchesForUser } from "../../../services/branches";
 
 // Material Dashboard 2 PRO React TS components
 import MDBox from "components/MDBox";
@@ -62,7 +63,14 @@ function LoginPage(): JSX.Element {
         throw new Error("Academia não identificada na URL.");
       }
 
-      await signInWithEmail({ email, password, idTenant });
+      const authUser = await signInWithEmail({ email, password, idTenant });
+
+      const userBranches = await fetchBranchesForUser(idTenant, authUser.uid);
+      if (!userBranches.length) {
+        await signOutUser();
+        throw new Error("Você não tem acesso às unidades desta academia.");
+      }
+
       navigate(redirectTo, { replace: true });
     } catch (e: any) {
       setError(e?.message || "Não foi possível entrar.");

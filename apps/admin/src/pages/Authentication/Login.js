@@ -16,7 +16,7 @@ import withRouter from 'components/Common/withRouter';
 import { loginUser, socialLogin } from "../../store/actions";
 
 const Login = props => {
-  document.title = "Login | Lexa - Responsive Bootstrap 5 Admin Dashboard";
+  document.title = "Login | InteliTec - Painel Administrativo";
 
   const dispatch = useDispatch();
 
@@ -78,7 +78,7 @@ const Login = props => {
 
                                 <div className="p-3">
                                     <h4 className="text-muted font-size-18 mb-1 text-center">Welcome Back !</h4>
-                                    <p className="text-muted text-center">Sign in to continue to Lexa.</p>
+                                    <p className="text-muted text-center">Sign in to continue to InteliTec.</p>
                                     <Form
                                       className="form-horizontal mt-4"
                                       onSubmit={(e) => {
@@ -156,7 +156,7 @@ const Login = props => {
                             </Link>
                         <div className="mt-5 text-center">
                             <p>Don't have an account ? <Link to="/register" className="text-primary"> Signup Now </Link></p>
-                            © {new Date().getFullYear()} Lexa <span className="d-none d-sm-inline-block"> - Crafted with <i className="mdi mdi-heart text-danger"></i> by Themesbrand.</span>
+                            © {new Date().getFullYear()} InteliTec
                         </div>
                     </Col>
                 </Row>

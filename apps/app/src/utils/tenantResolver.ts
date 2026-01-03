@@ -42,36 +42,25 @@ export const getTenantSlugFromUrl = (): string | null => {
   const hostname = window.location.hostname;
   const pathname = window.location.pathname;
 
-  console.log("[tenantResolver] hostname:", hostname);
-  console.log("[tenantResolver] pathname:", pathname);
-
   // Ignorar subdomínios reservados
   if (RESERVED_SUBDOMAINS.has(hostname.split(".")[0])) {
-    console.log("[tenantResolver] Subdomínio reservado detectado, tentando path");
     // Tentar pegar do primeiro segmento do path
     const match = pathname.match(/^\/([^/]+)/);
     if (match) {
       const firstSegment = match[1];
-      console.log("[tenantResolver] Primeiro segmento do path:", firstSegment);
       if (!RESERVED_PATH_PREFIXES.has(firstSegment)) {
-        console.log("[tenantResolver] Tenant slug resolvido do path:", firstSegment);
         return firstSegment;
       }
-      console.log("[tenantResolver] Primeiro segmento é reservado");
     }
-    console.log("[tenantResolver] Nenhum tenant slug encontrado no path");
     return null;
   }
 
   // Subdomínio customizado (ex: academia.painelswim.com)
   const subdomain = hostname.split(".")[0];
-  console.log("[tenantResolver] Subdomínio customizado:", subdomain);
   if (subdomain && subdomain !== "www") {
-    console.log("[tenantResolver] Tenant slug resolvido do subdomínio:", subdomain);
     return subdomain;
   }
 
-  console.log("[tenantResolver] Nenhum tenant slug encontrado");
   return null;
 };
 
@@ -102,37 +91,22 @@ export const getTenantSlugFromHostname = (hostname: string): string | null => {
 };
 
 export const resolveTenantSlugFromLocation = (location: Location): string | null => {
-  console.log("[resolveTenantSlugFromLocation] Iniciando resolução...");
-  
   const fromPath = getTenantSlugFromPath(location.pathname);
-  console.log("[resolveTenantSlugFromLocation] getTenantSlugFromPath:", fromPath);
   if (fromPath) {
-    console.log("[resolveTenantSlugFromLocation] ✅ Resolvido via /t/ path:", fromPath);
     return fromPath;
   }
 
   const fromRootPath = getTenantSlugFromRootPath(location.pathname);
-  console.log("[resolveTenantSlugFromLocation] getTenantSlugFromRootPath:", fromRootPath);
   if (fromRootPath) {
-    console.log("[resolveTenantSlugFromLocation] ✅ Resolvido via root path:", fromRootPath);
     return fromRootPath;
   }
 
   const fromQuery = getTenantSlugFromQuery(location.search);
-  console.log("[resolveTenantSlugFromLocation] getTenantSlugFromQuery:", fromQuery);
   if (fromQuery) {
-    console.log("[resolveTenantSlugFromLocation] ✅ Resolvido via query:", fromQuery);
     return fromQuery;
   }
 
   const fromHostname = getTenantSlugFromHostname(location.hostname);
-  console.log("[resolveTenantSlugFromLocation] getTenantSlugFromHostname:", fromHostname);
-  if (fromHostname) {
-    console.log("[resolveTenantSlugFromLocation] ✅ Resolvido via hostname:", fromHostname);
-  } else {
-    console.log("[resolveTenantSlugFromLocation] ❌ Nenhum tenant slug encontrado");
-  }
-  
   return fromHostname;
 };
 

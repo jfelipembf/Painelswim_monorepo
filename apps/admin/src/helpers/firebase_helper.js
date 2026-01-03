@@ -90,16 +90,12 @@ class FirebaseAuthBackend {
    * Login user with given details
    */
   loginUser = (email, password) => {
-    console.log("[Firebase Helper] loginUser chamado", { email });
     return new Promise((resolve, reject) => {
-      console.log("[Firebase Helper] Tentando signInWithEmailAndPassword...");
       signInWithEmailAndPassword(this.auth, email, password).then(
         () => {
-          console.log("[Firebase Helper] ✅ Login bem-sucedido, currentUser:", this.auth.currentUser);
           resolve(this.auth.currentUser);
         },
         (error) => {
-          console.error("[Firebase Helper] ❌ Erro no signInWithEmailAndPassword:", error);
           reject(this._handleError(error));
         }
       );
@@ -274,13 +270,8 @@ let _fireBaseBackend = null;
  * @param {*} config
  */
 const initFirebaseBackend = config => {
-  console.log("[Firebase Helper] initFirebaseBackend chamado com config:", config);
   if (!_fireBaseBackend) {
-    console.log("[Firebase Helper] Criando nova instância de FirebaseAuthBackend");
     _fireBaseBackend = new FirebaseAuthBackend(config);
-    console.log("[Firebase Helper] ✅ FirebaseAuthBackend inicializado");
-  } else {
-    console.log("[Firebase Helper] FirebaseAuthBackend já existe, reutilizando");
   }
   return _fireBaseBackend;
 };
@@ -289,7 +280,6 @@ const initFirebaseBackend = config => {
  * Returns the firebase backend
  */
 const getFirebaseBackend = () => {
-  console.log("[Firebase Helper] getFirebaseBackend chamado, retornando:", _fireBaseBackend ? "instância válida" : "null");
   return _fireBaseBackend;
 };
 

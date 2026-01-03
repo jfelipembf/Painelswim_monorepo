@@ -89,22 +89,11 @@ const getFirebaseApp = (): FirebaseApp => {
     return firebaseApp;
   }
 
-  console.log("[Firebase] Verificando configuração...");
-  console.log("[Firebase] Config:", {
-    apiKey: firebaseConfig.apiKey ? `${firebaseConfig.apiKey.substring(0, 10)}...` : "MISSING",
-    authDomain: firebaseConfig.authDomain || "MISSING",
-    projectId: firebaseConfig.projectId || "MISSING",
-    storageBucket: firebaseConfig.storageBucket || "MISSING",
-  });
-
   if (!hasFirebaseConfig()) {
-    console.error("[Firebase] ❌ Configuração ausente!");
     throw new Error("Configuração do Firebase ausente. Verifique o arquivo .env.");
   }
 
-  console.log("[Firebase] ✅ Inicializando Firebase App...");
   firebaseApp = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
-  console.log("[Firebase] ✅ Firebase App inicializado");
   return firebaseApp;
 };
 
@@ -118,9 +107,7 @@ export const getFirebaseAuth = (): Auth => {
 
 export const getFirebaseDb = (): Firestore => {
   if (!firebaseDb) {
-    console.log("[Firebase] Inicializando Firestore...");
     firebaseDb = getFirestore(getFirebaseApp());
-    console.log("[Firebase] ✅ Firestore inicializado");
   }
   ensureFirestoreDebug();
   ensureFirestoreEmulator(firebaseDb);

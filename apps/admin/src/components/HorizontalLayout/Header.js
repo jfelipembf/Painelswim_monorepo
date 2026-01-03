@@ -11,14 +11,14 @@ import { showRightSidebarAction, toggleLeftmenu } from "../../store/actions"
 import { Container } from "reactstrap"
 
 // Import menuDropdown
-import LanguageDropdown from "../CommonForBoth/TopbarDropdown/LanguageDropdown"
+
 import NotificationDropdown from "../CommonForBoth/TopbarDropdown/NotificationDropdown"
 import ProfileMenu from "../CommonForBoth/TopbarDropdown/ProfileMenu"
 
 // import megamenuImg from "../../assets/images/megamenu-img.png"
-import logo from "../../assets/images/logo-sm.png"
-import logoLight from "../../assets/images/logo-light.png"
-import logoDark from "../../assets/images/logo-dark.png"
+import logo from "../../assets/images/icon_inteli.png"
+import logoLight from "../../assets/images/icon_inteli.png"
+import logoDark from "../../assets/images/icon_inteli.png"
 
 //i18n
 import { withTranslation } from "react-i18next"
@@ -27,32 +27,7 @@ const Header = props => {
 
   const [isSearch, setSearch] = useState(false)
 
-  function toggleFullscreen() {
-    if (
-      !document.fullscreenElement &&
-      /* alternative standard method */ !document.mozFullScreenElement &&
-      !document.webkitFullscreenElement
-    ) {
-      // current working methods
-      if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen()
-      } else if (document.documentElement.mozRequestFullScreen) {
-        document.documentElement.mozRequestFullScreen()
-      } else if (document.documentElement.webkitRequestFullscreen) {
-        document.documentElement.webkitRequestFullscreen(
-          Element.ALLOW_KEYBOARD_INPUT
-        )
-      }
-    } else {
-      if (document.cancelFullScreen) {
-        document.cancelFullScreen()
-      } else if (document.mozCancelFullScreen) {
-        document.mozCancelFullScreen()
-      } else if (document.webkitCancelFullScreen) {
-        document.webkitCancelFullScreen()
-      }
-    }
-  }
+ 
   return (
     <React.Fragment>
 
@@ -92,30 +67,6 @@ const Header = props => {
           </div>
 
           <div className="float-end">
-            <form className="app-search d-none d-lg-inline-block">
-              <div className="position-relative">
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Search..."
-                />
-                <span className="fa fa-search"></span>
-              </div>
-            </form>
-            <LanguageDropdown />
-
-            <div className="dropdown d-none d-lg-inline-block">
-              <button
-                type="button"
-                className="btn header-item noti-icon waves-effect"
-                onClick={() => {
-                  toggleFullscreen()
-                }}
-                data-toggle="fullscreen"
-              >
-                <i className="mdi mdi-fullscreen font-size-24"></i>
-              </button>
-            </div>
             <div className="dropdown d-inline-block d-lg-none ms-2">
               <button
                 type="button"
