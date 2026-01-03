@@ -76,8 +76,9 @@ const Header = props => {
                 <span className="logo-sm">
                   <img src={logo} alt="" height="22" />
                 </span>
-                <span className="logo-lg">
-                  <img src={logoDark} alt="" height="17" />
+                <span className="logo-lg d-flex align-items-center gap-2">
+                  <img src={logoDark} alt="" height="24" />
+                  <span style={{ fontSize: '16px', fontWeight: '600', color: '#495057' }}>Intelitec</span>
                 </span>
               </Link>
 
@@ -85,8 +86,9 @@ const Header = props => {
                 <span className="logo-sm">
                   <img src={logo} alt="" height="22" />
                 </span>
-                <span className="logo-lg">
-                  <img src={logoLightPng} alt="" height="19" />
+                <span className="logo-lg d-flex align-items-center gap-2">
+                  <img src={logoLightPng} alt="" height="24" />
+                  <span style={{ fontSize: '16px', fontWeight: '600', color: '#495057' }}>Intelitec</span>
                 </span>
               </Link>
             </div>

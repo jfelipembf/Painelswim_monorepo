@@ -175,7 +175,11 @@ function LoginPage(): JSX.Element {
                   sx={{
                     width: "100%",
                     fontSize: "0.875rem",
+                    backgroundColor: "rgba(244, 67, 54, 0.08)",
+                    border: "1px solid rgba(244, 67, 54, 0.3)",
+                    color: "#d32f2f",
                     "& .MuiBox-root": { alignItems: "flex-start" },
+                    "& .MuiAlert-icon": { color: "#d32f2f" },
                   }}
                 >
                   <MDBox display="flex" flexDirection="column" gap={0.5}>

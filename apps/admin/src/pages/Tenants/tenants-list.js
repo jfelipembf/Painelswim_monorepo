@@ -73,7 +73,7 @@ export const TenantsList = () => {
                 loading={membersLoading}
                 placeholder="Buscar academia por nome ou slug"
                 actions={
-                  <Link to="/tenants/new" className="btn btn-primary">
+                  <Link to="/tenants/new" className="btn btn-primary" style={{ minWidth: '140px', whiteSpace: 'nowrap' }}>
                     Nova academia
                   </Link>
                 }

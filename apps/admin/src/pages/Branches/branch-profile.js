@@ -45,40 +45,56 @@ export const BranchProfile = () => {
 
   useEffect(() => {
     let mounted = true;
-    setError("");
-    setLoadingBranch(true);
+    
+    const loadBranch = async () => {
+      setError("");
+      setLoadingBranch(true);
+      try {
+        const data = await getBranchById({ branchId: id, tenantId: tenantIdFromQuery || undefined });
+        if (mounted) {
+          setBranch(data);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(String(err?.message || err));
+        }
+      } finally {
+        if (mounted) {
+          setLoadingBranch(false);
+        }
+      }
+    };
 
-    getBranchById({ branchId: id, tenantId: tenantIdFromQuery || undefined })
-      .then((data) => {
-        if (mounted) setBranch(data);
-      })
-      .catch((err) => {
-        if (mounted) setError(String(err?.message || err));
-      })
-      .finally(() => {
-        if (mounted) setLoadingBranch(false);
-      });
+    loadBranch();
 
     return () => {
       mounted = false;
     };
-  }, [getBranchById, id, tenantIdFromQuery]);
+  }, [id, tenantIdFromQuery]);
 
   useEffect(() => {
     let mounted = true;
     const resolvedTenantId = branch?.tenantId || tenantIdFromQuery;
+    
     if (!resolvedTenantId) {
       setTenant(null);
       return;
     }
 
-    getTenant(resolvedTenantId)
-      .then((data) => {
-        if (mounted) setTenant(data);
-      })
-      .catch(() => {
-        if (mounted) setTenant(null);
-      });
+    const loadTenant = async () => {
+      try {
+        const data = await getTenant(resolvedTenantId);
+        if (mounted) {
+          setTenant(data);
+        }
+      } catch {
+        if (mounted) {
+          setTenant(null);
+        }
+      }
+    };
+
+    loadTenant();
 
     return () => {
       mounted = false;

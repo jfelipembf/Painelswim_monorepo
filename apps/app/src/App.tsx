@@ -150,6 +150,8 @@ export default function App(): JSX.Element {
 
   const publicRoutes = new Set(["/login", "/forgot-password"]);
   const authOnlyRoutes = new Set<string>();
+  
+  const isPublicRoute = publicRoutes.has(pathname);
 
   const wrapRouteElement = (
     routePath: string,
@@ -234,7 +236,10 @@ export default function App(): JSX.Element {
       <ToastProvider>
         <ReferenceDataCacheProvider>
           <CssBaseline />
-          {layout === "dashboard" && authStatus === "authenticated" && tenantStatus === "ready" && (
+          {layout === "dashboard" && 
+           authStatus === "authenticated" && 
+           tenantStatus === "ready" && 
+           !isPublicRoute && (
             <>
               <Sidenav
                 color={sidenavColor}
