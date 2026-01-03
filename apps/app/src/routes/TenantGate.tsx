@@ -51,19 +51,26 @@ const TenantGate = ({ children }: TenantGateProps) => {
       console.log("[TenantGate] Detectado padrão /{tenant}/{branch}:", { possibleTenant, possibleBranch });
       
       // Verificar se não é uma rota reservada (ex: /dashboards/operational)
-      const reservedPrefixes = ['dashboards', 'pages', 'authentication', 'applications', 'ecommerce'];
+      const reservedPrefixes = ['dashboards', 'pages', 'authentication', 'applications', 'ecommerce', 'login'];
       if (!reservedPrefixes.includes(possibleTenant)) {
         console.log("[TenantGate] ✅ Padrão válido detectado, salvando tenant e redirecionando...");
         
         // Salvar o tenant slug
         const normalized = normalizeTenantSlug(possibleTenant);
-        writeStoredSlug(normalized);
-        dispatch(setTenantSlug(normalized));
+        const currentStored = readStoredSlug();
         
-        // Redirecionar para o dashboard
-        console.log("[TenantGate] Redirecionando para /dashboards/operational");
-        navigate('/dashboards/operational', { replace: true });
-        return;
+        // Só redirecionar se ainda não redirecionamos (evitar loop)
+        if (currentStored !== normalized) {
+          writeStoredSlug(normalized);
+          dispatch(setTenantSlug(normalized));
+          
+          // Redirecionar para o dashboard
+          console.log("[TenantGate] Redirecionando para /dashboards/operational");
+          navigate('/dashboards/operational', { replace: true });
+          return;
+        } else {
+          console.log("[TenantGate] Tenant já salvo, pulando redirect para evitar loop");
+        }
       }
     }
     
