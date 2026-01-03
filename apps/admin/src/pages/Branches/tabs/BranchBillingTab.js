@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Button } from "reactstrap";
 
 export const BranchBillingTab = ({
@@ -7,15 +7,8 @@ export const BranchBillingTab = ({
   billingLoading,
   onRefresh,
   onOpenPortal,
-  onLoad,
   error,
 }) => {
-  useEffect(() => {
-    if (!billing && !billingLoading) {
-      onLoad?.();
-    }
-  }, [billing, billingLoading, onLoad]);
-
   return (
     <>
       <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
