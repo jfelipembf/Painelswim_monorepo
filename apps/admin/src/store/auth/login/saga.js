@@ -16,10 +16,22 @@ const fireBaseBackend = getFirebaseBackend();
 function* loginUser({ payload: { user, history } }) {
   try {
     console.log("[Admin Login] Iniciando login...", { email: user.email });
+    console.log("[Admin Login] process.env:", process.env);
     console.log("[Admin Login] REACT_APP_DEFAULTAUTH:", process.env.REACT_APP_DEFAULTAUTH);
+    console.log("[Admin Login] Tipo de REACT_APP_DEFAULTAUTH:", typeof process.env.REACT_APP_DEFAULTAUTH);
     
-    if (process.env.REACT_APP_DEFAULTAUTH === "firebase") {
+    // Usar Firebase como padrão se REACT_APP_DEFAULTAUTH não estiver definido
+    const authMethod = process.env.REACT_APP_DEFAULTAUTH || "firebase";
+    console.log("[Admin Login] Método de autenticação selecionado:", authMethod);
+    
+    if (authMethod === "firebase") {
       console.log("[Admin Login] Usando Firebase auth");
+      console.log("[Admin Login] fireBaseBackend:", fireBaseBackend);
+      
+      if (!fireBaseBackend) {
+        throw new Error("Firebase backend não inicializado");
+      }
+      
       const response = yield call(
         fireBaseBackend.loginUser,
         user.email,
@@ -27,7 +39,7 @@ function* loginUser({ payload: { user, history } }) {
       );
       console.log("[Admin Login] ✅ Resposta do Firebase:", response);
       yield put(loginSuccess(response));
-    } else if (process.env.REACT_APP_DEFAULTAUTH === "jwt") {
+    } else if (authMethod === "jwt") {
       console.log("[Admin Login] Usando JWT auth");
       const response = yield call(postJwtLogin, {
         email: user.email,
@@ -35,7 +47,7 @@ function* loginUser({ payload: { user, history } }) {
       });
       localStorage.setItem("authUser", JSON.stringify(response));
       yield put(loginSuccess(response));
-    } else if (process.env.REACT_APP_DEFAULTAUTH === "fake") {
+    } else if (authMethod === "fake") {
       console.log("[Admin Login] Usando Fake auth");
       const response = yield call(postFakeLogin, {
         email: user.email,
@@ -43,11 +55,16 @@ function* loginUser({ payload: { user, history } }) {
       });
       localStorage.setItem("authUser", JSON.stringify(response));
       yield put(loginSuccess(response));
+    } else {
+      console.error("[Admin Login] ❌ Método de autenticação desconhecido:", authMethod);
+      throw new Error(`Método de autenticação desconhecido: ${authMethod}`);
     }
+    
     console.log("[Admin Login] ✅ Redirecionando para /dashboard");
     history('/dashboard');
   } catch (error) {
     console.error("[Admin Login] ❌ Erro no login:", error);
+    console.error("[Admin Login] Stack trace:", error.stack);
     yield put(apiError(error));
   }
 }
