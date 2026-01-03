@@ -86,6 +86,10 @@ export default function App(): JSX.Element {
   const [rtlCache, setRtlCache] = useState<any>(null);
   const { pathname } = useLocation();
 
+  console.log("[App.tsx] Componente renderizado");
+  console.log("[App.tsx] pathname atual:", pathname);
+  console.log("[App.tsx] window.location:", window.location.href);
+
   const {
     permissions,
     allowAll,
@@ -249,18 +253,52 @@ export default function App(): JSX.Element {
           {layout === "vr" && <Configurator />}
 
           <Routes>
+            {/* Rota para /{tenantSlug}/{branchSlug} - DEVE VIR ANTES das rotas estáticas */}
+            <Route
+              path="/:tenantSlug/:branchSlug"
+              element={
+                (() => {
+                  console.log("[App.tsx] Rota /:tenantSlug/:branchSlug foi matcheada!");
+                  console.log("[App.tsx] pathname:", window.location.pathname);
+                  return (
+                    <RequireAuth>
+                      <RequireBranch>
+                        <RequireSubscription>
+                          <Navigate
+                            to={
+                              allowAll ||
+                              (permissionsStatus === "ready" && permissions.dashboards_management_view)
+                                ? "/dashboards/management"
+                                : "/dashboards/operational"
+                            }
+                            replace
+                          />
+                        </RequireSubscription>
+                      </RequireBranch>
+                    </RequireAuth>
+                  );
+                })()
+              }
+            />
             {getRoutes(routes)}
+            {/* Rota catch-all para outras URLs */}
             <Route
               path="*"
               element={
-                <Navigate
-                  to={
-                    allowAll ||
-                    (permissionsStatus === "ready" && permissions.dashboards_management_view)
-                      ? "/dashboards/management"
-                      : "/dashboards/operational"
-                  }
-                />
+                (() => {
+                  console.log("[App.tsx] Rota catch-all (*) foi matcheada!");
+                  console.log("[App.tsx] pathname:", window.location.pathname);
+                  return (
+                    <Navigate
+                      to={
+                        allowAll ||
+                        (permissionsStatus === "ready" && permissions.dashboards_management_view)
+                          ? "/dashboards/management"
+                          : "/dashboards/operational"
+                      }
+                    />
+                  );
+                })()
               }
             />
           </Routes>

@@ -11,7 +11,9 @@ const STORAGE_KEY = "activeTenantSlug";
 
 const readStoredSlug = (): string | null => {
   try {
-    return localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEY);
+    console.log("[TenantGate] localStorage tenant slug:", stored);
+    return stored;
   } catch {
     return null;
   }
@@ -39,8 +41,15 @@ const TenantGate = ({ children }: TenantGateProps) => {
     const fromUrl = resolveTenantSlugFromLocation(window.location);
     console.log("[TenantGate] Tenant slug da URL:", fromUrl);
     
-    const fallback = readStoredSlug() || process.env.REACT_APP_DEFAULT_TENANT_SLUG || null;
-    console.log("[TenantGate] Fallback:", fallback);
+    const storedSlug = readStoredSlug();
+    const defaultSlug = process.env.REACT_APP_DEFAULT_TENANT_SLUG || null;
+    
+    // IMPORTANTE: Ignorar fallback se for 'app' ou 'admin' (subdomínios reservados)
+    const validStoredSlug = (storedSlug === 'app' || storedSlug === 'admin') ? null : storedSlug;
+    const fallback = validStoredSlug || defaultSlug;
+    
+    console.log("[TenantGate] Fallback original:", storedSlug);
+    console.log("[TenantGate] Fallback válido:", fallback);
     
     const resolved = fromUrl || fallback;
     console.log("[TenantGate] Tenant slug resolvido:", resolved);
@@ -53,7 +62,8 @@ const TenantGate = ({ children }: TenantGateProps) => {
     const normalized = normalizeTenantSlug(resolved);
     console.log("[TenantGate] ✅ Tenant slug normalizado:", normalized);
     
-    if (fromUrl) {
+    // Só salvar no localStorage se vier da URL e não for reservado
+    if (fromUrl && normalized !== 'app' && normalized !== 'admin') {
       writeStoredSlug(normalized);
     }
     dispatch(setTenantSlug(normalized));
