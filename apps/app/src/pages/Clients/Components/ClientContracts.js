@@ -16,6 +16,7 @@ import {
   getSuspensionDaysRemaining
 } from "../Utils/contractsUtils"
 import { useClientContracts } from "../Hooks/useClientContracts"
+import { getStatusLabel } from "../../../helpers/status"
 
 // Inline functions removed (buildContractKey)
 
@@ -188,7 +189,7 @@ const ClientContracts = ({ contracts = [], idClient = null, onRefresh = null }) 
                       <div>
                         <div className="fw-semibold">{formatDate(susp.startDate)} — {formatDate(susp.endDate)}</div>
                         <div className="text-muted small">
-                          {susp.daysUsed} dia(s) • Status: <span className={`text-${(susp.status || "").toLowerCase() === 'active' ? 'success' : (susp.status || "").toLowerCase() === 'scheduled' ? 'warning' : 'secondary'}`}>{susp.status}</span>
+                          {susp.daysUsed} dia(s) • Status: <span className={`text-${(susp.status || "").toLowerCase() === 'active' ? 'success' : (susp.status || "").toLowerCase() === 'scheduled' ? 'warning' : 'secondary'}`}>{getStatusLabel(susp.status, 'suspension')}</span>
                           {(susp.status || "").toLowerCase() === 'stopped' && ` • Interrompido`}
                         </div>
                         {susp.reason && <div className="small">Motivo: {susp.reason}</div>}
@@ -387,7 +388,7 @@ const ClientContracts = ({ contracts = [], idClient = null, onRefresh = null }) 
           id: uniqueKey,
           originalId: item.id,
           title: getContractName(displayItem),
-          subtitle: displayItem.status || "",
+          subtitle: getStatusLabel(displayItem.status, "contract"),
           meta: `${formatDate(displayItem.startDate)} • ${formatDate(
             displayItem.endDate
           )}`,

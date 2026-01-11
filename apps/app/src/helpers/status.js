@@ -8,6 +8,16 @@ export const STATUS_LABELS = {
     expired: "Expirado",
     cancelled: "Cancelado",
     suspended: "Suspenso",
+    cancellation_scheduled: "Cancelamento Agendado",
+    suspension_scheduled: "Suspensão Agendada",
+    scheduled: "Agendado",
+    stopped: "Interrompido",
+  },
+  suspension: {
+    active: "Ativa",
+    scheduled: "Agendada",
+    stopped: "Interrompida",
+    finished: "Finalizada",
   },
   enrollment: {
     active: "Ativa",

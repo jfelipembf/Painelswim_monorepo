@@ -8,6 +8,7 @@ import { useToast } from "components/Common/ToastProvider"
 import PageLoader from "../../../components/Common/PageLoader"
 import { useLoading } from "../../../hooks/useLoading"
 import { listContracts, createContract, updateContract } from "../../../services/Contracts"
+import { getStatusLabel } from "../../../helpers/status"
 
 const ContractsPage = ({ setBreadcrumbItems }) => {
   const [contracts, setContracts] = useState([])
@@ -53,7 +54,7 @@ const ContractsPage = ({ setBreadcrumbItems }) => {
       subtitle: item.value
         ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.value)
         : "R$ 0,00",
-      meta: (item.status || "active") === "active" ? "Ativo" : "Inativo",
+      meta: getStatusLabel(item.status || "active", "contract"),
     }))
   }, [contracts])
 
