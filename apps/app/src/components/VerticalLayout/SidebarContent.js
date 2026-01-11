@@ -157,8 +157,14 @@ const SidebarContent = props => {
 
   useEffect(() => {
     // Inicializa MetisMenu
-    menuRef.current = new MetisMenu("#side-menu")
-    activeMenu()
+    // Usamos um pequeno timeout para garantir que o React terminou de renderizar o DOM
+    const timer = setTimeout(() => {
+      if (menuRef.current) {
+        menuRef.current.dispose();
+      }
+      menuRef.current = new MetisMenu("#side-menu");
+      activeMenu();
+    }, 100); // 100ms delay
 
     // Observer para recalcular scrollbar quando abrir/fechar menus
     const observer = new MutationObserver(() => {
@@ -177,12 +183,13 @@ const SidebarContent = props => {
     }
 
     return () => {
+      clearTimeout(timer);
       observer.disconnect()
       if (menuRef.current && typeof menuRef.current.dispose === 'function') {
         menuRef.current.dispose()
       }
     }
-  }, [])
+  }, [basePath, props.t, activeMenu]);
 
   useEffect(() => {
     // Re-checar menu ativo quando a rota mudar
