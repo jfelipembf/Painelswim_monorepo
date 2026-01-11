@@ -28,106 +28,84 @@ function* loginUser({ payload: { user, history } }) {
 
     // Exigir slug de tenant e unidade; se ausente, não prossegue
     if (!tenantSlug || !branchSlug) {
-      console.warn("Login Saga: Missing tenant or branch slug", { tenantSlug, branchSlug });
       const msg = "Use o link completo da academia e unidade para entrar (ex.: /{academia}/{unidade}/login).";
       yield put(apiError(msg));
       return;
     }
 
-    console.log("Login Saga: Starting login flow...", {
-      authType: process.env.REACT_APP_DEFAULTAUTH,
-      email: user.email,
-      tenantSlug,
-      branchSlug
-    });
-
     if (process.env.REACT_APP_DEFAULTAUTH === "firebase") {
-      try {
-        const response = yield call(
-          fireBaseBackend.loginUser,
-          user.email,
-          user.password
-        );
-        console.log("Login Saga: Firebase Auth Success", response);
+      const response = yield call(
+        fireBaseBackend.loginUser,
+        user.email,
+        user.password
+      );
 
-        // Resolver tenant/branch e validar staff
-        const db = getFirestore();
-        let idTenant = null;
-        let idBranch = null;
+      // Resolver tenant/branch e validar staff
+      const db = getFirestore();
+      let idTenant = null;
+      let idBranch = null;
 
-        console.log("Login Saga: Fetching Tenant...", tenantSlug);
-        const tenantSlugRef = doc(db, "tenantsBySlug", tenantSlug);
-        const tenantSlugSnap = yield call(getDoc, tenantSlugRef);
-        if (!tenantSlugSnap.exists()) {
-          console.error("Login Saga: Tenant slug not found in tenantsBySlug");
-          throw new Error("Academia não encontrada para o link informado.");
-        }
-        idTenant = tenantSlugSnap.data().idTenant;
-        console.log("Login Saga: Tenant ID resolved", idTenant);
-
-        const tenantRef = doc(db, "tenants", idTenant);
-        const tenantSnap = yield call(getDoc, tenantRef);
-        if (!tenantSnap.exists()) {
-          console.error("Login Saga: Tenant doc not found in tenants collection");
-          throw new Error("Dados da academia não encontrados.");
-        }
-
-        const branchesCol = collection(tenantRef, "branches");
-        const branchQuery = query(branchesCol, where("slug", "==", branchSlug));
-        const branchSnap = yield call(getDocs, branchQuery);
-        if (branchSnap.empty) {
-          console.error("Login Saga: Branch not found for slug", branchSlug);
-          throw new Error("Unidade não encontrada para este link.");
-        }
-        branchSnap.forEach(docSnap => {
-          idBranch = docSnap.id;
-        });
-        console.log("Login Saga: Branch ID resolved", idBranch);
-
-        const staffCol = collection(tenantRef, "staff");
-        const staffQuery = query(staffCol, where("idStaff", "==", response.uid));
-        const staffSnap = yield call(getDocs, staffQuery);
-        if (staffSnap.empty) {
-          console.warn("Login Saga: User is not staff in this tenant", { uid: response.uid, idTenant });
-          yield call(fireBaseBackend.logout);
-          throw new Error("Você não tem acesso a esta academia/unidade.");
-        }
-
-        let staffData = null;
-        staffSnap.forEach(docSnap => {
-          staffData = docSnap.data();
-        });
-        console.log("Login Saga: Staff data found", staffData);
-
-        const fullNameFromStaff = staffData
-          ? [staffData.firstName, staffData.lastName].filter(Boolean).join(" ")
-          : null;
-
-        const sessionKey = `session-${tenantSlug || "no-tenant"}-${branchSlug || "no-branch"}`;
-        const sessionData = {
-          uid: response.uid,
-          email: response.email,
-          displayName: fullNameFromStaff || response.displayName || response.email,
-          photoUrl: staffData?.photoUrl || response.photoURL || response.photoUrl || null,
-          idTenant,
-          idBranch,
-          tenantSlug,
-          branchSlug,
-          role: staffData?.role || null,
-          staff: staffData,
-        };
-        localStorage.setItem(sessionKey, JSON.stringify(sessionData));
-        localStorage.setItem("authUser", JSON.stringify(sessionData));
-        localStorage.setItem("idTenant", String(idTenant));
-        localStorage.setItem("idBranch", String(idBranch));
-        localStorage.setItem("tenantSlug", String(tenantSlug));
-        localStorage.setItem("branchSlug", String(branchSlug));
-
-        yield put(loginSuccess(response));
-      } catch (fbError) {
-        console.error("Login Saga: Firebase/Firestore Error", fbError);
-        throw fbError;
+      const tenantSlugRef = doc(db, "tenantsBySlug", tenantSlug);
+      const tenantSlugSnap = yield call(getDoc, tenantSlugRef);
+      if (!tenantSlugSnap.exists()) {
+        throw new Error("Academia não encontrada para o link informado.");
       }
+      idTenant = tenantSlugSnap.data().idTenant;
+
+      const tenantRef = doc(db, "tenants", idTenant);
+      const tenantSnap = yield call(getDoc, tenantRef);
+      if (!tenantSnap.exists()) {
+        throw new Error("Dados da academia não encontrados.");
+      }
+
+      const branchesCol = collection(tenantRef, "branches");
+      const branchQuery = query(branchesCol, where("slug", "==", branchSlug));
+      const branchSnap = yield call(getDocs, branchQuery);
+      if (branchSnap.empty) {
+        throw new Error("Unidade não encontrada para este link.");
+      }
+      branchSnap.forEach(docSnap => {
+        idBranch = docSnap.id;
+      });
+
+      const staffCol = collection(tenantRef, "staff");
+      const staffQuery = query(staffCol, where("idStaff", "==", response.uid));
+      const staffSnap = yield call(getDocs, staffQuery);
+      if (staffSnap.empty) {
+        yield call(fireBaseBackend.logout);
+        throw new Error("Você não tem acesso a esta academia/unidade.");
+      }
+
+      let staffData = null;
+      staffSnap.forEach(docSnap => {
+        staffData = docSnap.data();
+      });
+
+      const fullNameFromStaff = staffData
+        ? [staffData.firstName, staffData.lastName].filter(Boolean).join(" ")
+        : null;
+
+      const sessionKey = `session-${tenantSlug || "no-tenant"}-${branchSlug || "no-branch"}`;
+      const sessionData = {
+        uid: response.uid,
+        email: response.email,
+        displayName: fullNameFromStaff || response.displayName || response.email,
+        photoUrl: staffData?.photoUrl || response.photoURL || response.photoUrl || null,
+        idTenant,
+        idBranch,
+        tenantSlug,
+        branchSlug,
+        role: staffData?.role || null,
+        staff: staffData,
+      };
+      localStorage.setItem(sessionKey, JSON.stringify(sessionData));
+      localStorage.setItem("authUser", JSON.stringify(sessionData));
+      localStorage.setItem("idTenant", String(idTenant));
+      localStorage.setItem("idBranch", String(idBranch));
+      localStorage.setItem("tenantSlug", String(tenantSlug));
+      localStorage.setItem("branchSlug", String(branchSlug));
+
+      yield put(loginSuccess(response));
     } else if (process.env.REACT_APP_DEFAULTAUTH === "jwt") {
       const response = yield call(postJwtLogin, {
         email: user.email,
@@ -150,7 +128,6 @@ function* loginUser({ payload: { user, history } }) {
       history('/dashboard');
     }
   } catch (error) {
-    console.error("Login Saga: Catch Final Error", error);
     const message = typeof error === "string" ? error : error?.message || "Não foi possível entrar.";
     yield put(apiError(message));
   }
@@ -194,8 +171,8 @@ function* socialLogin({ payload: { type, history } }) {
       yield put(loginSuccess(response));
     }
     const response = yield call(fireBaseBackend.socialLoginUser, type);
-    if (response)
-      history("/dashboard");
+    if(response)
+    history("/dashboard");
   } catch (error) {
     yield put(apiError(error?.message || "Não foi possível entrar."));
   }
