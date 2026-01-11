@@ -13,8 +13,8 @@ import { Link } from "react-router-dom"
 import { withTranslation } from "react-i18next"
 
 const SidebarContent = props => {
-  const ref = useRef()
-  const menuRef = useRef()
+  const ref = useRef();
+
 
   // Funções helper recriadas para corrigir erro "not defined"
   const tenant = props.router?.params?.tenant
@@ -25,185 +25,138 @@ const SidebarContent = props => {
     if (!basePath) return path
     return `${basePath}${path}`
   }
+  const activateParentDropdown = useCallback((item) => {
+    item.classList.add("active");
+    const parent = item.parentElement;
+    const parent2El = parent.childNodes[1];
 
-  const scrollElement = item => {
-    if (item) {
-      const currentPosition = item.offsetTop
-      if (currentPosition > window.innerHeight) {
-        if (ref.current) {
-          ref.current.getScrollElement().scrollTop = currentPosition - 300
-        }
-      }
+    if (parent2El && parent2El.id !== "side-menu") {
+      parent2El.classList.add("mm-show");
     }
-  }
 
-  const activateParentDropdown = useCallback(item => {
-    item.classList.add("active")
-    const parent = item.closest("li")
     if (parent) {
-      parent.classList.add("mm-active")
-      const parent2 = parent.closest("ul")
-      if (parent2 && parent2.id !== "side-menu") {
-        parent2.classList.add("mm-show") // ul
-        parent2.setAttribute("aria-expanded", "true")
-        parent2.style.height = "" // FIX: Unset height to avoid "single line" bug
+      parent.classList.add("mm-active");
+      const parent2 = parent.parentElement;
 
-        const parent3 = parent2.parentElement // li
+      if (parent2) {
+        parent2.classList.add("mm-show"); // ul tag
+
+        const parent3 = parent2.parentElement; // li tag
+
         if (parent3) {
-          parent3.classList.add("mm-active") // li
-          parent3.childNodes.forEach(child => {
-            if (child.tagName === "A") {
-              child.setAttribute("aria-expanded", "true")
-              child.classList.add("mm-active") // a
-            }
-          })
-
-          const parent4 = parent3.closest("ul")
-          if (parent4 && parent4.id !== "side-menu") {
-            parent4.classList.add("mm-show") // ul
-            parent4.setAttribute("aria-expanded", "true")
-            parent4.style.height = "" // FIX
-
-            const parent5 = parent4.parentElement
+          parent3.classList.add("mm-active"); // li
+          parent3.childNodes[0].classList.add("mm-active"); //a
+          const parent4 = parent3.parentElement; // ul
+          if (parent4) {
+            parent4.classList.add("mm-show"); // ul
+            const parent5 = parent4.parentElement;
             if (parent5) {
-              parent5.classList.add("mm-active") // li
-              parent5.childNodes.forEach(child => {
-                if (child.tagName === "A") {
-                  child.setAttribute("aria-expanded", "true")
-                  child.classList.add("mm-active") // a
-                }
-              })
+              parent5.classList.add("mm-show"); // li
+              parent5.childNodes[0].classList.add("mm-active"); // a tag
             }
           }
         }
       }
-      scrollElement(item)
-      return false
+      scrollElement(item);
+      return false;
     }
-    scrollElement(item)
-    return false
-  }, [])
+    scrollElement(item);
+    return false;
+  }, []);
 
-  const removeActivation = items => {
-    for (let i = 0; i < items.length; ++i) {
-      const item = items[i]
-      const parent = items[i].parentElement
+  const removeActivation = (items) => {
+    for (var i = 0; i < items.length; ++i) {
+      var item = items[i];
+      const parent = items[i].parentElement;
 
       if (item && item.classList.contains("active")) {
-        item.classList.remove("active")
+        item.classList.remove("active");
       }
       if (parent) {
-        const parent2 = parent.parentElement
+        const parent2El =
+          parent.childNodes && parent.childNodes.lenght && parent.childNodes[1]
+            ? parent.childNodes[1]
+            : null;
+        if (parent2El && parent2El.id !== "side-menu") {
+          parent2El.classList.remove("mm-show");
+        }
+
+        parent.classList.remove("mm-active");
+        const parent2 = parent.parentElement;
+
         if (parent2) {
-          parent2.classList.remove("mm-active")
-          parent2.classList.remove("mm-show")
+          parent2.classList.remove("mm-show");
 
-          const parent3 = parent2.parentElement
+          const parent3 = parent2.parentElement;
           if (parent3) {
-            parent3.classList.remove("mm-active") // li
-            parent3.childNodes.forEach(child => {
-              if (child.tagName === "A") {
-                child.classList.remove("mm-active")
-                child.setAttribute("aria-expanded", "false")
-              }
-            })
+            parent3.classList.remove("mm-active"); // li
+            parent3.childNodes[0].classList.remove("mm-active");
 
-            const parent4 = parent3.parentElement // ul
+            const parent4 = parent3.parentElement; // ul
             if (parent4) {
-              parent4.classList.remove("mm-show") // ul
-              const parent5 = parent4.parentElement
+              parent4.classList.remove("mm-show"); // ul
+              const parent5 = parent4.parentElement;
               if (parent5) {
-                parent5.classList.remove("mm-show") // li
-                parent5.childNodes.forEach(child => {
-                  if (child.tagName === "A") {
-                    child.classList.remove("mm-active") // a
-                    child.setAttribute("aria-expanded", "false")
-                  }
-                })
+                parent5.classList.remove("mm-show"); // li
+                parent5.childNodes[0].classList.remove("mm-active"); // a tag
               }
             }
           }
         }
-        parent.classList.remove("mm-active")
-        parent.classList.remove("mm-show")
-
-        const ul = parent.closest("ul")
-        if (ul) {
-          ul.setAttribute("aria-expanded", "false")
-          // FIX: Explicitly clear height
-          ul.style.height = ""
-        }
       }
     }
-  }
+  };
 
   const activeMenu = useCallback(() => {
-    const pathName = process.env.PUBLIC_URL + props.router.location.pathname
-    let matchingMenuItem = null
-    const ul = document.getElementById("side-menu")
-    const items = ul.getElementsByTagName("a")
-    removeActivation(items)
+    const pathName = process.env.PUBLIC_URL + props.router.location.pathname;
+    let matchingMenuItem = null;
+    const ul = document.getElementById("side-menu");
+    const items = ul.getElementsByTagName("a");
+    removeActivation(items);
 
     for (let i = 0; i < items.length; ++i) {
-      if (items[i].getAttribute("href") !== "#" && pathName === items[i].pathname) {
-        matchingMenuItem = items[i]
-        break
+      if (pathName === items[i].pathname) {
+        matchingMenuItem = items[i];
+        break;
       }
     }
     if (matchingMenuItem) {
-      activateParentDropdown(matchingMenuItem)
+      activateParentDropdown(matchingMenuItem);
     }
-  }, [props.router.location.pathname, activateParentDropdown])
+  }, [props.router.location.pathname, activateParentDropdown]);
 
   useEffect(() => {
-    // Inicializa MetisMenu
-    // Usamos um pequeno timeout para garantir que o React terminou de renderizar o DOM
-    const timer = setTimeout(() => {
-      if (menuRef.current) {
-        menuRef.current.dispose();
-      }
-      menuRef.current = new MetisMenu("#side-menu");
-      activeMenu();
-    }, 100); // 100ms delay
-
-    // Observer para recalcular scrollbar quando abrir/fechar menus
-    const observer = new MutationObserver(() => {
-      if (ref.current) {
-        ref.current.recalculate()
-      }
-    })
-
-    const menuEl = document.getElementById("side-menu")
-    if (menuEl) {
-      observer.observe(menuEl, {
-        attributes: true,
-        subtree: true,
-        attributeFilter: ["class", "aria-expanded"]
-      })
-    }
-
-    return () => {
-      clearTimeout(timer);
-      observer.disconnect()
-      if (menuRef.current && typeof menuRef.current.dispose === 'function') {
-        menuRef.current.dispose()
-      }
-    }
-  }, [basePath, props.t, activeMenu]);
+    ref.current.recalculate();
+  }, []);
 
   useEffect(() => {
-    // Re-checar menu ativo quando a rota mudar
-    activeMenu()
-  }, [activeMenu])
+    new MetisMenu("#side-menu");
+  }, []);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    activeMenu();
+  }, [activeMenu]);
+
+  function scrollElement(item) {
+    if (item) {
+      const currentPosition = item.offsetTop;
+      if (currentPosition > window.innerHeight) {
+        ref.current.getScrollElement().scrollTop = currentPosition - 300;
+      }
+    }
+  }
 
   return (
     <React.Fragment>
       <SimpleBar style={{ maxHeight: "100%" }} ref={ref}>
         <div id="sidebar-menu">
           <ul className="metismenu list-unstyled" id="side-menu">
+            <li className="menu-title">{props.t("Main")} </li>
             <li>
               <Link to={buildPath("/dashboard")} className="waves-effect">
                 <i className="mdi mdi-view-dashboard"></i>
+
                 <span>{props.t("Dashboard")}</span>
               </Link>
             </li>
@@ -220,14 +173,10 @@ const SidebarContent = props => {
               </Link>
             </li>
             <li>
-              <a
-                href="#"
-                className="has-arrow waves-effect"
-                onClick={e => e.preventDefault()}
-              >
+              <Link to="/#" className="has-arrow waves-effect">
                 <i className="mdi mdi-office-building-outline"></i>
                 <span>Administrativos</span>
-              </a>
+              </Link>
               <ul className="sub-menu" aria-expanded="false">
                 <li>
                   <Link to={buildPath("/collaborators/list")}>
@@ -274,14 +223,10 @@ const SidebarContent = props => {
               </ul>
             </li>
             <li>
-              <a
-                href="#"
-                className="has-arrow waves-effect"
-                onClick={e => e.preventDefault()}
-              >
+              <Link to="/#" className="has-arrow waves-effect">
                 <i className="mdi mdi-cash-multiple"></i>
                 <span>Financeiro</span>
-              </a>
+              </Link>
               <ul className="sub-menu" aria-expanded="false">
                 <li>
                   <Link to={buildPath("/financial/cashier")}>
@@ -310,14 +255,10 @@ const SidebarContent = props => {
               </Link>
             </li>
             <li>
-              <a
-                href="#"
-                className="has-arrow waves-effect"
-                onClick={e => e.preventDefault()}
-              >
+              <Link to="/#" className="has-arrow waves-effect">
                 <i className="mdi mdi-chart-bar"></i>
                 <span>Gerencial</span>
-              </a>
+              </Link>
               <ul className="sub-menu" aria-expanded="false">
                 <li>
                   <Link to={buildPath("/events/planning")}>

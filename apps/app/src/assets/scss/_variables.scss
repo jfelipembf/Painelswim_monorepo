@@ -1,4 +1,6 @@
 // Variables
+$variable-prefix: bs-;
+$prefix: $variable-prefix;
 
 //
 // custom-variables
@@ -12,7 +14,7 @@ $sidebar-menu-item-icon-color: var(--#{$prefix}sidebar-menu-sub-icon-color);
 $sidebar-menu-item-hover-color: var(--#{$prefix}sidebar-menu-item-hover-color);
 $sidebar-menu-item-active-color: var(--#{$prefix}sidebar-menu-item-active-color);
 $sidebar-menu-item-active-bg: var(--#{$prefix}sidebar-menu-item-active-bg);
-$sidebar-width: 136px;
+$sidebar-width: 240px;
 $sidebar-collapsed-width: 70px;
 $sidebar-width-sm: 176px;
 
@@ -62,7 +64,7 @@ $display-none: none;
 $display-block: block;
 
 // Brand
-$navbar-brand-box-width: 136px;
+$navbar-brand-box-width: 240px;
 $navbar-header-bg: var(--#{$prefix}navbar-header-bg);
 
 // Boxed layout width
@@ -444,7 +446,13 @@ $dark-border-subtle: $gray-500;
 // scss-docs-end theme-border-subtle-variables
 
 // Characters which are escaped by the escape-svg function
-$escaped-characters: (("<", "%3c"), (">", "%3e"), ("#", "%23"), ("(", "%28"), (")", "%29"));
+$escaped-characters: (
+  ("<", "%3c"),
+  (">", "%3e"),
+  ("#", "%23"),
+  ("(", "%28"),
+  (")", "%29")
+);
 
 // Options
 //
@@ -470,10 +478,7 @@ $enable-important-utilities: true;
 $enable-dark-mode: true;
 $color-mode-type: data; // `data` or `media-query`
 
-// Prefix for :root CSS variables
-
-$variable-prefix: bs-; // Deprecated in v5.2.0 for the shorter `$prefix`
-$prefix: $variable-prefix;
+// Prefix for :root CSS variables (Moved to top)
 
 // Gradient
 //
@@ -635,8 +640,7 @@ $border-radius-2xl: $border-radius-xxl; // Deprecated in v5.3.0
 // fusv-enable
 
 // scss-docs-start box-shadow-variables
-$box-shadow:
-  0 -3px 31px 0 rgba(0, 0, 0, 0.05),
+$box-shadow: 0 -3px 31px 0 rgba(0, 0, 0, 0.05),
   0 6px 20px 0 rgba(0, 0, 0, 0.02);
 $box-shadow-sm: 0 0.125rem 0.25rem rgba($black, 0.075);
 $box-shadow-lg: 0 1rem 3rem rgba($black, 0.175);
@@ -907,8 +911,7 @@ $btn-font-size-lg: $input-btn-font-size-lg;
 $btn-border-width: $input-btn-border-width;
 
 $btn-font-weight: $font-weight-normal;
-$btn-box-shadow:
-  inset 0 1px 0 rgba($white, 0.15),
+$btn-box-shadow: inset 0 1px 0 rgba($white, 0.15),
   0 1px 1px rgba($black, 0.075);
 $btn-focus-width: $input-btn-focus-width;
 $btn-focus-box-shadow: $input-btn-focus-box-shadow;
@@ -924,8 +927,7 @@ $btn-border-radius: var(--#{$prefix}border-radius);
 $btn-border-radius-sm: var(--#{$prefix}border-radius-sm);
 $btn-border-radius-lg: var(--#{$prefix}border-radius-lg);
 
-$btn-transition:
-  color 0.15s ease-in-out,
+$btn-transition: color 0.15s ease-in-out,
   background-color 0.15s ease-in-out,
   border-color 0.15s ease-in-out,
   box-shadow 0.15s ease-in-out;
@@ -1007,8 +1009,7 @@ $input-height: add($input-line-height * 1em, add($input-padding-y * 2, $input-he
 $input-height-sm: add($input-line-height * 1em, add($input-padding-y-sm * 2, $input-height-border, false));
 $input-height-lg: add($input-line-height * 1em, add($input-padding-y-lg * 2, $input-height-border, false));
 
-$input-transition:
-  border-color 0.15s ease-in-out,
+$input-transition: border-color 0.15s ease-in-out,
   box-shadow 0.15s ease-in-out;
 
 $form-color-width: 3rem;
@@ -1021,8 +1022,7 @@ $form-check-padding-start: $form-check-input-width + 0.5em;
 $form-check-margin-bottom: 0.125rem;
 $form-check-label-color: null;
 $form-check-label-cursor: null;
-$form-check-transition:
-  background-color 0.15s ease-in-out,
+$form-check-transition: background-color 0.15s ease-in-out,
   background-position 0.15s ease-in-out,
   border-color 0.15s ease-in-out,
   box-shadow 0.15s ease-in-out;
@@ -1137,14 +1137,12 @@ $form-range-thumb-bg: $component-active-bg;
 $form-range-thumb-border: 0;
 $form-range-thumb-border-radius: 1rem;
 $form-range-thumb-box-shadow: 0 0.1rem 0.25rem rgba($black, 0.1);
-$form-range-thumb-focus-box-shadow:
-  0 0 0 1px $body-bg,
+$form-range-thumb-focus-box-shadow: 0 0 0 1px $body-bg,
   $input-focus-box-shadow;
 $form-range-thumb-focus-box-shadow-width: $input-focus-width; // For focus box shadow issue in Edge
 $form-range-thumb-active-bg: tint-color($component-active-bg, 70%);
 $form-range-thumb-disabled-bg: var(--#{$prefix}secondary-color);
-$form-range-thumb-transition:
-  background-color 0.15s ease-in-out,
+$form-range-thumb-transition: background-color 0.15s ease-in-out,
   border-color 0.15s ease-in-out,
   box-shadow 0.15s ease-in-out;
 // scss-docs-end form-range-variables
@@ -1166,8 +1164,7 @@ $form-floating-label-height: 1.5em;
 $form-floating-label-opacity: 0.65;
 $form-floating-label-transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
 $form-floating-label-disabled-color: $gray-600;
-$form-floating-transition:
-  opacity 0.1s ease-in-out,
+$form-floating-transition: opacity 0.1s ease-in-out,
   transform 0.1s ease-in-out;
 // scss-docs-end form-floating-variables
 
@@ -1195,24 +1192,18 @@ $form-invalid-border-color: $form-feedback-invalid-color;
 
 // scss-docs-start form-validation-states
 $form-validation-states: (
-  "valid": (
-    "color": var(--#{$prefix}form-valid-color),
+  "valid": ("color": var(--#{$prefix}form-valid-color),
     "icon": $form-feedback-icon-valid,
     "tooltip-color": #fff,
     "tooltip-bg-color": var(--#{$prefix}success),
-    "focus-box-shadow": 0 0 $input-btn-focus-blur $input-focus-width
-      rgba(var(--#{$prefix}success-rgb), $input-btn-focus-color-opacity),
-    "border-color": var(--#{$prefix}form-valid-border-color)
-  ),
-  "invalid": (
-    "color": var(--#{$prefix}form-invalid-color),
+    "focus-box-shadow": 0 0 $input-btn-focus-blur $input-focus-width rgba(var(--#{$prefix}success-rgb), $input-btn-focus-color-opacity),
+    "border-color": var(--#{$prefix}form-valid-border-color)),
+  "invalid": ("color": var(--#{$prefix}form-invalid-color),
     "icon": $form-feedback-icon-invalid,
     "tooltip-color": #fff,
     "tooltip-bg-color": var(--#{$prefix}danger),
-    "focus-box-shadow": 0 0 $input-btn-focus-blur $input-focus-width
-      rgba(var(--#{$prefix}danger-rgb), $input-btn-focus-color-opacity),
-    "border-color": var(--#{$prefix}form-invalid-border-color)
-  )
+    "focus-box-shadow": 0 0 $input-btn-focus-blur $input-focus-width rgba(var(--#{$prefix}danger-rgb), $input-btn-focus-color-opacity),
+    "border-color": var(--#{$prefix}form-invalid-border-color))
 );
 // scss-docs-end form-validation-states
 
@@ -1253,8 +1244,7 @@ $nav-link-font-size: null;
 $nav-link-font-weight: null;
 $nav-link-color: var(--#{$prefix}link-color);
 $nav-link-hover-color: var(--#{$prefix}link-hover-color);
-$nav-link-transition:
-  color 0.15s ease-in-out,
+$nav-link-transition: color 0.15s ease-in-out,
   background-color 0.15s ease-in-out,
   border-color 0.15s ease-in-out;
 $nav-link-disabled-color: var(--#{$prefix}secondary-color);
@@ -1289,7 +1279,8 @@ $navbar-brand-font-size: $font-size-lg;
 // Compute the navbar-brand padding-y so the navbar-brand will have the same height as navbar-text and nav-link
 $nav-link-height: $font-size-base * $line-height-base + $nav-link-padding-y * 2;
 $navbar-brand-height: $navbar-brand-font-size * $line-height-base;
-$navbar-brand-padding-y: ($nav-link-height - $navbar-brand-height) * 0.5;
+$navbar-brand-padding-y: (
+  $nav-link-height - $navbar-brand-height) * 0.5;
 $navbar-brand-margin-end: 1rem;
 
 $navbar-toggler-padding-y: 0.25rem;
@@ -1299,7 +1290,8 @@ $navbar-toggler-border-radius: $btn-border-radius;
 $navbar-toggler-focus-width: $btn-focus-width;
 $navbar-toggler-transition: box-shadow 0.15s ease-in-out;
 
-$navbar-light-color: rgba(var(--#{$prefix}emphasis-color-rgb), 0.65);
+$navbar-light-color: rgba(var(--#{$prefix}emphasis-color-rgb), 0.65
+);
 $navbar-light-hover-color: rgba(var(--#{$prefix}emphasis-color-rgb), 0.8);
 $navbar-light-active-color: rgba(var(--#{$prefix}emphasis-color-rgb), 1);
 $navbar-light-disabled-color: rgba(var(--#{$prefix}emphasis-color-rgb), 0.3);
@@ -1336,9 +1328,7 @@ $dropdown-bg: var(--#{$prefix}secondary-bg);
 $dropdown-border-color: var(--#{$prefix}--#{$prefix}border-color);
 $dropdown-border-radius: var(--#{$prefix}border-radius);
 $dropdown-border-width: 0;
-$dropdown-inner-border-radius: calc(
-  #{$dropdown-border-radius} - #{$dropdown-border-width}
-); // stylelint-disable-line function-disallowed-list
+$dropdown-inner-border-radius: calc(#{$dropdown-border-radius} - #{$dropdown-border-width}); // stylelint-disable-line function-disallowed-list
 $dropdown-divider-bg: $dropdown-border-color;
 $dropdown-divider-margin-y: $spacer * 0.5;
 $dropdown-box-shadow: $box-shadow;
@@ -1414,8 +1404,7 @@ $pagination-disabled-color: var(--#{$prefix}secondary-color);
 $pagination-disabled-bg: var(--#{$prefix}secondary-bg);
 $pagination-disabled-border-color: var(--#{$prefix}border-color);
 
-$pagination-transition:
-  color 0.15s ease-in-out,
+$pagination-transition: color 0.15s ease-in-out,
   background-color 0.15s ease-in-out,
   border-color 0.15s ease-in-out,
   box-shadow 0.15s ease-in-out;
@@ -1474,8 +1463,7 @@ $accordion-button-padding-y: $accordion-padding-y;
 $accordion-button-padding-x: $accordion-padding-x;
 $accordion-button-color: var(--#{$prefix}body-color);
 $accordion-button-bg: var(--#{$prefix}accordion-bg);
-$accordion-transition:
-  $btn-transition,
+$accordion-transition: $btn-transition,
   border-radius 0.15s ease;
 $accordion-button-active-bg: var(--#{$prefix}primary-bg-subtle);
 $accordion-button-active-color: var(--#{$prefix}primary-text-emphasis);
@@ -1532,10 +1520,8 @@ $popover-max-width: 276px;
 $popover-border-width: var(--#{$prefix}border-width);
 $popover-border-color: var(--#{$prefix}border-color);
 $popover-border-radius: var(--#{$prefix}border-radius-lg);
-$popover-inner-border-radius: calc(
-  #{$popover-border-radius} - #{$popover-border-width}
-); // stylelint-disable-line function-disallowed-list
-$popover-box-shadow:                var(--#{$prefix}box-shadow) !default;
+$popover-inner-border-radius: calc(#{$popover-border-radius} - #{$popover-border-width}); // stylelint-disable-line function-disallowed-list
+$popover-box-shadow: var(--#{$prefix}box-shadow) !default;
 
 $popover-header-font-size: $font-size-base;
 $popover-header-bg: var(--#{$prefix}secondary-bg);
@@ -1606,8 +1592,8 @@ $modal-content-border-color: var(--#{$prefix}border-color);
 $modal-content-border-width: var(--#{$prefix}border-width);
 $modal-content-border-radius: var(--#{$prefix}border-radius-lg);
 $modal-content-inner-border-radius: subtract($modal-content-border-radius, $modal-content-border-width);
-$modal-content-box-shadow-xs:       var(--#{$prefix}box-shadow-sm) !default;
-$modal-content-box-shadow-sm-up:    var(--#{$prefix}box-shadow) !default;
+$modal-content-box-shadow-xs: var(--#{$prefix}box-shadow-sm) !default;
+$modal-content-box-shadow-sm-up: var(--#{$prefix}box-shadow) !default;
 
 $modal-backdrop-bg: $black;
 $modal-backdrop-opacity: 0.5;

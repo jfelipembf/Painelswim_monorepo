@@ -102,7 +102,7 @@ export const createTenant = async (tenantData, ownerData) => {
 
   await setDoc(slugDocRef, { idTenant: tenantId });
 
-  const memberRef = doc(db, TENANTS_COLLECTION, tenantId, "members", ownerUid);
+  const memberRef = doc(db, TENANTS_COLLECTION, tenantId, "staff", ownerUid);
   await setDoc(memberRef, {
     role: "owner",
     roleId: "owner",
@@ -130,7 +130,7 @@ export const createTenant = async (tenantData, ownerData) => {
   });
 
   // Adicionar owner como member da primeira branch
-  const branchMemberRef = doc(db, TENANTS_COLLECTION, tenantId, "branches", branchId, "members", ownerUid);
+  const branchMemberRef = doc(db, TENANTS_COLLECTION, tenantId, "branches", branchId, "staff", ownerUid);
   await setDoc(branchMemberRef, {
     idUser: ownerUid,
     email,
@@ -215,14 +215,14 @@ export const createBranch = async (tenantId, branchData) => {
   });
 
   // Buscar todos os owners do tenant e adicioná-los como members da nova branch
-  const membersRef = collection(db, TENANTS_COLLECTION, tenantId, "members");
+  const membersRef = collection(db, TENANTS_COLLECTION, tenantId, "staff");
   const membersSnapshot = await getDocs(membersRef);
-  
+
   const ownerPromises = [];
   membersSnapshot.forEach((memberDoc) => {
     const memberData = memberDoc.data();
     if (memberData.role === "owner") {
-      const branchMemberRef = doc(db, TENANTS_COLLECTION, tenantId, "branches", branchId, "members", memberDoc.id);
+      const branchMemberRef = doc(db, TENANTS_COLLECTION, tenantId, "branches", branchId, "staff", memberDoc.id);
       ownerPromises.push(
         setDoc(branchMemberRef, {
           idUser: memberDoc.id,
@@ -233,7 +233,7 @@ export const createBranch = async (tenantId, branchData) => {
           updatedAt: serverTimestamp(),
         })
       );
-      
+
       // Atualizar branchIds e roleByBranch do owner
       const currentBranchIds = memberData.branchIds || [];
       const currentRoleByBranch = memberData.roleByBranch || {};
