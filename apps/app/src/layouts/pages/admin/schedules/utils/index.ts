@@ -1,1 +1,0 @@
-export { scheduleValidationSchema } from "./validation";

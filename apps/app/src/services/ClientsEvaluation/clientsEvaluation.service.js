@@ -1,0 +1,166 @@
+import {
+  addDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore"
+
+import { makeCreatePayload, makeUpdatePayload } from "../_core/payload"
+import { clientsEvaluationCol, clientEvaluationDoc, getContext, getDb } from "./clientsEvaluation.repository"
+
+export const createClientEvaluation = async ({
+  idClient,
+  idActivity,
+  idClass = null,
+  idSession = null,
+  levelsByTopicId = {},
+  eventTypeName = "avaliação",
+  startAt = null,
+  endAt = null,
+  eventPlanId = null,
+  updatedByUserId = null,
+  ctxOverride = null,
+}) => {
+  if (!idClient) throw new Error("idClient é obrigatório")
+  if (!idActivity) throw new Error("idActivity é obrigatório")
+
+  const db = getDb()
+  const ctx = getContext(ctxOverride)
+
+  const col = clientsEvaluationCol(db, ctx, idClient)
+
+  // Use makeCreatePayload but custom fields need mapping first or pass raw
+  // The service logic here is complex with mapping, so we keep the mapping but use standard payload helper for metadata
+
+  const data = {
+    clientId: String(idClient),
+    idClient: String(idClient),
+    idActivity: String(idActivity),
+    idClass: idClass != null ? String(idClass) : null,
+    idSession: idSession != null ? String(idSession) : null,
+
+    eventTypeName,
+    eventPlanId: eventPlanId != null ? String(eventPlanId) : null,
+    startAt,
+    endAt,
+
+    levelsByTopicId: levelsByTopicId && typeof levelsByTopicId === "object" ? levelsByTopicId : {},
+    updatedByUserId: updatedByUserId != null ? String(updatedByUserId) : null,
+  }
+
+  const payload = makeCreatePayload(data, ctx)
+
+  const ref = await addDoc(col, payload)
+  return { id: ref.id, ...payload }
+}
+
+export const getLastClientEvaluation = async ({ idClient, idActivity, idTopic, ctxOverride = null }) => {
+  if (!idClient || !idActivity || !idTopic) return null
+
+  const db = getDb()
+  const ctx = getContext(ctxOverride)
+
+  const col = clientsEvaluationCol(db, ctx, idClient)
+  const q = query(
+    col,
+    where("idActivity", "==", String(idActivity)),
+    orderBy("createdAt", "desc"),
+    limit(1)
+  )
+
+  const snap = await getDocs(q)
+  if (snap.empty) return null
+  const d = snap.docs[0]
+  const data = d.data() || {}
+  const levelsMap = data.levelsByTopicId && typeof data.levelsByTopicId === "object" ? data.levelsByTopicId : {}
+  const levelInfo = levelsMap[String(idTopic)] || null
+  if (!levelInfo) return null
+
+  return {
+    id: d.id,
+    idClient: String(idClient),
+    idActivity: String(idActivity),
+    idTopic: String(idTopic),
+    levelId: levelInfo.levelId != null ? String(levelInfo.levelId) : null,
+    levelName: levelInfo.levelName || null,
+    levelValue: levelInfo.levelValue != null ? Number(levelInfo.levelValue) : null,
+  }
+}
+
+export const getLastClientEvaluationSnapshot = async ({ idClient, idActivity, ctxOverride = null }) => {
+  if (!idClient || !idActivity) return null
+
+  const db = getDb()
+  const ctx = getContext(ctxOverride)
+
+  const col = clientsEvaluationCol(db, ctx, idClient)
+  const q = query(
+    col,
+    where("idActivity", "==", String(idActivity)),
+    orderBy("createdAt", "desc"),
+    limit(1)
+  )
+
+  const snap = await getDocs(q)
+  if (snap.empty) return null
+  const d = snap.docs[0]
+  const data = d.data() || {}
+  return { id: d.id, ...data }
+}
+
+export const getClientEvaluations = async ({ idClient, ctxOverride = null }) => {
+  if (!idClient) return []
+
+  const db = getDb()
+  const ctx = getContext(ctxOverride)
+
+  const ref = clientsEvaluationCol(db, ctx, idClient)
+  const snap = await getDocs(query(ref, orderBy("createdAt", "desc")))
+
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+}
+
+export const getClientEvaluationByEvent = async ({ idClient, eventPlanId, ctxOverride = null }) => {
+  if (!idClient || !eventPlanId) return null
+
+  const db = getDb()
+  const ctx = getContext(ctxOverride)
+
+  const col = clientsEvaluationCol(db, ctx, idClient)
+  const q = query(
+    col,
+    where("eventPlanId", "==", String(eventPlanId)),
+    limit(1)
+  )
+
+  const snap = await getDocs(q)
+  if (snap.empty) return null
+  const d = snap.docs[0]
+  return { id: d.id, ...d.data() }
+}
+
+export const updateClientEvaluation = async (id, idClient, data, { ctxOverride = null } = {}) => {
+  if (!id || !idClient) throw new Error("ID da avaliação e ID do cliente são obrigatórios")
+
+  const db = getDb()
+  const ctx = getContext(ctxOverride)
+
+  const ref = clientEvaluationDoc(db, ctx, idClient, id)
+
+  const payload = makeUpdatePayload(data)
+
+  await updateDoc(ref, payload)
+  return { id, ...payload }
+}
+
+export default {
+  createClientEvaluation,
+  updateClientEvaluation,
+  getLastClientEvaluation,
+  getLastClientEvaluationSnapshot,
+  getClientEvaluations,
+  getClientEvaluationByEvent,
+}
