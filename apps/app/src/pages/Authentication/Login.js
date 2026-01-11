@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom';
-import { Container, Row,Col, Card, CardBody, Label, Form, Alert, Input, FormFeedback } from 'reactstrap';
+import { Container, Row, Col, Card, CardBody, Label, Form, Alert, Input, FormFeedback } from 'reactstrap';
 import logoSwim from "../../assets/images/logoSwim.png";
 import poolImg from "../../assets/images/pool.jpg";
 import { useSelector, useDispatch } from "react-redux";
@@ -39,20 +39,20 @@ const Login = props => {
 
 
   const selectLoginState = (state) => state.Login;
-    const LoginProperties = createSelector(
-      selectLoginState,
-        (login) => ({
-          error: login.error          
-        })
-    );
+  const LoginProperties = createSelector(
+    selectLoginState,
+    (login) => ({
+      error: login.error
+    })
+  );
 
-    const {
-      error
+  const {
+    error
   } = useSelector(LoginProperties);
 
-    const signIn = type => {
-        dispatch(socialLogin(type, props.router.navigate));
-    };
+  const signIn = type => {
+    dispatch(socialLogin(type, props.router.navigate));
+  };
 
   //for facebook and google authentication
   const socialResponse = type => {
@@ -71,8 +71,8 @@ const Login = props => {
           backgroundPosition: "center",
         }}
       >
-        <Container fluid className="d-flex align-items-stretch" style={{ minHeight: "100vh" }}>
-          <Row className="flex-grow-1 justify-content-end align-items-stretch">
+        <Container fluid className="p-0 d-flex align-items-stretch" style={{ minHeight: "100vh" }}>
+          <Row className="g-0 flex-grow-1 justify-content-end align-items-stretch">
             <Col
               md={6}
               lg={5}
@@ -116,6 +116,7 @@ const Login = props => {
                       <div className="mb-3">
                         <Label htmlFor="username">Email</Label>
                         <Input
+                          id="username"
                           name="email"
                           className="form-control"
                           placeholder="Digite seu email"
@@ -132,6 +133,7 @@ const Login = props => {
                       <div className="mb-3">
                         <Label htmlFor="userpassword">Senha</Label>
                         <Input
+                          id="userpassword"
                           name="password"
                           value={validation.values.password || ""}
                           type="password"
