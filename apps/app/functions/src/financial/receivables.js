@@ -1,11 +1,12 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { requireAuthContext } = require("../shared/context");
 const { generateEntityId } = require("../shared/id");
 const { buildReceivablePayload } = require("../shared/payloads");
 
 const db = admin.firestore();
-const { FieldValue } = admin.firestore;
+
 
 // Helper to get receivables collection
 const getReceivablesColl = (idTenant, idBranch) =>

@@ -2,6 +2,8 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const { requireAuthContext } = require("../shared/context");
 
+const { FieldValue } = require("firebase-admin/firestore");
+
 const db = admin.firestore();
 
 /**
@@ -124,7 +126,7 @@ exports.updateClass = functions.region("us-central1").https.onCall(async (data, 
             // Update Class
             t.update(classRef, {
                 ...updates,
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
             });
         });
 
@@ -145,7 +147,7 @@ exports.updateClass = functions.region("us-central1").https.onCall(async (data, 
                 // Remove undefined keys
                 Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
 
-                params.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+                params.updatedAt = FieldValue.serverTimestamp();
 
                 sessionsSnap.docs.forEach(doc => {
                     batch.update(doc.ref, params);
@@ -160,46 +162,52 @@ exports.updateClass = functions.region("us-central1").https.onCall(async (data, 
         if (updates.endDate) {
             const limitIso = updates.endDate; // Format: YYYY-MM-DD
 
-            // 1. Delete Sessions after endDate
-            const sessionsToDeleteSnap = await sessionsCol
-                .where("idClass", "==", id)
-                .where("sessionDate", ">", limitIso)
-                .get();
+            // Validate date format (simple regex check for YYYY-MM-DD)
+            if (!limitIso || !/^\d{4}-\d{2}-\d{2}$/.test(limitIso)) {
+                console.warn(`Invalid endDate format: ${limitIso}. Skipping end date processing.`);
+            } else {
 
-            if (!sessionsToDeleteSnap.empty) {
-                const batch = db.batch();
-                sessionsToDeleteSnap.docs.forEach(d => batch.delete(d.ref));
-                await batch.commit();
-                console.log(`Deleted ${sessionsToDeleteSnap.size} future sessions after ${limitIso}`);
-            }
+                // 1. Delete Sessions after endDate
+                const sessionsToDeleteSnap = await sessionsCol
+                    .where("idClass", "==", id)
+                    .where("sessionDate", ">", limitIso)
+                    .get();
 
-            // 2. Terminate Active Enrollments
-            const enrollmentsSnap = await enrollmentsCol
-                .where("idClass", "==", id)
-                .where("status", "==", "active")
-                .get();
-
-            if (!enrollmentsSnap.empty) {
-                const batch = db.batch();
-                let updatedCount = 0;
-
-                enrollmentsSnap.docs.forEach(d => {
-                    const enr = d.data();
-                    const enrEnd = enr.endDate;
-                    if (!enrEnd || enrEnd > limitIso) {
-                        batch.update(d.ref, {
-                            endDate: limitIso,
-                            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-                        });
-                        updatedCount++;
-                    }
-                });
-
-                if (updatedCount > 0) {
+                if (!sessionsToDeleteSnap.empty) {
+                    const batch = db.batch();
+                    sessionsToDeleteSnap.docs.forEach(d => batch.delete(d.ref));
                     await batch.commit();
+                    console.log(`Deleted ${sessionsToDeleteSnap.size} future sessions after ${limitIso}`);
+                }
+
+                // 2. Terminate Active Enrollments
+                const enrollmentsSnap = await enrollmentsCol
+                    .where("idClass", "==", id)
+                    .where("status", "==", "active")
+                    .get();
+
+                if (!enrollmentsSnap.empty) {
+                    const batch = db.batch();
+                    let updatedCount = 0;
+
+                    enrollmentsSnap.docs.forEach(d => {
+                        const enr = d.data();
+                        const enrEnd = enr.endDate;
+                        if (!enrEnd || enrEnd > limitIso) {
+                            batch.update(d.ref, {
+                                endDate: limitIso,
+                                updatedAt: FieldValue.serverTimestamp()
+                            });
+                            updatedCount++;
+                        }
+                    });
+
+                    if (updatedCount > 0) {
+                        await batch.commit();
+                    }
                 }
             }
-        }
+        } // End else valid date
 
         return { success: true };
 

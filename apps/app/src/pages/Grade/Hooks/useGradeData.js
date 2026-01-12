@@ -18,17 +18,35 @@ export const useGradeData = (referenceDate) => {
             try {
                 const key = firstLoadRef.current ? "page" : "refresh"
                 await withLoading(key, async () => {
-                    // listClasses is called but not used in Grade previously, verify if needed.
-                    // Keeping it for consistency if it was there, or removing if unused.
-                    // Original code: const [sess, acts, ars, stf] = await Promise.all([listSessions(), listActivities(), listAreas(), listStaff(), listClasses()])
-                    // It seems listClasses result was ignored.
+                    // Calculate date range (start of month - 7 days to end of month + 7 days)
+                    // to cover month view and cross-week views safely.
+                    const refDate = new Date(referenceDate)
+                    const y = refDate.getFullYear()
+                    const m = refDate.getMonth()
+
+                    // Simple range: current month view +/- buffer
+                    // Actually, let's just grab 2 months window around refDate to be safe and simple
+                    // Start: 1st of previous month
+                    const startDateObj = new Date(y, m - 1, 1)
+                    // End: Last day of next month
+                    const endDateObj = new Date(y, m + 2, 0)
+
+                    const startDate = startDateObj.toISOString().split("T")[0]
+                    const endDate = endDateObj.toISOString().split("T")[0]
+
                     const [sess, acts, ars, stf] = await Promise.all([
-                        listSessions(),
+                        listSessions({ startDate, endDate, limitCount: 1000 }),
                         listActivities(),
                         listAreas(),
                         listStaff(),
                         listClasses(),
                     ])
+
+                    console.log("DEBUG: useGradeData fetched", {
+                        sessionsCount: sess?.length,
+                        hasActivities: acts?.length > 0,
+                        hasStaff: stf?.length > 0
+                    })
 
                     const rawSessions = Array.isArray(sess) ? sess : []
 

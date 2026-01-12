@@ -1,12 +1,13 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { requireAuthContext } = require("../shared/context");
 const { generateEntityId } = require("../shared/id");
 const { createTransactionInternal } = require("../financial/transactions");
 const { buildClientContractPayload } = require("../shared/payloads");
 
 const db = admin.firestore();
-const { FieldValue } = admin.firestore;
+
 
 const getContractsColl = (idTenant, idBranch) =>
   db.collection("tenants").doc(idTenant).collection("branches").doc(idBranch).collection("clientsContracts");

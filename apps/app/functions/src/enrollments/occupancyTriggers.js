@@ -3,7 +3,7 @@ const admin = require("firebase-admin");
 
 const db = admin.firestore();
 
-const { FieldValue } = admin.firestore;
+const { FieldValue } = require("firebase-admin/firestore");
 
 const isoToday = () => new Date().toISOString().slice(0, 10);
 

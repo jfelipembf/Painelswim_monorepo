@@ -94,12 +94,12 @@ const Login = props => {
                   <div className="px-3 flex-grow-1 d-flex flex-column justify-content-center">
                     <div className="text-center mb-3">
                       <Link to="/" className="d-block auth-logo">
-                        <img src={logoSwim} alt="Swim" height="120" />
+                        <img src={logoSwim} alt="Swim" height="180" />
                       </Link>
                     </div>
 
-                    <h4 className="text-muted font-size-18 mb-1 text-center">Bem-vindo de volta!</h4>
-                    <p className="text-muted text-center">Acesse para continuar.</p>
+                    <h4 className="text-muted font-size-18 mb-1 text-center">Painel Swim</h4>
+                    <p className="text-muted text-center">Faça login para continuar.</p>
                     <Form
                       className="form-horizontal mt-4"
                       onSubmit={e => {

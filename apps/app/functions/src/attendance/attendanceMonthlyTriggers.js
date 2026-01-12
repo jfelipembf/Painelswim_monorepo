@@ -6,7 +6,7 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
-const {FieldValue} = admin.firestore;
+const { FieldValue } = require("firebase-admin/firestore");
 
 const toMonthKey = (isoDate) => {
   if (!isoDate || typeof isoDate !== "string") return null;
@@ -21,7 +21,7 @@ const monthRangeFromKey = (monthKey) => {
   const [y, m] = monthKey.split("-").map(Number);
   const endDate = new Date(Date.UTC(y, m, 0));
   const end = endDate.toISOString().slice(0, 10);
-  return {start, end};
+  return { start, end };
 };
 
 const normalizeWeekday = (weekday) => {
@@ -85,24 +85,24 @@ const calculateExpectedFromEnrollments = (enrollments, monthKey) => {
   return expected;
 };
 
-const recomputeClientMonthSummary = async ({idTenant, idBranch, idClient, monthKey}) => {
+const recomputeClientMonthSummary = async ({ idTenant, idBranch, idClient, monthKey }) => {
   if (!idTenant || !idBranch || !idClient || !monthKey) return;
   const range = monthRangeFromKey(monthKey);
   if (!range) return;
 
   const attendanceCol = db
-      .collection("tenants")
-      .doc(idTenant)
-      .collection("branches")
-      .doc(idBranch)
-      .collection("clients")
-      .doc(idClient)
-      .collection("attendance");
+    .collection("tenants")
+    .doc(idTenant)
+    .collection("branches")
+    .doc(idBranch)
+    .collection("clients")
+    .doc(idClient)
+    .collection("attendance");
 
   const attSnap = await attendanceCol
-      .where("sessionDate", ">=", range.start)
-      .where("sessionDate", "<=", range.end)
-      .get();
+    .where("sessionDate", ">=", range.start)
+    .where("sessionDate", "<=", range.end)
+    .get();
 
   let attended = 0;
   let absences = 0;
@@ -113,94 +113,94 @@ const recomputeClientMonthSummary = async ({idTenant, idBranch, idClient, monthK
   }
 
   const enrollmentsCol = db
-      .collection("tenants")
-      .doc(idTenant)
-      .collection("branches")
-      .doc(idBranch)
-      .collection("enrollments");
+    .collection("tenants")
+    .doc(idTenant)
+    .collection("branches")
+    .doc(idBranch)
+    .collection("enrollments");
 
   const enrSnap = await enrollmentsCol
-      .where("idClient", "==", idClient)
-      .where("type", "==", "recurring")
-      .where("status", "==", "active")
-      .get();
+    .where("idClient", "==", idClient)
+    .where("type", "==", "recurring")
+    .where("status", "==", "active")
+    .get();
 
   const enrollments = enrSnap.docs.map((d) => d.data() || {});
   const expected = calculateExpectedFromEnrollments(enrollments, monthKey);
   const frequency = expected > 0 ? (attended / expected) * 100 : 0;
 
   const summaryRef = db
-      .collection("tenants")
-      .doc(idTenant)
-      .collection("branches")
-      .doc(idBranch)
-      .collection("clients")
-      .doc(idClient)
-      .collection("attendanceMonthly")
-      .doc(monthKey);
+    .collection("tenants")
+    .doc(idTenant)
+    .collection("branches")
+    .doc(idBranch)
+    .collection("clients")
+    .doc(idClient)
+    .collection("attendanceMonthly")
+    .doc(monthKey);
 
   await summaryRef.set(
-      {
-        month: monthKey,
-        attended,
-        absences,
-        expected,
-        frequency,
-        updatedAt: FieldValue.serverTimestamp(),
-        idTenant,
-        idBranch,
-        idClient,
-      },
-      {merge: true},
+    {
+      month: monthKey,
+      attended,
+      absences,
+      expected,
+      frequency,
+      updatedAt: FieldValue.serverTimestamp(),
+      idTenant,
+      idBranch,
+      idClient,
+    },
+    { merge: true },
   );
 };
 
 exports.onAttendanceWrite = functions
-    .region("us-central1")
-    .firestore
-    .document("tenants/{idTenant}/branches/{idBranch}/clients/{idClient}/attendance/{idSession}")
-    .onWrite(async (change, context) => {
-      const {idTenant, idBranch, idClient} = context.params;
+  .region("us-central1")
+  .firestore
+  .document("tenants/{idTenant}/branches/{idBranch}/clients/{idClient}/attendance/{idSession}")
+  .onWrite(async (change, context) => {
+    const { idTenant, idBranch, idClient } = context.params;
 
-      const after = change.after.exists ? (change.after.data() || {}) : null;
-      const before = change.before.exists ? (change.before.data() || {}) : null;
+    const after = change.after.exists ? (change.after.data() || {}) : null;
+    const before = change.before.exists ? (change.before.data() || {}) : null;
 
-      const sessionDate = (after && after.sessionDate) || (before && before.sessionDate) || null;
-      const monthKey = toMonthKey(String(sessionDate || ""));
-      if (!monthKey) return null;
+    const sessionDate = (after && after.sessionDate) || (before && before.sessionDate) || null;
+    const monthKey = toMonthKey(String(sessionDate || ""));
+    if (!monthKey) return null;
 
-      await recomputeClientMonthSummary({idTenant, idBranch, idClient, monthKey});
-      return null;
-    });
+    await recomputeClientMonthSummary({ idTenant, idBranch, idClient, monthKey });
+    return null;
+  });
 
 exports.onEnrollmentWrite = functions
-    .region("us-central1")
-    .firestore
-    .document("tenants/{idTenant}/branches/{idBranch}/enrollments/{idEnrollment}")
-    .onWrite(async (change, context) => {
-      const {idTenant, idBranch} = context.params;
+  .region("us-central1")
+  .firestore
+  .document("tenants/{idTenant}/branches/{idBranch}/enrollments/{idEnrollment}")
+  .onWrite(async (change, context) => {
+    const { idTenant, idBranch } = context.params;
 
-      const after = change.after.exists ? (change.after.data() || {}) : null;
-      const before = change.before.exists ? (change.before.data() || {}) : null;
+    const after = change.after.exists ? (change.after.data() || {}) : null;
+    const before = change.before.exists ? (change.before.data() || {}) : null;
 
-      const doc = after || before;
-      if (!doc) return null;
+    const doc = after || before;
+    if (!doc) return null;
 
-      const type = String(doc.type || "").toLowerCase();
-      if (type !== "recurring") return null;
+    const type = String(doc.type || "").toLowerCase();
+    if (type !== "recurring") return null;
 
-      const idClient = doc.idClient;
-      if (!idClient) return null;
+    const idClient = doc.idClient;
+    if (!idClient) return null;
 
-      // recalcula mês atual e próximo (impacto no expected)
-      const now = new Date();
-      const mk0 = toMonthKey(now.toISOString().slice(0, 10));
-      const next = new Date(now);
-      next.setMonth(next.getMonth() + 1);
-      const mk1 = toMonthKey(next.toISOString().slice(0, 10));
+    // recalcula mês atual e próximo (impacto no expected)
+    const now = new Date();
+    const mk0 = toMonthKey(now.toISOString().slice(0, 10));
+    const next = new Date(now);
+    next.setMonth(next.getMonth() + 1);
+    const mk1 = toMonthKey(next.toISOString().slice(0, 10));
 
-      if (mk0) await recomputeClientMonthSummary({idTenant, idBranch, idClient, monthKey: mk0});
-      if (mk1 && mk1 !== mk0) await recomputeClientMonthSummary({idTenant, idBranch, idClient, monthKey: mk1});
+    if (mk0) await recomputeClientMonthSummary({ idTenant, idBranch, idClient, monthKey: mk0 });
+    if (mk1 && mk1 !== mk0) await recomputeClientMonthSummary({ idTenant, idBranch, idClient, monthKey: mk1 });
 
-      return null;
-    });
+    return null;
+  });

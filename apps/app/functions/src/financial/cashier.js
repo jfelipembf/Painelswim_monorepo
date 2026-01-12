@@ -1,9 +1,10 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
-const {requireAuthContext} = require("../shared/context");
+const { FieldValue } = require("firebase-admin/firestore");
+const { requireAuthContext } = require("../shared/context");
 
 const db = admin.firestore();
-const {FieldValue} = admin.firestore;
+
 
 // Helper para obter coleção
 const getSessionsColl = (idTenant, idBranch) =>
@@ -14,7 +15,7 @@ const getSessionsColl = (idTenant, idBranch) =>
  * Payload: { idTenant, idBranch, openingBalance }
  */
 exports.openCashier = functions.region("us-central1").https.onCall(async (data, context) => {
-  const {idTenant, idBranch, uid, token} = requireAuthContext(data, context);
+  const { idTenant, idBranch, uid, token } = requireAuthContext(data, context);
   const openingBalance = Number(data.openingBalance || 0);
 
   if (openingBalance < 0) {
@@ -27,9 +28,9 @@ exports.openCashier = functions.region("us-central1").https.onCall(async (data, 
   // Nota: Idealmente isso seria uma transação, mas para simplificar e reduzir custos de leitura em alta concorrência (raro aqui),
   // fazemos uma query simples. O risco de race condition é baixo para um caixa físico por branch.
   const openSnapshot = await sessionsRef
-      .where("status", "==", "open")
-      .limit(1)
-      .get();
+    .where("status", "==", "open")
+    .limit(1)
+    .get();
 
   if (!openSnapshot.empty) {
     throw new functions.https.HttpsError("failed-precondition", "Já existe um caixa aberto nesta unidade.");
@@ -67,8 +68,8 @@ exports.openCashier = functions.region("us-central1").https.onCall(async (data, 
  * Payload: { idTenant, idBranch, idSession, closingBalance, observations }
  */
 exports.closeCashier = functions.region("us-central1").https.onCall(async (data, context) => {
-  const {idTenant, idBranch} = requireAuthContext(data, context);
-  const {idSession, observations} = data;
+  const { idTenant, idBranch } = requireAuthContext(data, context);
+  const { idSession, observations } = data;
   const closingBalance = Number(data.closingBalance || 0);
 
   if (!idSession) {
@@ -100,7 +101,7 @@ exports.closeCashier = functions.region("us-central1").https.onCall(async (data,
       });
     });
 
-    return {success: true, message: "Caixa fechado com sucesso."};
+    return { success: true, message: "Caixa fechado com sucesso." };
   } catch (error) {
     console.error("Erro ao fechar caixa:", error);
     if (error instanceof functions.https.HttpsError) throw error;

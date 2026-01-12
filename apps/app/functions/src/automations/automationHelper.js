@@ -21,15 +21,17 @@ exports.processTrigger = async (idTenant, idBranch, triggerType, data) => {
             .collection("automations");
 
         // Query active automations for this trigger type
+        console.log(`[DEBUG] processTrigger querying: active=true, type=${triggerType}`);
         const snapshot = await automationsRef
             .where("active", "==", true)
             .where("type", "==", triggerType)
             .get();
 
         if (snapshot.empty) {
-            console.log(`No active automations found for ${triggerType}`);
+            console.log(`[DEBUG] No active automations found for ${triggerType}`);
             return;
         }
+        console.log(`[DEBUG] Found ${snapshot.size} active automations for ${triggerType}`);
 
         const promises = snapshot.docs.map(async (doc) => {
             const automation = doc.data();

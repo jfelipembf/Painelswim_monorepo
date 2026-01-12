@@ -10,9 +10,9 @@ const TurnSelector = ({ value, onChange }) => {
       <ButtonGroup className="flex-wrap">
         {TURN_OPTIONS.map(option => (
           <Button
-            key={option.value}
-            color={value === option.value ? "primary" : "light"}
-            onClick={() => onChange(option.value)}
+            key={option.id}
+            color={value === option.id ? "primary" : "light"}
+            onClick={() => onChange(option.id)}
             size="sm"
           >
             {option.label}

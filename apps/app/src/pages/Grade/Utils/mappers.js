@@ -1,14 +1,32 @@
 export const mapSessionsToSchedules = (sessions, activities, areas, staff) => {
     const base = (Array.isArray(sessions) ? sessions : []).filter(Boolean)
 
+    if (base.length > 0) {
+        console.log("DEBUG: mapSessionsToSchedules", {
+            totalSessions: base.length,
+            totalStaff: staff?.length,
+            sampleSession: base[0],
+            sampleStaff: staff?.[0]
+        })
+    }
+
     const mapped = base.map((sess) => {
         if (!sess || typeof sess !== "object") {
             return null
         }
 
-        const activity = activities.find(a => a.id === sess.idActivity) || {}
-        const area = areas.find(a => a.id === sess.idArea) || {}
-        const instr = staff.find(i => i.id === sess.idStaff) || {}
+        const instr = staff.find(i => String(i.id) === String(sess.idStaff)) || {}
+
+        if (sess.idStaff && !instr.id) {
+            console.warn("DEBUG: Teacher not found for session", {
+                sessionId: sess.idSession || sess.id,
+                idStaff: sess.idStaff,
+                staffIds: staff.map(s => s.id)
+            })
+        }
+
+        const activity = activities.find(a => String(a.id) === String(sess.idActivity)) || {}
+        const area = areas.find(a => String(a.id) === String(sess.idArea)) || {}
         const weekday = sess.weekday !== undefined && sess.weekday !== null ? Number(sess.weekday) : null
         const id = sess.idSession || sess.id
         if (!id) {

@@ -1,5 +1,6 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { buildClientPayload } = require("../shared/payloads");
 
 /**
@@ -96,13 +97,16 @@ exports.createClient = functions
         idGym,
         idTenant,
         idBranch,
-        // Ensure backend timestamps
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       };
 
       // Strip undefined values including nested ones using JSON serialization
+      // NOTE: This destroys Firestore Sentinels like serverTimestamp(), so we add them AFTER.
       const payload = JSON.parse(JSON.stringify(rawPayload));
+
+      // Ensure backend timestamps
+      payload.createdAt = FieldValue.serverTimestamp();
+      payload.updatedAt = FieldValue.serverTimestamp();
+
       console.log("createClient payload ready:", JSON.stringify(payload));
 
       await clientRef.set(payload);
@@ -159,7 +163,6 @@ exports.updateClient = functions
 
       const rawPayload = {
         ...clientData,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       };
 
       if (derivedName !== undefined) {
@@ -168,6 +171,11 @@ exports.updateClient = functions
 
       // Strip undefined values
       const payload = JSON.parse(JSON.stringify(rawPayload));
+
+      // Ensure backend timestamp
+      payload.updatedAt = FieldValue.serverTimestamp();
+
+      console.log("updateClient payload ready:", JSON.stringify(payload));
       console.log("updateClient payload ready:", JSON.stringify(payload));
 
       await clientRef.update(payload);

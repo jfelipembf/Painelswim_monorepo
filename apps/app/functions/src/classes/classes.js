@@ -1,5 +1,6 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { getFirestore } = require("firebase-admin/firestore");
 
 const db = getFirestore();
@@ -104,8 +105,8 @@ exports.generateClassSessions = functions
         durationMinutes: Number(classData.durationMinutes || 0),
         maxCapacity: Number(classData.maxCapacity || classData.capacity || 0),
         status: "scheduled",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       };
 
       // set com merge=true pra tolerar reexecução sem estourar
@@ -133,6 +134,7 @@ exports.createClass = functions
     }
 
     const { idTenant, idBranch, classData } = data;
+    functions.logger.info("[DEBUG] createClass called", { idTenant, idBranch, classData });
 
     if (!idTenant || !idBranch) {
       throw new functions.https.HttpsError("invalid-argument", "idTenant e idBranch são obrigatórios");
@@ -154,11 +156,13 @@ exports.createClass = functions
       ...classData,
       idTenant,
       idBranch,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     };
 
+    functions.logger.info("[DEBUG] createClass writing to Firestore", { path: classRef.path });
     await classRef.set(payload);
+    functions.logger.info("[DEBUG] createClass write success", { id: classRef.id });
 
     return { id: classRef.id, ...payload };
   });
@@ -197,7 +201,7 @@ exports.updateClass = functions
 
     const payload = {
       ...classData,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     };
 
     await classRef.update(payload);

@@ -24,7 +24,7 @@ import Sidebar from "./Sidebar"
 import Footer from "./Footer"
 import Rightbar from "../CommonForBoth/Rightbar"
 //Import Breadcrumb
-import Breadcrumb from "../../components/Common/Breadcrumb"
+import Breadcrumb from "../Common/Breadcrumb"
 import useAcademies from "../../pages/Academies/hooks/useAcademies"
 import useTenant from "../../hooks/useTenant"
 import { Button } from "reactstrap"

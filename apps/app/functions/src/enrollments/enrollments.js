@@ -1,5 +1,6 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const db = admin.firestore();
 const { processTrigger } = require("../automations/automationHelper");
 
@@ -41,8 +42,8 @@ exports.deleteEnrollment = functions
     // Soft delete: muda status para canceled em vez de apagar
     await enrollmentRef.update({
       status: "canceled",
-      canceledAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      canceledAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     return enrollmentData;
@@ -69,8 +70,8 @@ exports.createRecurringEnrollment = functions.region("us-central1").https.onCall
     idBranch,
     type: "recurring",
     status: data.status || "active",
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
     createdBy: uid || context.auth.uid,
   };
 
@@ -102,8 +103,8 @@ exports.createSingleSessionEnrollment = functions.region("us-central1").https.on
     idBranch,
     type: data.type || "single-session",
     status: data.status || "active",
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
     createdBy: uid || context.auth.uid,
   };
 
@@ -112,18 +113,11 @@ exports.createSingleSessionEnrollment = functions.region("us-central1").https.on
     const docRef = await ref.add(payload);
 
     // --- AUTOMATION TRIGGER: EXPERIMENTAL_SCHEDULED ---
+    // --- AUTOMATION TRIGGER: EXPERIMENTAL_SCHEDULED ---
+    console.log(`[DEBUG] Checking automation trigger for type: ${payload.type}, subtype: ${payload.subtype}`);
     if (payload.type === "experimental" || payload.type === "aula_experimental" || payload.subtype === "experimental") {
       try {
-        // Need to fetch client name and professional name for variables if not in payload
-        // For now, assuming basic data or we fetch it.
-        // Let's assume payload has clientName or we read from doc if needed.
-        // To be fast, we use what we have. If names are missing, variables will be empty.
-
-        // NOTE: The UI typically sends `clientName` or we can fetch it.
-        // Let's rely on `data.clientName` or similar if passed, else "Aluno".
-
-        // To support date formatting, we might need a small helper or just raw string.
-
+        console.log("[DEBUG] Trigger condition met. Preparing triggerData...");
         const triggerData = {
           name: data.clientName || "Aluno",
           date: data.sessionDate || "", // Assuming YYYY-MM-DD or similar
@@ -132,12 +126,47 @@ exports.createSingleSessionEnrollment = functions.region("us-central1").https.on
           phone: data.clientPhone // Ensure UI sends this or we fetch
         };
 
-        // Trigger async (don't await to block response)
+        // 1. Notify Student
         processTrigger(idTenant, idBranch, "EXPERIMENTAL_SCHEDULED", triggerData);
+
+        // 2. Notify Teacher (if assigned)
+        if (payload.idStaff) {
+          const staffRef = db
+            .collection("tenants")
+            .doc(idTenant)
+            .collection("branches")
+            .doc(idBranch)
+            .collection("staff")
+            .doc(payload.idStaff);
+
+          const staffSnap = await staffRef.get();
+          if (staffSnap.exists) {
+            const staffData = staffSnap.data();
+            if (staffData.phone) {
+              const teacherTriggerData = {
+                ...triggerData,
+                phone: staffData.phone,
+                name: staffData.name || staffData.firstName || "Professor" // Override name variable for teacher context if needed, or keep student name? 
+                // Usually teacher wants to know STUDENT name. So let's keep triggerData.name as Student Name.
+                // But if the template says "Hello {name}", it will say "Hello StudentName".
+                // We should probably add variable {student} and {teacher}.
+                // Let's UPDATE triggerData to support clear roles.
+              };
+              // Add specific aliases
+              teacherTriggerData.student = triggerData.name;
+              teacherTriggerData.teacher = staffData.name || staffData.firstName;
+
+              // We use 'phone' for the recipient (processTrigger uses data.phone)
+              processTrigger(idTenant, idBranch, "EXPERIMENTAL_SCHEDULED_TEACHER", teacherTriggerData);
+            }
+          }
+        }
+
       } catch (triggerError) {
         console.error("Error triggering automation:", triggerError);
       }
     }
+    // --------------------------------------------------
     // --------------------------------------------------
 
     return { id: docRef.id, ...payload };

@@ -1,12 +1,13 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { requireAuthContext } = require("../shared/context");
 
 /**
  * Cria um usuário no Authentication e um documento na coleção Staff.
  * Deve ser chamado apenas por usuários com permissão de administrador (ou gerente).
  */
-const { FieldValue } = require("firebase-admin/firestore");
+
 
 exports.createStaffUser = functions.region("us-central1").https.onCall(async (data, context) => {
     // Validação de contexto (Auth, Tenant, Branch)

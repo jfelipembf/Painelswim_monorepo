@@ -1,5 +1,6 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const db = admin.firestore();
 
 /**
@@ -42,13 +43,13 @@ exports.markAttendance = functions
       type: type || null,
       idTenant,
       idBranch,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     };
 
     await attendanceRef.set(
       {
         ...payload,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       },
       { merge: true }
     );
@@ -89,13 +90,13 @@ exports.saveSessionSnapshot = functions
       attendanceSnapshot: clients || [],
       presentCount: presentCount || 0,
       absentCount: absentCount || 0,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     };
 
     await sessionRef.set(
       {
         ...payload,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       },
       { merge: true }
     );
@@ -146,8 +147,8 @@ exports.addExtraParticipantToSession = functions
     await sessionRef.set(
       {
         extraParticipants: next,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       },
       { merge: true }
     );

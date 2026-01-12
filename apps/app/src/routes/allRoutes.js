@@ -69,8 +69,8 @@ const userRoutes = [
   { path: "/crm", component: <CRMPage /> },
   { path: "/events/planning", component: <PlanningEventsPage /> },
   { path: "/management/evaluation-levels", component: <EvaluationLevelsPage /> },
-  // { path: "/management/integrations", component: <IntegrationsPage /> },
-  // { path: "/management/automations", component: <AutomationsPage /> },
+  { path: "/management/integrations", component: <IntegrationsPage /> },
+  { path: "/management/automations", component: <AutomationsPage /> },
   { path: "/evaluation", component: <Evaluation /> },
   { path: "/admin/settings", component: <SettingsPage /> },
   // // //profile

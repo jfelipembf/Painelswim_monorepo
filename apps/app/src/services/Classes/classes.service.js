@@ -21,7 +21,7 @@ export const createClasses = async (data = {}, { weeks = 4 } = {}) => {
   const functions = requireFunctions()
 
   const createClassFn = httpsCallable(functions, "createClass")
-  const generateSessionsFn = httpsCallable(functions, "generateClassSessions")
+  /* const generateSessionsFn = httpsCallable(functions, "generateClassSessions") */ // Removing unused
 
   const created = []
 
@@ -44,24 +44,20 @@ export const createClasses = async (data = {}, { weeks = 4 } = {}) => {
         idArea: item.idArea || rest.idArea || null,
       })
 
-      const result = await createClassFn({
-        idTenant,
-        idBranch,
-        classData: classPayload,
-      })
-
-      const createdClass = result.data
-      created.push(createdClass)
-
-      // Gerar sessões para a turma criada
-      if (createdClass.id) {
-        await generateSessionsFn({
+      console.log(`[DEBUG] createClasses calling createClassFn for schedule item`, classPayload);
+      const startT = Date.now();
+      try {
+        const result = await createClassFn({
           idTenant,
           idBranch,
-          idClass: createdClass.id,
           classData: classPayload,
-          weeks,
         })
+        console.log(`[DEBUG] createClasses success (${Date.now() - startT}ms)`, result.data);
+        const createdClass = result.data
+        created.push(createdClass)
+      } catch (err) {
+        console.error(`[DEBUG] createClasses ERROR (${Date.now() - startT}ms)`, err);
+        throw err;
       }
     }
     return created
@@ -75,24 +71,20 @@ export const createClasses = async (data = {}, { weeks = 4 } = {}) => {
     const { weekDays, ...rest } = data
     const classPayload = { ...rest, weekday: day ?? null }
 
-    const result = await createClassFn({
-      idTenant,
-      idBranch,
-      classData: classPayload,
-    })
-
-    const createdClass = result.data
-    created.push(createdClass)
-
-    // Gerar sessões para a turma criada
-    if (createdClass.id) {
-      await generateSessionsFn({
+    console.log(`[DEBUG] createClasses (weekDays) calling createClassFn for day ${day}`, classPayload);
+    const startT = Date.now();
+    try {
+      const result = await createClassFn({
         idTenant,
         idBranch,
-        idClass: createdClass.id,
         classData: classPayload,
-        weeks,
       })
+      console.log(`[DEBUG] createClasses (weekDays) success (${Date.now() - startT}ms)`, result.data);
+      const createdClass = result.data
+      created.push(createdClass)
+    } catch (err) {
+      console.error(`[DEBUG] createClasses (weekDays) ERROR (${Date.now() - startT}ms)`, err);
+      throw err;
     }
   }
 

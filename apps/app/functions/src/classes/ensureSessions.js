@@ -3,7 +3,7 @@ const admin = require("firebase-admin");
 
 const db = admin.firestore();
 
-const {FieldValue} = admin.firestore;
+const { FieldValue } = require("firebase-admin/firestore");
 
 const addDays = (date, days) => {
   const d = new Date(date);
@@ -36,13 +36,13 @@ const generateSessionsForClass = async ({
   weeks = 2,
   fromDate = null,
 }) => {
-  if (!idTenant || !idBranch || !idClass || !classData) return {created: 0};
+  if (!idTenant || !idBranch || !idClass || !classData) return { created: 0 };
 
   const weekday = classData.weekday ?? null;
-  if (weekday === null || weekday === undefined) return {created: 0};
+  if (weekday === null || weekday === undefined) return { created: 0 };
 
   const startIso = toISODate(fromDate || classData.startDate || new Date());
-  if (!startIso) return {created: 0};
+  if (!startIso) return { created: 0 };
 
   const endDateStr = classData.endDate ? toISODate(classData.endDate) : null;
 
@@ -53,10 +53,10 @@ const generateSessionsForClass = async ({
 
   const enrollmentsCol = db.collection("tenants").doc(idTenant).collection("branches").doc(idBranch).collection("enrollments");
   const enrSnap = await enrollmentsCol
-      .where("type", "==", "recurring")
-      .where("idClass", "==", idClass)
-      .where("status", "==", "active")
-      .get();
+    .where("type", "==", "recurring")
+    .where("idClass", "==", idClass)
+    .where("status", "==", "active")
+    .get();
   const recurring = enrSnap.docs.map((d) => d.data() || {});
 
   const recurringCountForDate = (iso) => {
@@ -142,48 +142,48 @@ const generateSessionsForClass = async ({
     await batch.commit();
   }
 
-  return {created: createdCount};
+  return { created: createdCount };
 };
 
 module.exports = functions
-    .region("us-central1")
-    .https.onCall(async (data, context) => {
-      const idTenant = data?.idTenant ? String(data.idTenant) : null;
-      const idBranch = data?.idBranch ? String(data.idBranch) : null;
-      const targetDate = data?.targetDate ? String(data.targetDate) : null;
+  .region("us-central1")
+  .https.onCall(async (data, context) => {
+    const idTenant = data?.idTenant ? String(data.idTenant) : null;
+    const idBranch = data?.idBranch ? String(data.idBranch) : null;
+    const targetDate = data?.targetDate ? String(data.targetDate) : null;
 
-      if (!context?.auth) {
-        throw new functions.https.HttpsError("unauthenticated", "Auth obrigatório");
-      }
+    if (!context?.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Auth obrigatório");
+    }
 
-      if (!idTenant || !idBranch) {
-        throw new functions.https.HttpsError("invalid-argument", "idTenant e idBranch são obrigatórios");
-      }
+    if (!idTenant || !idBranch) {
+      throw new functions.https.HttpsError("invalid-argument", "idTenant e idBranch são obrigatórios");
+    }
 
-      const startIso = toISODate(targetDate || new Date());
-      if (!startIso) {
-        throw new functions.https.HttpsError("invalid-argument", "targetDate inválido");
-      }
+    const startIso = toISODate(targetDate || new Date());
+    if (!startIso) {
+      throw new functions.https.HttpsError("invalid-argument", "targetDate inválido");
+    }
 
-      const classesCol = db.collection("tenants").doc(idTenant).collection("branches").doc(idBranch).collection("classes");
-      const classesSnap = await classesCol.get();
+    const classesCol = db.collection("tenants").doc(idTenant).collection("branches").doc(idBranch).collection("classes");
+    const classesSnap = await classesCol.get();
 
-      let createdTotal = 0;
+    let createdTotal = 0;
 
-      for (const classDoc of classesSnap.docs) {
-        const classData = classDoc.data() || {};
-        const res = await generateSessionsForClass({
-          idTenant,
-          idBranch,
-          idClass: classDoc.id,
-          classData,
-          weeks: 4,
-          fromDate: startIso,
-        });
-        createdTotal += res.created;
-      }
+    for (const classDoc of classesSnap.docs) {
+      const classData = classDoc.data() || {};
+      const res = await generateSessionsForClass({
+        idTenant,
+        idBranch,
+        idClass: classDoc.id,
+        classData,
+        weeks: 4,
+        fromDate: startIso,
+      });
+      createdTotal += res.created;
+    }
 
-      functions.logger.info("ensureSessions", {idTenant, idBranch, startIso, createdTotal});
+    functions.logger.info("ensureSessions", { idTenant, idBranch, startIso, createdTotal });
 
-      return {ok: true, created: createdTotal};
-    });
+    return { ok: true, created: createdTotal };
+  });

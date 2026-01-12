@@ -1,27 +1,28 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
-const {requireAuthContext} = require("../shared/context");
-const {generateEntityId} = require("../shared/id");
+const { FieldValue } = require("firebase-admin/firestore");
+const { requireAuthContext } = require("../shared/context");
+const { generateEntityId } = require("../shared/id");
 
 const db = admin.firestore();
-const {FieldValue} = admin.firestore;
+
 
 // Helper to get transactions collection
 const getTransactionsColl = (idTenant, idBranch) =>
   db
-      .collection("tenants")
-      .doc(idTenant)
-      .collection("branches")
-      .doc(idBranch)
-      .collection("financialTransactions");
+    .collection("tenants")
+    .doc(idTenant)
+    .collection("branches")
+    .doc(idBranch)
+    .collection("financialTransactions");
 
 const getSessionsColl = (idTenant, idBranch) =>
   db
-      .collection("tenants")
-      .doc(idTenant)
-      .collection("branches")
-      .doc(idBranch)
-      .collection("cashierSessions");
+    .collection("tenants")
+    .doc(idTenant)
+    .collection("branches")
+    .doc(idBranch)
+    .collection("cashierSessions");
 
 /**
  * Função interna para criar transação.
@@ -29,19 +30,19 @@ const getSessionsColl = (idTenant, idBranch) =>
  * Suporta batch opcional.
  */
 const createTransactionInternal = async (
-    {
-      idTenant,
-      idBranch,
-      payload,
-      options = {},
-      batch,
-    },
+  {
+    idTenant,
+    idBranch,
+    payload,
+    options = {},
+    batch,
+  },
 ) => {
   const transactionId = await generateEntityId(
-      idTenant,
-      idBranch,
-      "transaction",
-      {sequential: true},
+    idTenant,
+    idBranch,
+    "transaction",
+    { sequential: true },
   );
 
   const finalPayload = {
@@ -58,10 +59,10 @@ const createTransactionInternal = async (
   if (batch) {
     const docRef = ref.doc();
     batch.set(docRef, finalPayload);
-    return {id: docRef.id, ...finalPayload};
+    return { id: docRef.id, ...finalPayload };
   } else {
     const docRef = await ref.add(finalPayload);
-    return {id: docRef.id, ...finalPayload};
+    return { id: docRef.id, ...finalPayload };
   }
 };
 
@@ -70,34 +71,34 @@ const createTransactionInternal = async (
  * Valida se o caixa está aberto antes de registrar.
  */
 exports.addExpense = functions.region("us-central1").https.onCall(async (data, context) => {
-  const {idTenant, idBranch, uid, token} = requireAuthContext(data, context);
+  const { idTenant, idBranch, uid, token } = requireAuthContext(data, context);
   const amount = Number(data.amount);
-  const {description, category, method, metadata} = data;
+  const { description, category, method, metadata } = data;
 
   if (!amount || amount <= 0) {
     throw new functions.https.HttpsError(
-        "invalid-argument",
-        "O valor deve ser maior que zero.",
+      "invalid-argument",
+      "O valor deve ser maior que zero.",
     );
   }
   if (!description) {
     throw new functions.https.HttpsError(
-        "invalid-argument",
-        "A descrição é obrigatória.",
+      "invalid-argument",
+      "A descrição é obrigatória.",
     );
   }
 
   // Verificar se o caixa está aberto
   const sessionsRef = getSessionsColl(idTenant, idBranch);
   const openSnapshot = await sessionsRef
-      .where("status", "==", "open")
-      .limit(1)
-      .get();
+    .where("status", "==", "open")
+    .limit(1)
+    .get();
 
   if (openSnapshot.empty) {
     throw new functions.https.HttpsError(
-        "failed-precondition",
-        "Não há caixa aberto para registrar despesa.",
+      "failed-precondition",
+      "Não há caixa aberto para registrar despesa.",
     );
   }
 
@@ -117,12 +118,12 @@ exports.addExpense = functions.region("us-central1").https.onCall(async (data, c
   };
 
   try {
-    return await createTransactionInternal({idTenant, idBranch, payload});
+    return await createTransactionInternal({ idTenant, idBranch, payload });
   } catch (error) {
     console.error("Erro ao registrar despesa:", error);
     throw new functions.https.HttpsError(
-        "internal",
-        "Erro ao salvar despesa.",
+      "internal",
+      "Erro ao salvar despesa.",
     );
   }
 });
@@ -131,7 +132,7 @@ exports.addExpense = functions.region("us-central1").https.onCall(async (data, c
  * Registra uma receita de venda.
  */
 exports.addSaleRevenue = functions.region("us-central1").https.onCall(async (data, context) => {
-  const {idTenant, idBranch, uid, token} = requireAuthContext(data, context);
+  const { idTenant, idBranch, uid, token } = requireAuthContext(data, context);
   const amount = Number(data.amount);
   const {
     saleType,
@@ -148,8 +149,8 @@ exports.addSaleRevenue = functions.region("us-central1").https.onCall(async (dat
 
   if (!amount || amount <= 0) {
     throw new functions.https.HttpsError(
-        "invalid-argument",
-        "O valor deve ser maior que zero.",
+      "invalid-argument",
+      "O valor deve ser maior que zero.",
     );
   }
 
@@ -176,7 +177,7 @@ exports.addSaleRevenue = functions.region("us-central1").https.onCall(async (dat
   };
 
   try {
-    return await createTransactionInternal({idTenant, idBranch, payload});
+    return await createTransactionInternal({ idTenant, idBranch, payload });
   } catch (error) {
     console.error("Erro ao registrar receita:", error);
     throw new functions.https.HttpsError("internal", "Erro ao salvar receita.");
@@ -187,8 +188,8 @@ exports.addSaleRevenue = functions.region("us-central1").https.onCall(async (dat
  * Atualiza uma transação financeira.
  */
 exports.updateFinancialTransaction = functions.region("us-central1").https.onCall(async (data, context) => {
-  const {idTenant, idBranch, uid} = requireAuthContext(data, context);
-  const {idTransaction, ...updates} = data;
+  const { idTenant, idBranch, uid } = requireAuthContext(data, context);
+  const { idTransaction, ...updates } = data;
 
   if (!idTransaction) throw new functions.https.HttpsError("invalid-argument", "ID da transação é obrigatório.");
 
@@ -210,7 +211,7 @@ exports.updateFinancialTransaction = functions.region("us-central1").https.onCal
 
   try {
     await ref.update(payload);
-    return {id: idTransaction, ...payload};
+    return { id: idTransaction, ...payload };
   } catch (error) {
     console.error("Erro ao atualizar transação:", error);
     throw new functions.https.HttpsError("internal", "Erro ao atualizar transação.");
@@ -221,8 +222,8 @@ exports.updateFinancialTransaction = functions.region("us-central1").https.onCal
  * Remove uma transação financeira.
  */
 exports.deleteFinancialTransaction = functions.region("us-central1").https.onCall(async (data, context) => {
-  const {idTenant, idBranch} = requireAuthContext(data, context);
-  const {idTransaction} = data;
+  const { idTenant, idBranch } = requireAuthContext(data, context);
+  const { idTransaction } = data;
 
   if (!idTransaction) throw new functions.https.HttpsError("invalid-argument", "ID da transação é obrigatório.");
 
@@ -230,7 +231,7 @@ exports.deleteFinancialTransaction = functions.region("us-central1").https.onCal
 
   try {
     await ref.delete();
-    return {success: true, id: idTransaction};
+    return { success: true, id: idTransaction };
   } catch (error) {
     console.error("Erro ao remover transação:", error);
     throw new functions.https.HttpsError("internal", "Erro ao remover transação.");

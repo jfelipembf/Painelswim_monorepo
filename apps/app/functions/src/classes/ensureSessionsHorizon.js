@@ -6,7 +6,7 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
-const {FieldValue} = admin.firestore;
+const { FieldValue } = require("firebase-admin/firestore");
 
 const addDays = (date, days) => {
   const d = new Date(date);
@@ -39,13 +39,13 @@ const generateSessionsForClass = async ({
   weeks,
   fromDate,
 }) => {
-  if (!idTenant || !idBranch || !idClass || !classData) return {created: 0};
+  if (!idTenant || !idBranch || !idClass || !classData) return { created: 0 };
 
   const weekday = classData.weekday ?? null;
-  if (weekday === null || weekday === undefined) return {created: 0};
+  if (weekday === null || weekday === undefined) return { created: 0 };
 
   const startIso = toISODate(fromDate || classData.startDate || new Date());
-  if (!startIso) return {created: 0};
+  if (!startIso) return { created: 0 };
 
   const endDateStr = classData.endDate ? toISODate(classData.endDate) : null;
 
@@ -53,24 +53,24 @@ const generateSessionsForClass = async ({
   const totalDays = Math.max(1, Number(weeks || 0) * 7);
 
   const sessionsCol = db
-      .collection("tenants")
-      .doc(idTenant)
-      .collection("branches")
-      .doc(idBranch)
-      .collection("sessions");
+    .collection("tenants")
+    .doc(idTenant)
+    .collection("branches")
+    .doc(idBranch)
+    .collection("sessions");
 
   const enrollmentsCol = db
-      .collection("tenants")
-      .doc(idTenant)
-      .collection("branches")
-      .doc(idBranch)
-      .collection("enrollments");
+    .collection("tenants")
+    .doc(idTenant)
+    .collection("branches")
+    .doc(idBranch)
+    .collection("enrollments");
 
   const enrSnap = await enrollmentsCol
-      .where("type", "==", "recurring")
-      .where("idClass", "==", idClass)
-      .where("status", "==", "active")
-      .get();
+    .where("type", "==", "recurring")
+    .where("idClass", "==", idClass)
+    .where("status", "==", "active")
+    .get();
 
   const recurring = enrSnap.docs.map((d) => d.data() || {});
 
@@ -141,7 +141,7 @@ const generateSessionsForClass = async ({
     await batch.commit();
   }
 
-  return {created: createdCount};
+  return { created: createdCount };
 };
 
 /**
@@ -149,47 +149,47 @@ const generateSessionsForClass = async ({
  * Roda diariamente para manter o horizonte sempre preenchido.
  */
 module.exports = functions
-    .region("us-central1")
-    .pubsub.schedule("10 0 * * *")
-    .timeZone("America/Sao_Paulo")
-    .onRun(async (context) => {
-      const fromIso = toISODate(new Date());
-      const weeks = 26; // ~6 meses
+  .region("us-central1")
+  .pubsub.schedule("10 0 * * *")
+  .timeZone("America/Sao_Paulo")
+  .onRun(async (context) => {
+    const fromIso = toISODate(new Date());
+    const weeks = 26; // ~6 meses
 
-      const tenantsSnap = await db.collection("tenants").get();
+    const tenantsSnap = await db.collection("tenants").get();
 
-      let createdTotal = 0;
+    let createdTotal = 0;
 
-      for (const tenantDoc of tenantsSnap.docs) {
-        const idTenant = tenantDoc.id;
-        const branchesSnap = await db.collection("tenants").doc(idTenant).collection("branches").get();
+    for (const tenantDoc of tenantsSnap.docs) {
+      const idTenant = tenantDoc.id;
+      const branchesSnap = await db.collection("tenants").doc(idTenant).collection("branches").get();
 
-        for (const branchDoc of branchesSnap.docs) {
-          const idBranch = branchDoc.id;
-          const classesSnap = await db
-              .collection("tenants")
-              .doc(idTenant)
-              .collection("branches")
-              .doc(idBranch)
-              .collection("classes")
-              .get();
+      for (const branchDoc of branchesSnap.docs) {
+        const idBranch = branchDoc.id;
+        const classesSnap = await db
+          .collection("tenants")
+          .doc(idTenant)
+          .collection("branches")
+          .doc(idBranch)
+          .collection("classes")
+          .get();
 
-          for (const classDoc of classesSnap.docs) {
-            const classData = classDoc.data() || {};
-            const res = await generateSessionsForClass({
-              idTenant,
-              idBranch,
-              idClass: classDoc.id,
-              classData,
-              weeks,
-              fromDate: fromIso,
-            });
-            createdTotal += res.created;
-          }
+        for (const classDoc of classesSnap.docs) {
+          const classData = classDoc.data() || {};
+          const res = await generateSessionsForClass({
+            idTenant,
+            idBranch,
+            idClass: classDoc.id,
+            classData,
+            weeks,
+            fromDate: fromIso,
+          });
+          createdTotal += res.created;
         }
       }
+    }
 
-      functions.logger.info("ensureSessionsHorizon", {fromIso, weeks, createdTotal});
-      return null;
-    });
+    functions.logger.info("ensureSessionsHorizon", { fromIso, weeks, createdTotal });
+    return null;
+  });
 

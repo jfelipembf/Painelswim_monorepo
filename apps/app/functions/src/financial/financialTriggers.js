@@ -2,7 +2,7 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 
 const db = admin.firestore();
-const { FieldValue } = admin.firestore;
+const { FieldValue } = require("firebase-admin/firestore");
 
 /**
  * Atualiza os contadores em dailySummary e monthlySummary

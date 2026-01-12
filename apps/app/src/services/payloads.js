@@ -194,7 +194,9 @@ export const buildClassPayload = (data) => {
         maxCapacity: Number(data.maxCapacity || data.capacity || 20),
 
         // Config
-        active: data.active !== false
+        active: data.active !== false,
+        startDate: data.startDate || null,
+        endDate: data.endDate || null,
     }
 }
 

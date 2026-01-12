@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react"
 import { Button, Form, FormGroup, Label, Input, Alert, Row, Col } from "reactstrap"
 import ButtonLoader from "../../../../components/Common/ButtonLoader"
 
+import { DEFAULT_MESSAGES } from "../constants/triggers"
+
 const AutomationDetail = ({ automation, onSave, triggerLabels }) => {
     const [active, setActive] = useState(false)
     const [messageTemplate, setMessageTemplate] = useState("")
@@ -11,7 +13,10 @@ const AutomationDetail = ({ automation, onSave, triggerLabels }) => {
     useEffect(() => {
         if (automation) {
             setActive(automation.active !== false)
-            setMessageTemplate(automation.whatsappTemplate || "")
+            // If template is empty and it's a temporary (new) config, use default.
+            // Or even if existing but empty? Let's assume if empty use default for better UX.
+            const defaultMsg = DEFAULT_MESSAGES[automation.type] || ""
+            setMessageTemplate(automation.whatsappTemplate || defaultMsg)
             setDaysBefore(automation.config?.daysBefore || 0)
         }
     }, [automation])

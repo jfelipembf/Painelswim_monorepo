@@ -1,5 +1,6 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { requireAuthContext } = require("../shared/context");
 const { generateEntityId } = require("../shared/id");
 const { createTransactionInternal } = require("../financial/transactions");
@@ -8,7 +9,7 @@ const { addClientCreditInternal } = require("../financial/credits");
 const { createClientContractInternal } = require("../clientContracts/clientContracts");
 
 const db = admin.firestore();
-const { FieldValue } = admin.firestore;
+
 
 const getSalesColl = (idTenant, idBranch) =>
   db

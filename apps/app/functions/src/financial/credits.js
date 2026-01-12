@@ -1,9 +1,9 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
-const {requireAuthContext} = require("../shared/context");
+const { requireAuthContext } = require("../shared/context");
 
 const db = admin.firestore();
-const {FieldValue} = admin.firestore;
+const { FieldValue } = require("firebase-admin/firestore");
 
 // Helper to get credits collection
 const getCreditsColl = (idTenant, idBranch, idClient) =>
@@ -13,7 +13,7 @@ const getCreditsColl = (idTenant, idBranch, idClient) =>
  * Função interna para adicionar crédito.
  * Suporta batch opcional.
  */
-const addClientCreditInternal = async ({idTenant, idBranch, idClient, payload, uid, userToken, batch}) => {
+const addClientCreditInternal = async ({ idTenant, idBranch, idClient, payload, uid, userToken, batch }) => {
   const finalPayload = {
     idTenant,
     idBranch,
@@ -33,10 +33,10 @@ const addClientCreditInternal = async ({idTenant, idBranch, idClient, payload, u
 
   if (batch) {
     batch.set(ref, finalPayload);
-    return {id: ref.id, ...finalPayload};
+    return { id: ref.id, ...finalPayload };
   } else {
     await ref.set(finalPayload);
-    return {id: ref.id, ...finalPayload};
+    return { id: ref.id, ...finalPayload };
   }
 };
 
@@ -44,9 +44,9 @@ const addClientCreditInternal = async ({idTenant, idBranch, idClient, payload, u
  * Adiciona um crédito para o cliente.
  */
 exports.addClientCredit = functions.region("us-central1").https.onCall(async (data, context) => {
-  const {idTenant, idBranch, uid, token} = requireAuthContext(data, context);
+  const { idTenant, idBranch, uid, token } = requireAuthContext(data, context);
 
-  const {idClient, amount} = data;
+  const { idClient, amount } = data;
   const creditAmount = Number(amount);
 
   if (!idClient) {
@@ -77,8 +77,8 @@ exports.addClientCreditInternal = addClientCreditInternal;
  * Consome saldo de um crédito do cliente.
  */
 exports.consumeClientCredit = functions.region("us-central1").https.onCall(async (data, context) => {
-  const {idTenant, idBranch, uid} = requireAuthContext(data, context);
-  const {idClient, idCredit, amount} = data;
+  const { idTenant, idBranch, uid } = requireAuthContext(data, context);
+  const { idClient, idCredit, amount } = data;
   const value = Number(amount || 0);
 
   if (!idClient || !idCredit) throw new functions.https.HttpsError("invalid-argument", "IDs obrigatórios.");
@@ -103,7 +103,7 @@ exports.consumeClientCredit = functions.region("us-central1").https.onCall(async
       });
     });
 
-    return {success: true};
+    return { success: true };
   } catch (error) {
     console.error("Erro ao consumir crédito:", error);
     if (error instanceof functions.https.HttpsError) throw error;
@@ -115,8 +115,8 @@ exports.consumeClientCredit = functions.region("us-central1").https.onCall(async
  * Remove um crédito (operação administrativa).
  */
 exports.deleteClientCredit = functions.region("us-central1").https.onCall(async (data, context) => {
-  const {idTenant, idBranch} = requireAuthContext(data, context);
-  const {idClient, idCredit} = data;
+  const { idTenant, idBranch } = requireAuthContext(data, context);
+  const { idClient, idCredit } = data;
 
   if (!idClient || !idCredit) throw new functions.https.HttpsError("invalid-argument", "IDs obrigatórios.");
 
@@ -124,7 +124,7 @@ exports.deleteClientCredit = functions.region("us-central1").https.onCall(async 
 
   try {
     await ref.delete();
-    return {success: true, id: idCredit};
+    return { success: true, id: idCredit };
   } catch (error) {
     console.error("Erro ao remover crédito:", error);
     throw new functions.https.HttpsError("internal", "Erro ao remover crédito.");
