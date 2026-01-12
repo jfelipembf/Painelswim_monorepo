@@ -11,7 +11,7 @@ import {
 import { withTranslation } from "react-i18next"
 // Redux
 import { connect } from "react-redux"
-import {  Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import withRouter from "components/Common/withRouter"
 
 // users
@@ -49,10 +49,10 @@ const ProfileMenu = props => {
     "Usuário"
 
   const avatar =
-    userData?.photoURL ||
-    userData?.photoUrl ||
     userData?.staff?.photoUrl ||
-    user1
+    userData?.staff?.photo ||
+    userData?.photoURL ||
+    userData?.photoUrl
 
   return (
     <React.Fragment>
@@ -71,11 +71,17 @@ const ProfileMenu = props => {
           tag="button"
         >
           <span className="d-none d-sm-inline fw-semibold text-dark">{displayName}</span>
-          <img
-            className="rounded-circle header-profile-user"
-            src={avatar}
-            alt="Header Avatar"
-          />
+          {avatar ? (
+            <img
+              className="rounded-circle header-profile-user"
+              src={avatar}
+              alt="Header Avatar"
+            />
+          ) : (
+            <div className="rounded-circle header-profile-user d-flex align-items-center justify-content-center bg-soft-secondary">
+              <i className="mdi mdi-account font-size-20 text-secondary" />
+            </div>
+          )}
         </DropdownToggle>
         <DropdownMenu className="dropdown-menu-end">
           <div className="px-3 pb-2 d-sm-none">
@@ -85,14 +91,7 @@ const ProfileMenu = props => {
             <i className="mdi mdi-account-circle font-size-17 text-muted align-middle me-1" />
             {props.t("Perfil")}
           </DropdownItem>
-          <DropdownItem tag={Link} to="/grade">
-            <i className="mdi mdi-office-building font-size-17 text-muted align-middle me-1" />
-            Unidades
-          </DropdownItem>
-          <DropdownItem tag={Link} to="/financial/cashier">
-            <i className="mdi mdi-cash-multiple font-size-17 text-muted align-middle me-1" />
-            Financeiro
-          </DropdownItem>
+
           <div className="dropdown-divider" />
           <Link to="/logout" className="dropdown-item text-danger">
             <i className="mdi mdi-power font-size-17 text-muted align-middle me-1 text-danger" />

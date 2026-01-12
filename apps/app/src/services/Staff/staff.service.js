@@ -80,6 +80,9 @@ export const updateStaff = async (staff, { ctxOverride = null } = {}) => {
   const updateStaffFn = httpsCallable(functions, "updateStaffUser")
 
   try {
+    if (!staff.id) {
+      throw new Error("ID do colaborador é obrigatório na chamada do serviço (Frontend)");
+    }
     const params = {
       ...staff,
       idTenant: ctx.idTenant,

@@ -68,18 +68,15 @@ function* loginUser({ payload: { user, history } }) {
         idBranch = docSnap.id;
       });
 
-      const staffCol = collection(tenantRef, "staff");
-      const staffQuery = query(staffCol, where("idStaff", "==", response.uid));
-      const staffSnap = yield call(getDocs, staffQuery);
-      if (staffSnap.empty) {
+      const staffRef = doc(tenantRef, "branches", idBranch, "staff", response.uid);
+      const staffSnap = yield call(getDoc, staffRef);
+
+      if (!staffSnap.exists()) {
         yield call(fireBaseBackend.logout);
         throw new Error("Você não tem acesso a esta academia/unidade.");
       }
 
-      let staffData = null;
-      staffSnap.forEach(docSnap => {
-        staffData = docSnap.data();
-      });
+      const staffData = staffSnap.data();
 
       const fullNameFromStaff = staffData
         ? [staffData.firstName, staffData.lastName].filter(Boolean).join(" ")
@@ -90,7 +87,7 @@ function* loginUser({ payload: { user, history } }) {
         uid: response.uid,
         email: response.email,
         displayName: fullNameFromStaff || response.displayName || response.email,
-        photoUrl: staffData?.photoUrl || response.photoURL || response.photoUrl || null,
+        photoUrl: staffData?.photoUrl || staffData?.photo || response.photoURL || response.photoUrl || null,
         idTenant,
         idBranch,
         tenantSlug,
@@ -171,8 +168,8 @@ function* socialLogin({ payload: { type, history } }) {
       yield put(loginSuccess(response));
     }
     const response = yield call(fireBaseBackend.socialLoginUser, type);
-    if(response)
-    history("/dashboard");
+    if (response)
+      history("/dashboard");
   } catch (error) {
     yield put(apiError(error?.message || "Não foi possível entrar."));
   }

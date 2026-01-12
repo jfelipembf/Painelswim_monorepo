@@ -14,6 +14,7 @@ import Authmiddleware from "./routes/middleware/Authmiddleware"
 import VerticalLayout from "./components/VerticalLayout/"
 import HorizontalLayout from "./components/HorizontalLayout/"
 import NonAuthLayout from "./components/NonAuthLayout"
+import { ToastProvider } from "./components/Common/ToastProvider"
 
 // Import scss
 import "./assets/scss/theme.scss"
@@ -21,41 +22,26 @@ import "./assets/scss/theme.scss"
 // Import Firebase Configuration file
 import { initFirebaseBackend } from "./helpers/firebase_helper"
 
-// Tenant/Branch providers removidos - não são necessários no painel admin
-
-
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_APIKEY || process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_AUTHDOMAIN || process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  databaseURL: process.env.REACT_APP_DATABASEURL || process.env.REACT_APP_FIREBASE_DATABASE_URL,
-  projectId: process.env.REACT_APP_PROJECTID || process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_STORAGEBUCKET || process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId:
-    process.env.REACT_APP_MESSAGINGSENDERID || process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_APPID || process.env.REACT_APP_FIREBASE_APP_ID,
-  measurementId: process.env.REACT_APP_MEASUREMENTID || process.env.REACT_APP_FIREBASE_MEASUREMENT_ID,
+  apiKey: process.env.REACT_APP_APIKEY,
+  authDomain: process.env.REACT_APP_AUTHDOMAIN,
+  databaseURL: process.env.REACT_APP_DATABASEURL,
+  projectId: process.env.REACT_APP_PROJECTID,
+  storageBucket: process.env.REACT_APP_STORAGEBUCKET,
+  messagingSenderId: process.env.REACT_APP_MESSAGINGSENDERID,
+  appId: process.env.REACT_APP_APPID,
+  measurementId: process.env.REACT_APP_MEASUREMENTID,
 }
 
-const defaultAuthProvider = process.env.REACT_APP_DEFAULTAUTH || "firebase"
-
-if (defaultAuthProvider === "firebase") {
-  const hasConfig =
-    firebaseConfig.apiKey &&
-    firebaseConfig.authDomain &&
-    firebaseConfig.projectId &&
-    firebaseConfig.appId
-
-  if (hasConfig) {
-    initFirebaseBackend(firebaseConfig)
-  }
-}
+// init firebase backend
+initFirebaseBackend(firebaseConfig)
 
 const App = props => {
-// {alert('hiii')}
-//   useEffect(() => {
-//     alert('hii')
-//     document.getElementsByTagName("html")[0].setAttribute("dir", "rtl");
-//   }, [])
+  // {alert('hiii')}
+  //   useEffect(() => {
+  //     alert('hii')
+  //     document.getElementsByTagName("html")[0].setAttribute("dir", "rtl");
+  //   }, [])
 
   function getLayout() {
     let layoutCls = VerticalLayout
@@ -87,15 +73,17 @@ const App = props => {
           />
         ))}
 
-        {/* Authenticated routes - SEM tenant context (rotas normais do sistema) */}
+        {/* Authenticated routes */}
         {userRoutes.map((route, idx) => (
           <Route
             key={idx}
             path={route.path}
             element={
               <Authmiddleware>
-                <Layout>{route.component}</Layout>
-              </Authmiddleware>              
+                <ToastProvider>
+                  <Layout>{route.component}</Layout>
+                </ToastProvider>
+              </Authmiddleware>
             }
           />
         ))}

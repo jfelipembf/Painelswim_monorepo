@@ -25,10 +25,16 @@ import Footer from "./Footer"
 import Rightbar from "../CommonForBoth/Rightbar"
 //Import Breadcrumb
 import Breadcrumb from "../../components/Common/Breadcrumb"
+import useAcademies from "../../pages/Academies/hooks/useAcademies"
+import useTenant from "../../hooks/useTenant"
+import { Button } from "reactstrap"
+import { useNavigate } from "react-router-dom"
 
 const Layout = (props) => {
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const selectLayoutState = (state) => state.Layout;
 
   const selectLayoutProperties = createSelector(
@@ -39,7 +45,7 @@ const Layout = (props) => {
       leftSideBarType: layout.leftSideBarType,
       topbarTheme: layout.topbarTheme,
       layoutColor: layout.layoutColor,
-      layoutMode:layout.layoutMode
+      layoutMode: layout.layoutMode
     }));
 
   const {
@@ -62,15 +68,15 @@ const Layout = (props) => {
         dispatch(showRightSidebarAction(false));
       }
     };
-  
+
     //init body click event fot toggle rightbar
     document.body.addEventListener("click", hideRightbar, true);
-  
+
     // Cleanup the event listener on component unmount
     return () => {
       document.body.removeEventListener("click", hideRightbar, true);
     };
-  }, [dispatch]); 
+  }, [dispatch]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -117,7 +123,7 @@ const Layout = (props) => {
   }, [layoutColor, dispatch]);
 
 
-  
+
 
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
@@ -155,15 +161,13 @@ const Layout = (props) => {
         <div className="main-content">
           <div className="page-content">
             <Container fluid>
-              <Breadcrumb />
               {props.children}
-              {/* render Footer */}
-              <Footer />
             </Container>
           </div>
         </div>
         <Footer />
       </div>
+
       {props.showRightSidebar ? <Rightbar /> : null}
     </React.Fragment>
   )
@@ -173,7 +177,7 @@ const Layout = (props) => {
 Layout.propTypes = {
   changeLayoutWidth: PropTypes.func,
   changeColor: PropTypes.func,
-  changeMode:PropTypes.func,
+  changeMode: PropTypes.func,
   changeSidebarTheme: PropTypes.func,
   changeSidebarType: PropTypes.func,
   changeTopbarTheme: PropTypes.func,

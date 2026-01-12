@@ -1,48 +1,30 @@
 import { initializeApp } from "firebase/app";
 import {
-  FacebookAuthProvider,
-  GoogleAuthProvider,
+  getAuth,
   createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  sendPasswordResetEmail,
   signInWithEmailAndPassword,
-  signInWithPopup,
   signOut,
+  sendPasswordResetEmail,
+  GoogleAuthProvider,
+  FacebookAuthProvider,
+  signInWithPopup,
+  onAuthStateChanged,
 } from "firebase/auth";
 import {
+  getFirestore,
   collection,
   doc,
-  getFirestore,
-  getDocs,
-  serverTimestamp,
   setDoc,
+  serverTimestamp,
 } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
-import { getAnalytics, isSupported as isAnalyticsSupported } from "firebase/analytics";
-import {
-  getDownloadURL,
-  getStorage,
-  ref,
-  uploadBytes,
-} from "firebase/storage";
 
 class FirebaseAuthBackend {
   constructor(firebaseConfig) {
     if (firebaseConfig) {
+      // Initialize Firebase
       this.app = initializeApp(firebaseConfig);
       this.auth = getAuth(this.app);
-      this.db = getFirestore(this.app);
-      this.storage = getStorage(this.app);
-
-      isAnalyticsSupported()
-        .then((supported) => {
-          if (supported) {
-            this.analytics = getAnalytics(this.app);
-          }
-        })
-        .catch(() => {
-          // ignore analytics errors
-        });
+      this.firestore = getFirestore(this.app);
 
       onAuthStateChanged(this.auth, (user) => {
         if (user) {
@@ -60,8 +42,8 @@ class FirebaseAuthBackend {
   registerUser = (email, password) => {
     return new Promise((resolve, reject) => {
       createUserWithEmailAndPassword(this.auth, email, password).then(
-        () => {
-          resolve(this.auth.currentUser);
+        (userCredential) => {
+          resolve(userCredential.user);
         },
         (error) => {
           reject(this._handleError(error));
@@ -76,8 +58,8 @@ class FirebaseAuthBackend {
   editProfileAPI = (email, password) => {
     return new Promise((resolve, reject) => {
       createUserWithEmailAndPassword(this.auth, email, password).then(
-        () => {
-          resolve(this.auth.currentUser);
+        (userCredential) => {
+          resolve(userCredential.user);
         },
         (error) => {
           reject(this._handleError(error));
@@ -92,8 +74,8 @@ class FirebaseAuthBackend {
   loginUser = (email, password) => {
     return new Promise((resolve, reject) => {
       signInWithEmailAndPassword(this.auth, email, password).then(
-        () => {
-          resolve(this.auth.currentUser);
+        (userCredential) => {
+          resolve(userCredential.user);
         },
         (error) => {
           reject(this._handleError(error));
@@ -105,11 +87,13 @@ class FirebaseAuthBackend {
   /**
    * forget Password user with given details
    */
-  forgetPassword = email => {
+  forgetPassword = (email) => {
     return new Promise((resolve, reject) => {
-      sendPasswordResetEmail(this.auth, email, {
+      const actionCodeSettings = {
         url: window.location.protocol + "//" + window.location.host + "/login",
-      })
+        handleCodeInApp: true,
+      };
+      sendPasswordResetEmail(this.auth, email, actionCodeSettings)
         .then(() => {
           resolve(true);
         })
@@ -135,23 +119,23 @@ class FirebaseAuthBackend {
   };
 
   /**
-  * Social Login user with given details
-  */
-
+   * Social Login user with given details
+   */
   socialLoginUser = async (type) => {
     let provider;
     if (type === "google") {
-        provider = new GoogleAuthProvider();
+      provider = new GoogleAuthProvider();
     } else if (type === "facebook") {
-        provider = new FacebookAuthProvider();
+      provider = new FacebookAuthProvider();
     }
     try {
-        const result = await signInWithPopup(this.auth, provider);
-        return result.user;
+      const result = await signInWithPopup(this.auth, provider);
+      const user = result.user;
+      return user;
     } catch (error) {
-        throw this._handleError(error);
+      throw this._handleError(error);
     }
-};
+  };
 
   addNewUserToFirestore = (user) => {
     const { profile } = user.additionalUserInfo;
@@ -162,85 +146,17 @@ class FirebaseAuthBackend {
       email: profile.email,
       picture: profile.picture,
       createdDtm: serverTimestamp(),
-      lastLoginTime: serverTimestamp()
+      lastLoginTime: serverTimestamp(),
     };
-    setDoc(doc(this.db, "users", this.auth.currentUser.uid), details, { merge: true });
+
+    // Use setDoc with doc reference
+    const userDocRef = doc(this.firestore, "users", this.auth.currentUser.uid);
+    setDoc(userDocRef, details);
+
     return { user, details };
   };
 
-  uploadFile = async ({ path, file, contentType }) => {
-    const storageRef = ref(this.storage, path);
-    const metadata = contentType ? { contentType } : undefined;
-    const snapshot = await uploadBytes(storageRef, file, metadata);
-    const url = await getDownloadURL(snapshot.ref);
-    return { url, path: snapshot.metadata.fullPath };
-  };
-
-  createUserWithDetails = async ({
-    email,
-    password,
-    firstName,
-    lastName,
-    gender,
-    birthDate,
-    phone,
-    role,
-    status,
-    address,
-    photoFile,
-  }) => {
-    const userCredential = await createUserWithEmailAndPassword(
-      this.auth,
-      email,
-      password
-    );
-
-    const uid = userCredential.user.uid;
-
-    let photo = null;
-    if (photoFile) {
-      const extension = photoFile?.name?.split(".").pop() || "jpg";
-      const upload = await this.uploadFile({
-        path: `users/${uid}/photo.${extension}`,
-        file: photoFile,
-        contentType: photoFile.type,
-      });
-      photo = upload;
-    }
-
-    const docData = {
-      uid,
-      firstName: firstName || "",
-      lastName: lastName || "",
-      gender: gender || "",
-      birthDate: birthDate || "",
-      email: email || "",
-      phone: phone || "",
-      role: role || "",
-      status: status || "active",
-      address: {
-        cep: address?.cep || "",
-        estado: address?.estado || "",
-        cidade: address?.cidade || "",
-        bairro: address?.bairro || "",
-        numero: address?.numero || "",
-      },
-      photoUrl: photo?.url || "",
-      photoPath: photo?.path || "",
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    };
-
-    await setDoc(doc(this.db, "users", uid), docData, { merge: true });
-    return { authUser: userCredential.user, userDoc: docData };
-  };
-
-  listUsers = async () => {
-    const snap = await getDocs(collection(this.db, "users"));
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-  };
-
-  setLoggeedInUser = user => {
+  setLoggeedInUser = (user) => {
     localStorage.setItem("authUser", JSON.stringify(user));
   };
 
@@ -269,7 +185,7 @@ let _fireBaseBackend = null;
  * Initilize the backend
  * @param {*} config
  */
-const initFirebaseBackend = config => {
+const initFirebaseBackend = (config) => {
   if (!_fireBaseBackend) {
     _fireBaseBackend = new FirebaseAuthBackend(config);
   }
@@ -283,15 +199,4 @@ const getFirebaseBackend = () => {
   return _fireBaseBackend;
 };
 
-const getFirebaseServices = () => {
-  if (!_fireBaseBackend) return null;
-  return {
-    app: _fireBaseBackend.app,
-    auth: _fireBaseBackend.auth,
-    db: _fireBaseBackend.db,
-    storage: _fireBaseBackend.storage,
-    analytics: _fireBaseBackend.analytics,
-  };
-};
-
-export { initFirebaseBackend, getFirebaseBackend, getFirebaseServices };
+export { initFirebaseBackend, getFirebaseBackend };

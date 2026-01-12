@@ -84,7 +84,7 @@ useEffect(() => {
                                 </h3>
                                 <div className="p-3">
                                     <h4 className="text-muted font-size-18 mb-1 text-center">Free Register</h4>
-                                    <p className="text-muted text-center">Get your free InteliTec account now.</p>
+                                    <p className="text-muted text-center">Get your free Lexa account now.</p>
                                     <Form
                                       className="form-horizontal mt-4"
                                       onSubmit={(e) => {
@@ -167,7 +167,7 @@ useEffect(() => {
 
                                         <div className="mb-0 row">
                                             <div className="col-12 mt-4">
-                                                <p className="text-muted mb-0 font-size-14">By registering you agree to the InteliTec <Link to="#" className="text-primary">Terms of Use</Link></p>
+                                                <p className="text-muted mb-0 font-size-14">By registering you agree to the Lexa <Link to="#" className="text-primary">Terms of Use</Link></p>
                                             </div>
                                         </div>
                                     </Form>
@@ -176,7 +176,7 @@ useEffect(() => {
                         </Card>
                         <div className="mt-5 text-center">
                             <p>Already have an account ? <Link to="/login" className="text-primary"> Login </Link> </p>
-                            © {new Date().getFullYear()} InteliTec
+                            © <script>document.write(new Date().getFullYear())</script> Lexa <span className="d-none d-sm-inline-block"> - Crafted with <i className="mdi mdi-heart text-danger"></i> by Themesbrand.</span>
                         </div>
                     </Col>
                 </Row>

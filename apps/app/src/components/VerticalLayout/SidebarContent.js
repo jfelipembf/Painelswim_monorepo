@@ -272,7 +272,8 @@ const SidebarContent = props => {
                     <span>Níveis de Avaliação</span>
                   </Link>
                 </li>
-                <li>
+
+                {/* <li>
                   <Link to={buildPath("/management/integrations")}>
                     <i className="mdi mdi-api"></i>
                     <span>Integrações</span>
@@ -283,7 +284,7 @@ const SidebarContent = props => {
                     <i className="mdi mdi-robot-excited-outline"></i>
                     <span>Automações</span>
                   </Link>
-                </li>
+                </li> */}
               </ul>
             </li>
             <li>

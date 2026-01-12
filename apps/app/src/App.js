@@ -34,11 +34,12 @@ const firebaseConfig = {
 initFirebaseBackend(firebaseConfig)
 
 const App = props => {
-// {alert('hiii')}
-//   useEffect(() => {
-//     alert('hii')
-//     document.getElementsByTagName("html")[0].setAttribute("dir", "rtl");
-//   }, [])
+  // Force rebuild 2026-01-12 match cache
+  // {alert('hiii')}
+  //   useEffect(() => {
+  //     alert('hii')
+  //     document.getElementsByTagName("html")[0].setAttribute("dir", "rtl");
+  //   }, [])
 
   function getLayout() {
     let layoutCls = VerticalLayout
@@ -58,36 +59,36 @@ const App = props => {
     <React.Fragment>
       <ToastProvider>
         <Routes>
-        {/* Non-authenticated routes */}
-        {authRoutes.map((route, idx) => (
+          {/* Non-authenticated routes */}
+          {authRoutes.map((route, idx) => (
+            <Route
+              key={idx}
+              path={route.path}
+              element={
+                <NonAuthLayout>
+                  {route.component}
+                </NonAuthLayout>
+              }
+            />
+          ))}
+          {/* Login com tenant/unidade na rota */}
           <Route
-            key={idx}
-            path={route.path}
+            path="/:tenant/:branch/login"
             element={
               <NonAuthLayout>
-                {route.component}
-            </NonAuthLayout>
+                {authRoutes.find(r => r.path === "/login")?.component}
+              </NonAuthLayout>
             }
           />
-        ))}
-        {/* Login com tenant/unidade na rota */}
-        <Route
-          path="/:tenant/:branch/login"
-          element={
-            <NonAuthLayout>
-              {authRoutes.find(r => r.path === "/login")?.component}
-            </NonAuthLayout>
-          }
-        />
 
-        {/* Authenticated routes with tenant/branch context */}
-        <Route
-          path="/:tenant/:branch/*"
-          element={<TenantRouter Layout={Layout} />}
-        />
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to="/pages-404" replace />} />
-      </Routes>
+          {/* Authenticated routes with tenant/branch context */}
+          <Route
+            path="/:tenant/:branch/*"
+            element={<TenantRouter Layout={Layout} />}
+          />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/pages-404" replace />} />
+        </Routes>
       </ToastProvider>
     </React.Fragment>
   )

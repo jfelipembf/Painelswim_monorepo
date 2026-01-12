@@ -151,6 +151,7 @@ export const StaffRole = {
 
 export const buildStaffPayload = (data) => {
     return {
+        id: data.id,
         firstName: data.firstName || "",
         lastName: data.lastName || "",
         name: data.name || [data.firstName, data.lastName].filter(Boolean).join(" ").trim(),

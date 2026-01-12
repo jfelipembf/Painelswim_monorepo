@@ -1,7 +1,8 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { Container, Row, Col, Card, CardBody, Label, Form, Alert, Input, FormFeedback } from "reactstrap";
-import intelitecLogo from "../../assets/images/icon_inteli.png";
+import React from 'react'
+import { Link } from 'react-router-dom';
+import { Container, Row, Col, Card, CardBody, Label, Form, Alert, Input, FormFeedback } from 'reactstrap';
+import logoDark from "../../assets/images/logo-dark.png";
+import logoLight from "../../assets/images/logo-dark.png";
 import { useSelector, useDispatch } from "react-redux";
 import { createSelector } from "reselect";
 import PropTypes from "prop-types";
@@ -12,24 +13,10 @@ import { useFormik } from "formik";
 import withRouter from 'components/Common/withRouter';
 
 // actions
-import { loginUser } from "../../store/actions";
+import { loginUser, socialLogin } from "../../store/actions";
 
-const ERROR_MESSAGES = [
-  { matches: ["invalid password", "invalid email", "wrong password"], friendly: "E-mail ou senha inválidos." },
-  { matches: ["user not found", "no user record"], friendly: "Usuário não encontrado. Verifique o e-mail informado." },
-  { matches: ["too-many-requests"], friendly: "Muitas tentativas. Aguarde alguns instantes antes de tentar novamente." },
-  { matches: ["network request failed"], friendly: "Não foi possível conectar. Verifique sua internet e tente novamente." },
-];
-
-const translateLoginMessage = (message) => {
-  if (!message) return "";
-  const normalized = message.toLowerCase();
-  const matched = ERROR_MESSAGES.find(({ matches }) => matches.some((keyword) => normalized.includes(keyword)));
-  return matched?.friendly || "Não foi possível entrar. Tente novamente em instantes.";
-};
-
-const Login = (props) => {
-  document.title = "Login | Intelitec - Painel Administrativo";
+const Login = props => {
+  document.title = "Login | Lexa - Responsive Bootstrap 5 Admin Dashboard";
 
   const dispatch = useDispatch();
 
@@ -38,12 +25,12 @@ const Login = (props) => {
     enableReinitialize: true,
 
     initialValues: {
-      email: "",
-      password: "",
+      email: "admin@themesbrand.com" || '',
+      password: "123456" || '',
     },
     validationSchema: Yup.object({
-      email: Yup.string().required("Informe seu e-mail"),
-      password: Yup.string().required("Informe sua senha"),
+      email: Yup.string().required("Por favor, insira seu e-mail"),
+      password: Yup.string().required("Por favor, insira sua senha"),
     }),
     onSubmit: (values) => {
       dispatch(loginUser(values, props.router.navigate));
@@ -52,15 +39,26 @@ const Login = (props) => {
 
 
   const selectLoginState = (state) => state.Login;
-  const LoginProperties = createSelector(selectLoginState, (login) => ({
-    error: login.error,
-  }));
+  const LoginProperties = createSelector(
+    selectLoginState,
+    (login) => ({
+      error: login.error
+    })
+  );
 
   const {
     error
   } = useSelector(LoginProperties);
 
-  const friendlyErrorMessage = error ? translateLoginMessage(error) : "";
+  const signIn = type => {
+    dispatch(socialLogin(type, props.router.navigate));
+  };
+
+  //for facebook and google authentication
+  const socialResponse = type => {
+    signIn(type);
+  };
+
 
   return (
     <React.Fragment>
@@ -72,17 +70,15 @@ const Login = (props) => {
                 <CardBody className="pt-0">
 
                   <h3 className="text-center mt-5 mb-4">
-                    <Link to="/" className="d-block auth-logo text-decoration-none">
-                      <span className="d-flex align-items-center justify-content-center gap-2">
-                        <img src={intelitecLogo} alt="Intelitec" height="48" />
-                        <span style={{ fontSize: "20px", fontWeight: 700, color: "#495057" }}>Intelitec</span>
-                      </span>
+                    <Link to="/" className="d-block auth-logo">
+                      <img src={logoDark} alt="" height="30" className="auth-logo-dark" />
+                      <img src={logoLight} alt="" height="30" className="auth-logo-light" />
                     </Link>
                   </h3>
 
                   <div className="p-3">
                     <h4 className="text-muted font-size-18 mb-1 text-center">Bem-vindo de volta!</h4>
-                    <p className="text-muted text-center">Entre para acessar o Painel Intelitec.</p>
+                    <p className="text-muted text-center">Faça login para continuar no Painel.</p>
                     <Form
                       className="form-horizontal mt-4"
                       onSubmit={(e) => {
@@ -91,13 +87,13 @@ const Login = (props) => {
                         return false;
                       }}
                     >
-                      {error ? <Alert color="danger">{friendlyErrorMessage}</Alert> : null}
+                      {error ? <Alert color="danger">{error}</Alert> : null}
                       <div className="mb-3">
                         <Label htmlFor="username">E-mail</Label>
                         <Input
                           name="email"
                           className="form-control"
-                          placeholder="Digite seu e-mail"
+                          placeholder="Insira o e-mail"
                           type="email"
                           onChange={validation.handleChange}
                           onBlur={validation.handleBlur}
@@ -116,7 +112,7 @@ const Login = (props) => {
                           name="password"
                           value={validation.values.password || ""}
                           type="password"
-                          placeholder="Digite sua senha"
+                          placeholder="Insira a senha"
                           onChange={validation.handleChange}
                           onBlur={validation.handleBlur}
                           invalid={
@@ -127,41 +123,48 @@ const Login = (props) => {
                           <FormFeedback type="invalid">{validation.errors.password}</FormFeedback>
                         ) : null}
                       </div>
-                      <Row className="mb-3 mt-4 align-items-center">
-                        <Col xs="6">
+                      <Row className="mb-3 mt-4">
+                        <div className="col-6">
                           <div className="form-check">
                             <input type="checkbox" className="form-check-input" id="customControlInline" />
-                            <label className="form-check-label" htmlFor="customControlInline">
-                              Lembrar acesso
+                            <label className="form-check-label" htmlFor="customControlInline">Lembrar-me
                             </label>
                           </div>
-                        </Col>
-                        <Col xs="6" className="text-end">
-                          <button className="btn btn-primary w-md waves-effect waves-light" type="submit">
-                            Entrar
-                          </button>
-                        </Col>
+                        </div>
+                        <div className="col-6 text-end">
+                          <button className="btn btn-primary w-md waves-effect waves-light" type="submit">Entrar</button>
+                        </div>
                       </Row>
                       <Row className="form-group mb-0">
-                        <Col xs="12" className="mt-4 text-center text-md-start">
-                          <Link to="/forgot-password" className="text-muted">
-                            <i className="mdi mdi-lock"></i> Esqueceu sua senha?
-                          </Link>
-                        </Col>
+                        <div className="col-12 mt-4">
+                          <Link to="/forgot-password" className="text-muted"><i className="mdi mdi-lock"></i> Esqueceu sua senha?</Link>
+                        </div>
                       </Row>
                     </Form>
                   </div>
                 </CardBody>
               </Card>
+              <Link
+                to="#"
+                className="social-list-item bg-danger text-white border-danger"
+                onClick={e => {
+                  e.preventDefault();
+                  socialResponse("google");
+                }}
+              >
+                <i className="mdi mdi-google" />
+              </Link>
               <div className="mt-5 text-center">
-                © {new Date().getFullYear()} Intelitec
+                <p>Não tem uma conta? <Link to="/register" className="text-primary"> Cadastre-se agora </Link></p>
+                © {new Date().getFullYear()} Painel Swim <span className="d-none d-sm-inline-block"> - Desenvolvido com <i className="mdi mdi-heart text-danger"></i> por Felipe Macedo.</span>
               </div>
             </Col>
           </Row>
         </Container>
       </div>
+
     </React.Fragment>
-  );
+  )
 }
 
 export default withRouter(Login);

@@ -6,6 +6,8 @@ const { requireAuthContext } = require("../shared/context");
  * Cria um usuário no Authentication e um documento na coleção Staff.
  * Deve ser chamado apenas por usuários com permissão de administrador (ou gerente).
  */
+const { FieldValue } = require("firebase-admin/firestore");
+
 exports.createStaffUser = functions.region("us-central1").https.onCall(async (data, context) => {
     // Validação de contexto (Auth, Tenant, Branch)
     const { idTenant, idBranch } = requireAuthContext(data, context);
@@ -51,22 +53,22 @@ exports.createStaffUser = functions.region("us-central1").https.onCall(async (da
             }
         }
 
+        let uid;
+
         if (userRecord) {
-            throw new functions.https.HttpsError(
-                "already-exists",
-                `O email ${email} já está em uso por outro usuário.`
-            );
+            // Usuário já existe, reaproveitar UID
+            console.log(`Usuário já existe no Auth (UID: ${userRecord.uid}), vinculando à nova unidade.`);
+            uid = userRecord.uid;
+        } else {
+            // 2. Criar usuário no Auth
+            userRecord = await admin.auth().createUser({
+                email,
+                password,
+                displayName,
+                disabled: status === "inactive",
+            });
+            uid = userRecord.uid;
         }
-
-        // 2. Criar usuário no Auth
-        userRecord = await admin.auth().createUser({
-            email,
-            password,
-            displayName,
-            disabled: status === "inactive",
-        });
-
-        const uid = userRecord.uid;
 
         // 3. Criar documento no Firestore (Staff)
         const staffRef = admin
@@ -78,7 +80,7 @@ exports.createStaffUser = functions.region("us-central1").https.onCall(async (da
             .collection("staff")
             .doc(uid);
 
-        const now = admin.firestore.FieldValue.serverTimestamp();
+        const now = FieldValue.serverTimestamp();
 
         await staffRef.set({
             id: uid,
@@ -156,7 +158,7 @@ exports.updateStaffUser = functions.region("us-central1").https.onCall(async (da
     }
 
     const displayName = `${firstName} ${lastName || ""}`.trim();
-    const now = admin.firestore.FieldValue.serverTimestamp();
+    const now = FieldValue.serverTimestamp();
 
     try {
         // 1. Atualizar dados no Authentication (se necessário)

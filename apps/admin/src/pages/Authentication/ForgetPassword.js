@@ -1,11 +1,12 @@
-import React from "react";
+import React from 'react'
 import PropTypes from "prop-types";
-import { Link } from "react-router-dom";
-import { Alert, Card, CardBody, Col, Container, FormFeedback, Input, Label, Row } from "reactstrap";
-import intelitecLogo from "../../assets/images/icon_inteli.png";
-import { useDispatch, useSelector } from "react-redux";
+import { Link } from 'react-router-dom';
+import { Alert, Card, CardBody, Col, Container, FormFeedback, Input, Label, Row } from 'reactstrap';
+import logoDark from "../../assets/images/logo-dark.png";
+import logoLight from "../../assets/images/logo-light.png";
+import { useDispatch, useSelector } from 'react-redux';
 import { createSelector } from "reselect";
-import withRouter from "components/Common/withRouter";
+import withRouter from 'components/Common/withRouter';
 // Formik Validation
 import * as Yup from "yup";
 import { useFormik } from "formik";
@@ -13,26 +14,8 @@ import { useFormik } from "formik";
 // action
 import { userForgetPassword } from "../../store/actions";
 
-const FORGOT_ERROR_MESSAGES = [
-  { matches: ["user not found", "no user record"], friendly: "Usuário não encontrado. Verifique o e-mail informado." },
-  { matches: ["too-many-requests"], friendly: "Muitas tentativas. Aguarde alguns instantes e tente novamente." },
-  { matches: ["network request failed"], friendly: "Não foi possível conectar. Verifique sua internet e tente novamente." },
-];
-
-const translateForgotError = (message) => {
-  if (!message) return "";
-  const normalized = message.toLowerCase();
-  const match = FORGOT_ERROR_MESSAGES.find(({ matches }) =>
-    matches.some((keyword) => normalized.includes(keyword))
-  );
-  return match?.friendly || "Não foi possível enviar as instruções. Tente novamente em instantes.";
-};
-
-const successFallback =
-  "Se o e-mail estiver cadastrado, você receberá as instruções para redefinir sua senha.";
-
 const ForgetPasswordPage = props => {
-  document.title = "Recuperar Senha | Intelitec - Painel Administrativo";
+  document.title = "Forget Password | Lexa - Responsive Bootstrap 5 Admin Dashboard";
 
   const dispatch = useDispatch();
 
@@ -44,7 +27,7 @@ const ForgetPasswordPage = props => {
       email: '',
     },
     validationSchema: Yup.object({
-      email: Yup.string().required("Informe seu e-mail"),
+      email: Yup.string().required("Por favor, insira seu e-mail"),
     }),
     onSubmit: (values) => {
       dispatch(userForgetPassword(values, props.history));
@@ -61,10 +44,10 @@ const ForgetPasswordPage = props => {
     })
   );
 
-  const { forgetError, forgetSuccessMsg } = useSelector(ForgotPasswordProperties);
-
-  const friendlyError = forgetError ? translateForgotError(forgetError) : "";
-  const friendlySuccess = forgetSuccessMsg || successFallback;
+  const {
+    forgetError,
+    forgetSuccessMsg
+  } = useSelector(ForgotPasswordProperties);
 
   return (
     <React.Fragment>
@@ -75,25 +58,21 @@ const ForgetPasswordPage = props => {
               <Card className="overflow-hidden">
                 <CardBody className="pt-0">
                   <h3 className="text-center mt-5 mb-4">
-                    <Link to="/" className="d-block auth-logo text-decoration-none">
-                      <span className="d-flex align-items-center justify-content-center gap-2">
-                        <img src={intelitecLogo} alt="Intelitec" height="48" />
-                        <span style={{ fontSize: "20px", fontWeight: 700, color: "#495057" }}>
-                          Intelitec
-                        </span>
-                      </span>
+                    <Link to="/" className="d-block auth-logo">
+                      <img src={logoDark} alt="" height="30" className="auth-logo-dark" />
+                      <img src={logoLight} alt="" height="30" className="auth-logo-light" />
                     </Link>
                   </h3>
                   <div className="p-3">
-                    <h4 className="text-muted font-size-18 mb-3 text-center">Recuperar senha</h4>
-                    {forgetError ? (
+                    <h4 className="text-muted font-size-18 mb-3 text-center">Redefinir Senha</h4>
+                    {forgetError && forgetError ? (
                       <Alert color="danger" style={{ marginTop: "13px" }}>
-                        {friendlyError}
+                        {forgetError}
                       </Alert>
                     ) : null}
                     {forgetSuccessMsg ? (
                       <Alert color="success" style={{ marginTop: "13px" }}>
-                        {friendlySuccess}
+                        {forgetSuccessMsg}
                       </Alert>
                     ) : null}
                     <form className="form-horizontal mt-4"
@@ -108,7 +87,7 @@ const ForgetPasswordPage = props => {
                         <Input
                           name="email"
                           className="form-control"
-                          placeholder="Digite seu e-mail"
+                          placeholder="Insira o e-mail"
                           type="email"
                           onChange={validation.handleChange}
                           onBlur={validation.handleBlur}
@@ -124,7 +103,7 @@ const ForgetPasswordPage = props => {
 
                       <Row className="mb-3">
                         <div className="col-12 text-end">
-                          <button className="btn btn-primary w-md waves-effect waves-light" type="submit">Enviar instruções</button>
+                          <button className="btn btn-primary w-md waves-effect waves-light" type="submit">Redefinir</button>
                         </div>
                       </Row>
                     </form>
@@ -132,8 +111,8 @@ const ForgetPasswordPage = props => {
                 </CardBody>
               </Card>
               <div className="mt-5 text-center">
-                <p>Lembrou a senha? <Link to="/login" className="text-primary"> Entrar</Link> </p>
-                © {new Date().getFullYear()} Intelitec
+                <p>Lembrou? <Link to="/login" className="text-primary"> Entrar aqui </Link> </p>
+                © {new Date().getFullYear()} Painel Swim <span className="d-none d-sm-inline-block"> - Desenvolvido com <i className="mdi mdi-heart text-danger"></i> por Felipe Macedo.</span>
               </div>
             </Col>
           </Row>

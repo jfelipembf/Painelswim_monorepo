@@ -107,6 +107,7 @@ const CollaboratorProfile = ({ setBreadcrumbItems }) => {
         delete rawPayload.avatar // Strict cleanup
 
         const payload = buildStaffPayload(rawPayload)
+        payload.id = staffId // Ensure ID is present from URL param
 
         await updateStaff(payload)
         setFormData(payload)

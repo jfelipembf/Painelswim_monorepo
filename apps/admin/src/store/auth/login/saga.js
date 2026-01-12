@@ -6,47 +6,16 @@ import { apiError, loginSuccess, logoutUserSuccess } from "./actions";
 
 //Include Both Helper File with needed methods
 import { getFirebaseBackend } from "../../../helpers/firebase_helper";
-import {
-  postFakeLogin,
-  postJwtLogin,
-} from "../../../helpers/fakebackend_helper";
-
-const fireBaseBackend = getFirebaseBackend();
 
 function* loginUser({ payload: { user, history } }) {
   try {
-    // Usar Firebase como padrão se REACT_APP_DEFAULTAUTH não estiver definido
-    const authMethod = process.env.REACT_APP_DEFAULTAUTH || "firebase";
-    
-    if (authMethod === "firebase") {
-      if (!fireBaseBackend) {
-        throw new Error("Firebase backend não inicializado");
-      }
-      
-      const response = yield call(
-        fireBaseBackend.loginUser,
-        user.email,
-        user.password
-      );
-      yield put(loginSuccess(response));
-    } else if (authMethod === "jwt") {
-      const response = yield call(postJwtLogin, {
-        email: user.email,
-        password: user.password,
-      });
-      localStorage.setItem("authUser", JSON.stringify(response));
-      yield put(loginSuccess(response));
-    } else if (authMethod === "fake") {
-      const response = yield call(postFakeLogin, {
-        email: user.email,
-        password: user.password,
-      });
-      localStorage.setItem("authUser", JSON.stringify(response));
-      yield put(loginSuccess(response));
-    } else {
-      throw new Error(`Método de autenticação desconhecido: ${authMethod}`);
-    }
-    
+    const fireBaseBackend = getFirebaseBackend();
+    const response = yield call(
+      fireBaseBackend.loginUser,
+      user.email,
+      user.password
+    );
+    yield put(loginSuccess(response));
     history('/dashboard');
   } catch (error) {
     yield put(apiError(error));
@@ -57,10 +26,10 @@ function* logoutUser({ payload: { history } }) {
   try {
     localStorage.removeItem("authUser");
 
-    if (process.env.REACT_APP_DEFAULTAUTH === "firebase") {
-      const response = yield call(fireBaseBackend.logout);
-      yield put(logoutUserSuccess(response));
-    }
+    const fireBaseBackend = getFirebaseBackend();
+    const response = yield call(fireBaseBackend.logout);
+    yield put(logoutUserSuccess(response));
+
     history('/login');
   } catch (error) {
     yield put(apiError(error));
@@ -69,20 +38,15 @@ function* logoutUser({ payload: { history } }) {
 
 function* socialLogin({ payload: { type, history } }) {
   try {
-    if (process.env.REACT_APP_DEFAULTAUTH === "firebase") {
-      const fireBaseBackend = getFirebaseBackend();
-      const response = yield call(fireBaseBackend.socialLoginUser, type);
-      if (response) {
-        history("/dashboard");
-      } else {
-        history("/login");
-      }
-      localStorage.setItem("authUser", JSON.stringify(response));
-      yield put(loginSuccess(response));
-    }
+    const fireBaseBackend = getFirebaseBackend();
     const response = yield call(fireBaseBackend.socialLoginUser, type);
-    if(response)
-    history("/dashboard");
+    if (response) {
+      history("/dashboard");
+    } else {
+      history("/login");
+    }
+    localStorage.setItem("authUser", JSON.stringify(response));
+    yield put(loginSuccess(response));
   } catch (error) {
     yield put(apiError(error));
   }

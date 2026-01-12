@@ -1,50 +1,102 @@
-import { useCallback, useMemo } from "react";
-import { getFirebaseBackend } from "../../../helpers/firebase_helper";
-import { GENDER_LABELS, ROLE_LABELS, STATUS_LABELS } from "../../../constants";
+import { useState, useEffect, useCallback } from "react";
+import { getFirestore, collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { useToast } from "../../../components/Common/ToastProvider";
 
-export const useUsersService = () => {
-  const backend = getFirebaseBackend();
+const useUsers = () => {
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const { addToast } = useToast();
 
-  const guardBackend = useCallback(() => {
-    if (!backend) {
-      throw new Error("Firebase não inicializado. Verifique REACT_APP_DEFAULTAUTH.");
-    }
-    return backend;
-  }, [backend]);
+    const functions = getFunctions();
+    const createUserFunction = httpsCallable(functions, 'createUser');
+    const updateUserFunction = httpsCallable(functions, 'updateUser');
+    const deleteUserFunction = httpsCallable(functions, 'deleteUser');
 
-  const createUser = useCallback(
-    async (payload) => {
-      const service = guardBackend();
-      return service.createUserWithDetails(payload);
-    },
-    [guardBackend]
-  );
+    // Real-time listener for users list
+    useEffect(() => {
+        const db = getFirestore();
+        const q = query(
+            collection(db, "users"),
+            where("isActive", "==", true) // Only fetch active users by default
+            // orderBy("createdAt", "desc") // Requires index, adding might cause error if not indexed yet
+        );
 
-  const listUsers = useCallback(async () => {
-    const service = guardBackend();
-    return service.listUsers ? service.listUsers() : [];
-  }, [guardBackend]);
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const userList = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setUsers(userList);
+            setLoading(false);
+        }, (err) => {
+            console.error("Error fetching users:", err);
+            setError(err);
+            setLoading(false);
+            addToast({ title: "Erro", message: "Erro ao carregar usuários.", color: "danger" });
+        });
 
-  const genderOptions = useMemo(
-    () => Object.entries(GENDER_LABELS).map(([value, label]) => ({ value, label })),
-    []
-  );
+        return () => unsubscribe();
+    }, [addToast]);
 
-  const roleOptions = useMemo(
-    () => Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label })),
-    []
-  );
+    const addUser = useCallback(async (userData) => {
+        setLoading(true);
+        try {
+            // Default password for new users if not provided in UI (or handle in UI)
+            // Ideally UI should ask for it or generate one.
+            // For now, let's assume specific logic or default.
+            const payload = {
+                ...userData,
+                password: "DefaultPassword123!", // TEMPORARY: In prod, send welcome email or ask in UI
+            };
 
-  const statusOptions = useMemo(
-    () => Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label })),
-    []
-  );
+            const result = await createUserFunction(payload);
+            addToast({ title: "Sucesso", message: "Usuário criado com sucesso!", color: "success" });
+            setLoading(false);
+            return result.data;
+        } catch (err) {
+            console.error("Error creating user:", err);
+            addToast({ title: "Erro", message: err.message || "Erro ao criar usuário.", color: "danger" });
+            setLoading(false);
+            throw err;
+        }
+    }, [addToast, createUserFunction]);
 
-  return {
-    createUser,
-    listUsers,
-    genderOptions,
-    roleOptions,
-    statusOptions,
-  };
+    const updateUser = useCallback(async (uid, updates) => {
+        setLoading(true);
+        try {
+            await updateUserFunction({ uid, ...updates });
+            addToast({ title: "Sucesso", message: "Usuário atualizado com sucesso!", color: "success" });
+            setLoading(false);
+        } catch (err) {
+            console.error("Error updating user:", err);
+            addToast({ title: "Erro", message: err.message || "Erro ao atualizar usuário.", color: "danger" });
+            setLoading(false);
+            throw err;
+        }
+    }, [addToast, updateUserFunction]);
+
+    const removeUser = useCallback(async (uid) => {
+        // confirmation logic should be in UI
+        try {
+            await deleteUserFunction({ uid, hardDelete: false });
+            addToast({ title: "Sucesso", message: "Usuário removido com sucesso!", color: "success" });
+        } catch (err) {
+            console.error("Error deleting user:", err);
+            addToast({ title: "Erro", message: err.message || "Erro ao remover usuário.", color: "danger" });
+            throw err;
+        }
+    }, [addToast, deleteUserFunction]);
+
+    return {
+        users,
+        loading,
+        error,
+        addUser,
+        updateUser,
+        removeUser
+    };
 };
+
+export default useUsers;

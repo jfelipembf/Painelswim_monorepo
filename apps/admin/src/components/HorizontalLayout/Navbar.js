@@ -102,19 +102,330 @@ const Navbar = props => {
                   </Link>
                 </li>
 
-                <li className="nav-item">
-                  <Link className="nav-link" to="/users">
-                    <i className="ti-user"></i>{props.t("Usuários")}
+                <li className="nav-item dropdown">
+                  <Link
+                    to="/#"
+                    onClick={e => {
+                      e.preventDefault()
+                      setemail(!email)
+                    }}
+                    className="nav-link dropdown-toggle arrow-none"
+                  >
+                    <i className="ti-email"></i>{props.t("Email")}
                   </Link>
+                  <div
+                    className={classname("dropdown-menu dropdown-menu-left", 
+                    { show: email }
+                    )}
+                  >
+                    <Link to="#" className="dropdown-item">
+                      {props.t("Inbox")}
+                    </Link>
+                    <Link to="#" className="dropdown-item">
+                      {props.t("Read Email")}
+                    </Link>
+                    <Link to="#" className="dropdown-item">
+                      {props.t("Email Compose")}
+                    </Link>
+                  </div>
                 </li>
 
-                <li className="nav-item">
-                  <Link className="nav-link" to="/tenants">
-                    <i className="ti-home"></i>{props.t("Academias")}
+                <li className="nav-item dropdown">
+                  <Link
+                    to="/#"
+                    onClick={e => {
+                      e.preventDefault()
+                      setui(!ui)
+                    }}
+                    className="nav-link dropdown-toggle arrow-none"
+                  >
+                    <i className="ti-support"></i>
+                    {props.t("UI Elements")}
                   </Link>
+                  <div
+                    className={classname(
+                      "dropdown-menu mega-dropdown-menu px-2 dropdown-mega-menu-xl",
+                      { show: ui }
+                    )}
+                  >
+                    <Row>
+                      <Col lg={4}>
+                        <div>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Alerts")}
+                          </Link>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Buttons")}
+                          </Link>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Badge")}
+                          </Link>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Cards")}
+                          </Link>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Carousel")}
+                          </Link>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Dropdowns")}
+                          </Link>
+                        </div>
+                      </Col>
+                      <Col lg={4}>
+                        <div>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Grid")}
+                          </Link>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Images")}
+                          </Link>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Lightbox")}
+                          </Link>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Modals")}
+                          </Link>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Pagination")}
+                          </Link>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Popover & Tooltips")}
+                          </Link>
+                        </div>
+                      </Col>
+                      <Col lg={4}>
+                        <div>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Progress Bars")}
+                          </Link>
+                          <Link
+                            to="#"
+                            className="dropdown-item"
+                          >
+                            {props.t("Tabs & Accordions")}
+                          </Link>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Typography")}
+                          </Link>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Video")}
+                          </Link>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Utilities")}
+                          </Link>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Colors")}
+                          </Link>
+                          <Link to="#" className="dropdown-item">
+                            {props.t("Offcanvas")}
+                          </Link>
+                        </div>
+                      </Col>
+                    </Row>
+                  </div>
                 </li>
 
-              </ul>
+                <li className="nav-item dropdown">
+                  <Link
+                    to="/#"
+                    className="nav-link dropdown-toggle arrow-none"
+                    onClick={e => {
+                      e.preventDefault()
+                      setform(!form)
+                    }}
+                  >
+                    <i className="ti-receipt"></i> {props.t("Forms")}
+                  </Link>
+                  <div
+                    className={classname("dropdown-menu dropdown-menu-left", { show: form })}
+                  >
+                    <Link to="#" className="dropdown-item">
+                      {props.t("Form Elements")}
+                    </Link>
+                    <Link to="#" className="dropdown-item">
+                      {props.t("Form Validation")}
+                    </Link>
+                    <Link to="#" className="dropdown-item">
+                      {props.t("Form Advanced")}
+                    </Link>
+                    <Link to="#" className="dropdown-item">
+                      {props.t("Form Editors")}
+                    </Link>
+                    <Link to="#" className="dropdown-item">
+                      {props.t("Form File Upload")}{" "}
+                    </Link>
+                  </div>
+                </li>
+
+                <li className="nav-item dropdown">
+                  <Link
+                    to="/#"
+                    className="nav-link dropdown-toggle arrow-none"
+                    onClick={e => {
+                      e.preventDefault()
+                      setMoreItem(!moreItem)
+                    }}
+                  >
+                    <i className="ti-menu-alt"></i>More
+                  </Link>
+                  <div className={classname("dropdown-menu dropdown-menu-left", { show: moreItem })}>
+                    <Link to="#" className="dropdown-item">{props.t("Calendar")}</Link>
+                    <Link to="#" className="dropdown-item">{props.t("Chat")}</Link>
+                    <Link to="#" className="dropdown-item">{props.t("Kanban")}</Link>
+                    <div className="dropdown">
+                      <Link
+                        to="/#"
+                        className="dropdown-item dropdown-toggle arrow-none"
+                        onClick={e => {
+                          e.preventDefault()
+                          seticon(!icon)
+                        }}
+                      >
+                        {props.t("Icons")} <div className="arrow-down"></div>
+                      </Link>
+                      <div
+                        className={classname("dropdown-menu", { show: icon })}
+                      >
+
+                        <Link to="#" className="dropdown-item">
+                          {props.t("Material Design")}
+                        </Link>
+
+                        <Link to="#" className="dropdown-item">{props.t("Ion Icons")}</Link>
+
+                        <Link to="#" className="dropdown-item">{props.t("Font Awesome")}</Link>
+
+                        <Link to="#" className="dropdown-item">{props.t("Themify Icons")}</Link>
+
+                        <Link to="#" className="dropdown-item">{props.t("Dripicons")}</Link>
+
+                        <Link to="#" className="dropdown-item">{props.t("Typicons Icons")}</Link>
+
+                      </div>
+                    </div>
+                    <div className="dropdown">
+                      <Link
+                        to="/#"
+                        className="dropdown-item dropdown-toggle arrow-none"
+                        onClick={e => {
+                          e.preventDefault()
+                          settable(!table)
+                        }}
+                      >
+                        {props.t("Tables")} <div className="arrow-down"></div>
+                      </Link>
+                      <div
+                        className={classname("dropdown-menu", { show: table })}
+                      >
+                        <Link to="#" className="dropdown-item">
+                          {props.t("Basic Tables")}
+                        </Link>
+                        <Link to="#" className="dropdown-item">
+                          {props.t("Data Tables")}
+                        </Link>
+                        <Link to="#" className="dropdown-item">
+                          {props.t("Responsive Table")}
+                        </Link>
+                        <Link to="#" className="dropdown-item">
+                          {props.t("Editable Table")}
+                        </Link>
+                      </div>
+                    </div>
+                    <div className="dropdown">
+                      <Link
+                        to="/#"
+                        className="dropdown-item dropdown-toggle arrow-none"
+                        onClick={e => {
+                          e.preventDefault()
+                          setmap(!map)
+                        }}
+                      >
+                        {props.t("Maps")} <div className="arrow-down"></div>
+                      </Link>
+                      <div
+                        className={classname("dropdown-menu", { show: map })}
+                      >
+                        <Link to="#" className="dropdown-item">
+                          {props.t("Google Maps")}{" "}
+                        </Link>
+                        <Link to="#" className="dropdown-item">
+                          {props.t("Vector Maps")}{" "}
+                        </Link>
+                       
+                      </div>
+                    </div>
+                    <Link to="#" className="dropdown-item">{props.t("Range Slider")}</Link>
+                    <Link to="#" className="dropdown-item">{props.t("Session Timeout")}</Link>
+                  </div>
+                </li>
+                <li className="nav-item dropdown">
+                  <Link
+                    to="/#"
+                    className="nav-link dropdown-toggle arrow-none"
+                    onClick={e => {
+                      e.preventDefault()
+                      setchart(!chart)
+                    }}
+                  >
+                    <i className="ti-pie-chart"></i> {props.t("Charts")}
+                  </Link>
+                  <div
+                    className={classname("dropdown-menu", { show: chart })}
+                  >
+
+                    <Link to="#" className="dropdown-item">
+                      {props.t("Apex charts")}
+                    </Link>
+
+                    
+                    <Link to="#" className="dropdown-item">
+                      {props.t("Chartjs Chart")}
+                    </Link>
+
+                    <Link to="#" className="dropdown-item">
+                      {props.t("Sparkline Chart")}
+                    </Link>
+
+                    <Link to="#" className="dropdown-item">
+                      {props.t("Jquery Knob Chart")}
+                    </Link>
+
+                  </div>
+                </li>
+
+                <li className="nav-item dropdown">
+                  <Link className="nav-link dropdown-toggle arrow-none" to="#" id="topnav-pages"
+                    onClick={e => {
+                      e.preventDefault()
+                      setextra(!extra)
+                    }}
+                  >
+                    <i className="ti-support"></i>Pages
+                  </Link>
+                  <div className={classname("dropdown-menu mega-dropdown-menu px-2 dropdown-mega-menu-lg dropdown-menu-right", { show: extra })}>
+                    <Row>
+                      <Col lg={6}>
+                        <div>
+                          <Link to="#" className="dropdown-item">Timeline</Link>
+                          <Link to="#" className="dropdown-item">Invoice</Link>
+                          <Link to="#" className="dropdown-item">Directory</Link>
+                          <Link to="/pages-login" className="dropdown-item">Login</Link>
+                          <Link to="/pages-register" className="dropdown-item">Register</Link>
+                        </div>
+                      </Col>
+                      <Col lg={6}>
+                        <div>
+                          <Link to="/page-recoverpw" className="dropdown-item">Recover Password</Link>
+                          <Link to="/auth-lock-screen" className="dropdown-item">Lock Screen</Link>
+                          <Link to="/pages-blank" className="dropdown-item">Blank Page</Link>
+                          <Link to="/pages-404" className="dropdown-item">Error 404</Link>
+                          <Link to="/pages-500" className="dropdown-item">Error 500</Link>
+
+                        </div>
+                      </Col>
+                    </Row>
+                  </div>
+                </li></ul>
             </Collapse>
           </nav>
         </div>
