@@ -114,3 +114,21 @@ exports.createContract = require("./src/contracts/contracts").createContract;
 exports.updateContract = require("./src/contracts/contracts").updateContract;
 exports.createStaffUser = require("./src/staff/staff").createStaffUser;
 exports.updateStaffUser = require("./src/staff/staff").updateStaffUser;
+
+// Integrations
+exports.saveIntegrationConfig = require("./src/integrations/integrations").saveIntegrationConfig;
+exports.getIntegrationConfig = require("./src/integrations/integrations").getIntegrationConfig;
+
+// Notifications
+// Notifications
+exports.sendWhatsAppMessage = require("./src/notifications/whatsapp").sendWhatsAppMessage;
+
+// Automations
+exports.saveAutomation = require("./src/automations/automations").saveAutomation;
+exports.getAutomations = require("./src/automations/automations").getAutomations;
+exports.deleteAutomation = require("./src/automations/automations").deleteAutomation;
+exports.checkBirthdayAutomations = require("./src/automations/scheduled").checkBirthdayAutomations;
+
+
+
+

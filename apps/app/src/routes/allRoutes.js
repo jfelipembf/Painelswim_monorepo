@@ -23,6 +23,8 @@ import Evaluation from "../pages/Evaluation"
 import SettingsPage from "../pages/Admin/Settings"
 import CollaboratorProfile from "../pages/Collaborators/Components/Profile"
 import CRMPage from "../pages/CRM"
+import IntegrationsPage from "../pages/Management/Integrations"
+import AutomationsPage from "../pages/Management/Automations"
 import { Navigate } from "react-router-dom"
 
 // Authentication related pages
@@ -67,6 +69,8 @@ const userRoutes = [
   { path: "/crm", component: <CRMPage /> },
   { path: "/events/planning", component: <PlanningEventsPage /> },
   { path: "/management/evaluation-levels", component: <EvaluationLevelsPage /> },
+  { path: "/management/integrations", component: <IntegrationsPage /> },
+  { path: "/management/automations", component: <AutomationsPage /> },
   { path: "/evaluation", component: <Evaluation /> },
   { path: "/admin/settings", component: <SettingsPage /> },
   // // //profile

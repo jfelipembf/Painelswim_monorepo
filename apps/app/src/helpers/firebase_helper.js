@@ -1,7 +1,7 @@
 // Firebase v9+ modular SDK
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { 
-  getAuth, 
+import {
+  getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
@@ -11,14 +11,14 @@ import {
   GoogleAuthProvider,
   FacebookAuthProvider
 } from 'firebase/auth';
-import { 
-  getFirestore, 
-  doc, 
-  setDoc, 
-  serverTimestamp 
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  serverTimestamp
 } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { getFunctions } from 'firebase/functions';
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 
 class FirebaseAuthBackend {
   constructor(firebaseConfig) {
@@ -34,7 +34,13 @@ class FirebaseAuthBackend {
       this.db = getFirestore(this.app);
       this.storage = getStorage(this.app);
       this.functions = getFunctions(this.app);
-      
+
+      // Connect to emulator if on localhost
+      if (window.location.hostname === "localhost") {
+        console.log("Using local Firebase Functions emulator");
+        connectFunctionsEmulator(this.functions, "localhost", 5001);
+      }
+
       // Segunda instância para criar usuários sem fazer login automático
       this.secondaryApp = initializeApp(firebaseConfig, 'Secondary');
       this.secondaryAuth = getAuth(this.secondaryApp);
@@ -99,10 +105,10 @@ class FirebaseAuthBackend {
     try {
       const userCredential = await createUserWithEmailAndPassword(this.secondaryAuth, email, password);
       const user = userCredential.user;
-      
+
       // Fazer logout da instância secundária imediatamente
       await signOut(this.secondaryAuth);
-      
+
       return user;
     } catch (error) {
       throw this._handleError(error);
@@ -252,7 +258,7 @@ const getFirebaseServices = () => {
 
 const onAuthStateChangedListener = (callback) => {
   const { auth } = getFirebaseServices();
-  if (!auth) return () => {};
+  if (!auth) return () => { };
   return onAuthStateChanged(auth, callback);
 };
 

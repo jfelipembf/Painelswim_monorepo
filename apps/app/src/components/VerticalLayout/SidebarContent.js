@@ -272,6 +272,18 @@ const SidebarContent = props => {
                     <span>Níveis de Avaliação</span>
                   </Link>
                 </li>
+                <li>
+                  <Link to={buildPath("/management/integrations")}>
+                    <i className="mdi mdi-api"></i>
+                    <span>Integrações</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to={buildPath("/management/automations")}>
+                    <i className="mdi mdi-robot-excited-outline"></i>
+                    <span>Automações</span>
+                  </Link>
+                </li>
               </ul>
             </li>
             <li>

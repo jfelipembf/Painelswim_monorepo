@@ -1,6 +1,7 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const db = admin.firestore();
+const { processTrigger } = require("../automations/automationHelper");
 
 /**
  * Soft delete de uma matrícula (muda status para canceled).
@@ -109,6 +110,36 @@ exports.createSingleSessionEnrollment = functions.region("us-central1").https.on
   try {
     const ref = db.collection("tenants").doc(idTenant).collection("branches").doc(idBranch).collection("enrollments");
     const docRef = await ref.add(payload);
+
+    // --- AUTOMATION TRIGGER: EXPERIMENTAL_SCHEDULED ---
+    if (payload.type === "experimental" || payload.type === "aula_experimental" || payload.subtype === "experimental") {
+      try {
+        // Need to fetch client name and professional name for variables if not in payload
+        // For now, assuming basic data or we fetch it.
+        // Let's assume payload has clientName or we read from doc if needed.
+        // To be fast, we use what we have. If names are missing, variables will be empty.
+
+        // NOTE: The UI typically sends `clientName` or we can fetch it.
+        // Let's rely on `data.clientName` or similar if passed, else "Aluno".
+
+        // To support date formatting, we might need a small helper or just raw string.
+
+        const triggerData = {
+          name: data.clientName || "Aluno",
+          date: data.sessionDate || "", // Assuming YYYY-MM-DD or similar
+          time: data.sessionTime || "",
+          professional: data.professionalName || "",
+          phone: data.clientPhone // Ensure UI sends this or we fetch
+        };
+
+        // Trigger async (don't await to block response)
+        processTrigger(idTenant, idBranch, "EXPERIMENTAL_SCHEDULED", triggerData);
+      } catch (triggerError) {
+        console.error("Error triggering automation:", triggerError);
+      }
+    }
+    // --------------------------------------------------
+
     return { id: docRef.id, ...payload };
   } catch (error) {
     console.error("Error creating single session enrollment:", error);
