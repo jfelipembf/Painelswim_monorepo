@@ -1,8 +1,7 @@
-import PropTypes from 'prop-types'
-import React from "react"
-
-import { Route, Routes } from "react-router-dom"
-import { connect } from "react-redux"
+import PropTypes from "prop-types";
+import React from "react";
+import { Route, Routes } from "react-router-dom";
+import { connect } from "react-redux";
 
 // Import Routes all
 import { userRoutes, authRoutes } from "./routes/allRoutes"
