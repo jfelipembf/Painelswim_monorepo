@@ -67,7 +67,8 @@ const ClientEnrollPage = () => {
     setExistingEnrollments,
     enrollmentType,
     setSessions, // Pass setter for optimistic update
-    reloadPageData: loadData
+    reloadPageData: loadData,
+    clientPhone: client?.phone || client?.mobile || client?.whatsapp || "" // Pass clientPhone
   })
 
   const isLoading = (key) => {

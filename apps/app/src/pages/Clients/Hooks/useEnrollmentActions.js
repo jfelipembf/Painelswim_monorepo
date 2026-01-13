@@ -8,7 +8,7 @@ import { createRecurringEnrollment, createSingleSessionEnrollment, listEnrollmen
 import { createExperimentalPayload, createRecurringPayload } from "../../../services/Enrollments/enrollment.helpers"
 import { ENROLLMENT_TYPES } from "../../../services/Enrollments/enrollment.types"
 
-export const useEnrollmentActions = ({ clientId, clientName, selectedSessionKeys, schedulesForGrid, setSelectedSessionKeys, setExistingEnrollments, enrollmentType = 'regular', reloadPageData, setSessions }) => {
+export const useEnrollmentActions = ({ clientId, clientName, clientPhone, selectedSessionKeys, schedulesForGrid, setSelectedSessionKeys, setExistingEnrollments, enrollmentType = 'regular', reloadPageData, setSessions }) => {
     const { isLoading, withLoading } = useLoading()
     const { settings } = useSystemSettings()
     const toast = useToast()
@@ -87,7 +87,7 @@ export const useEnrollmentActions = ({ clientId, clientName, selectedSessionKeys
                             session: s,
                             status: "active"
                         })
-                        await createSingleSessionEnrollment(payload)
+                        await createSingleSessionEnrollment({ ...payload, clientPhone })
                     }
                 } else {
                     // Recurring Logic (Default)

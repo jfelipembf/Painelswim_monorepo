@@ -2,6 +2,8 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const { FieldValue } = require("firebase-admin/firestore");
 const db = admin.firestore();
+const { formatDate } = require("../helpers/date");
+
 const { processTrigger } = require("../automations/automationHelper");
 
 /**
@@ -118,48 +120,63 @@ exports.createSingleSessionEnrollment = functions.region("us-central1").https.on
     if (payload.type === "experimental" || payload.type === "aula_experimental" || payload.subtype === "experimental") {
       try {
         console.log("[DEBUG] Trigger condition met. Preparing triggerData...");
+        const formattedDate = formatDate(data.sessionDate);
+
+        const getFirstName = (fullName) => {
+          if (!fullName) return "";
+          return fullName.split(" ")[0];
+        };
+
+        let teacherName = data.professionalName || "";
+        let teacherPhone = "";
+
+        // Pre-fetch Teacher Info if available to ensure we have the name for the student message
+        if (payload.idStaff) {
+          try {
+            const staffRef = db
+              .collection("tenants")
+              .doc(idTenant)
+              .collection("branches")
+              .doc(idBranch)
+              .collection("staff")
+              .doc(payload.idStaff);
+
+            const staffSnap = await staffRef.get();
+            if (staffSnap.exists) {
+              const staffData = staffSnap.data();
+              teacherName = staffData.name || staffData.firstName || teacherName;
+              teacherPhone = staffData.phone;
+            }
+          } catch (e) {
+            console.error("Error fetching staff data:", e);
+          }
+        }
+
+        const studentFirstName = getFirstName(data.clientName || "Aluno");
+        const teacherFirstName = getFirstName(teacherName);
+
         const triggerData = {
-          name: data.clientName || "Aluno",
-          date: data.sessionDate || "", // Assuming YYYY-MM-DD or similar
-          time: data.sessionTime || "",
-          professional: data.professionalName || "",
-          phone: data.clientPhone // Ensure UI sends this or we fetch
+          name: studentFirstName, // Default name variable is often student name in student templates
+          student: studentFirstName,
+          teacher: teacherFirstName,
+          professional: teacherFirstName, // Legacy variable support
+          date: formattedDate,
+          time: data.sessionTime || data.startTime || "",
+          phone: data.clientPhone
         };
 
         // 1. Notify Student
-        processTrigger(idTenant, idBranch, "EXPERIMENTAL_SCHEDULED", triggerData);
+        await processTrigger(idTenant, idBranch, "EXPERIMENTAL_SCHEDULED", triggerData);
 
-        // 2. Notify Teacher (if assigned)
-        if (payload.idStaff) {
-          const staffRef = db
-            .collection("tenants")
-            .doc(idTenant)
-            .collection("branches")
-            .doc(idBranch)
-            .collection("staff")
-            .doc(payload.idStaff);
+        // 2. Notify Teacher (if valid phone found)
+        if (teacherPhone) {
+          const teacherTriggerData = {
+            ...triggerData,
+            phone: teacherPhone,
+            name: teacherFirstName // In teacher context, {name} usually addresses the recipient (teacher)
+          };
 
-          const staffSnap = await staffRef.get();
-          if (staffSnap.exists) {
-            const staffData = staffSnap.data();
-            if (staffData.phone) {
-              const teacherTriggerData = {
-                ...triggerData,
-                phone: staffData.phone,
-                name: staffData.name || staffData.firstName || "Professor" // Override name variable for teacher context if needed, or keep student name? 
-                // Usually teacher wants to know STUDENT name. So let's keep triggerData.name as Student Name.
-                // But if the template says "Hello {name}", it will say "Hello StudentName".
-                // We should probably add variable {student} and {teacher}.
-                // Let's UPDATE triggerData to support clear roles.
-              };
-              // Add specific aliases
-              teacherTriggerData.student = triggerData.name;
-              teacherTriggerData.teacher = staffData.name || staffData.firstName;
-
-              // We use 'phone' for the recipient (processTrigger uses data.phone)
-              processTrigger(idTenant, idBranch, "EXPERIMENTAL_SCHEDULED_TEACHER", teacherTriggerData);
-            }
-          }
+          await processTrigger(idTenant, idBranch, "EXPERIMENTAL_SCHEDULED_TEACHER", teacherTriggerData);
         }
 
       } catch (triggerError) {

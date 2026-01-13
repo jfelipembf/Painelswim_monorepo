@@ -156,6 +156,8 @@ export const createSingleSessionEnrollment = async (data) => {
       ...payload,
       idTenant,
       idBranch,
+      clientPhone: data.clientPhone, // Explicitly pass phone
+      sessionTime: data.startTime // Map startTime to sessionTime for automation template
     })
 
     // [FUNNEL] Log Experimental Scheduled

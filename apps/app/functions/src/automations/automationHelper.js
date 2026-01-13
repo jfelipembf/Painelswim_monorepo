@@ -45,6 +45,10 @@ exports.processTrigger = async (idTenant, idBranch, triggerType, data) => {
                 message = message.replace(/{time}/g, data.time || "");
                 message = message.replace(/{professional}/g, data.professional || "");
                 message = message.replace(/{activity}/g, data.activity || "");
+                message = message.replace(/{student}/g, data.student || data.name || "");
+                message = message.replace(/{teacher}/g, data.teacher || data.professional || "");
+                message = message.replace(/{student}/g, data.student || data.name || "");
+                message = message.replace(/{teacher}/g, data.teacher || data.professional || "");
 
                 // You can add more variables here as needed
             }

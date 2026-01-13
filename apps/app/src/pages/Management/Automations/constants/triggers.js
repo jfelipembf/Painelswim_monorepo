@@ -16,8 +16,8 @@ export const TRIGGER_LABELS = {
 export const DEFAULT_MESSAGES = {
     NEW_LEAD: "Olá {name}, agradecemos seu interesse! Como podemos ajudar?",
     NEW_CLIENT: "Bem-vindo(a) {name}! Estamos muito felizes em ter você conosco.",
-    EXPERIMENTAL_SCHEDULED: "Olá {name}, sua aula experimental foi agendada para {date} às {time} com {professional}. Te esperamos!",
-    EXPERIMENTAL_SCHEDULED_TEACHER: "Olá {teacher}, você tem uma nova aula experimental agendada.\n\nAluno: {student}\nData: {date} às {time}\n\nBom trabalho!",
+    EXPERIMENTAL_SCHEDULED: "Olá {student}, passando para confirmar seu agendamento de aula experimental para o dia {date} às {time} aqui na A2 Aquática! 🏊‍♂️\n\nQualquer dúvida ou se precisar de alguma coisa, é só nos avisar.\n\nTe esperamos!",
+    EXPERIMENTAL_SCHEDULED_TEACHER: "Fala {teacher}! 🚀\n\nTem um novo talento chegando na área!\n\nAluno: {student}\nData: {date} às {time}\n\nVamos com tudo fazer essa aula ser incrível! Bom trabalho! 💪",
     EXPERIMENTAL_MISSED: "Olá {name}, notamos que não pôde comparecer à aula experimental. Gostaria de reagendar?",
     EXPERIMENTAL_ATTENDED: "Olá {name}, esperamos que tenha gostado da aula! O que achou de fazer a matrícula agora?",
     CONTRACT_EXPIRING: "Olá {name}, seu contrato vence em breve ({date}). Renove agora e garanta condições especiais!",
