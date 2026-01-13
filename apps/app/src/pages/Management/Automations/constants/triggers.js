@@ -22,7 +22,7 @@ export const DEFAULT_MESSAGES = {
     EXPERIMENTAL_ATTENDED: "Olá {name}, esperamos que tenha gostado da aula! O que achou de fazer a matrícula agora?",
     CONTRACT_EXPIRING: "Olá {name}, seu contrato vence em breve ({date}). Renove agora e garanta condições especiais!",
     CONTRACT_RENEWED: "Obrigado por renovar conosco, {name}! Continue focado nos treinos.",
-    EVALUATION_RESULT: "Olá {name}, o resultado da sua avaliação está disponível. Confira!",
+    EVALUATION_RESULT: "Olá {student}, parabéns por finalizar mais uma avaliação aqui na A2 Aquática! 🏊‍♂️\n\nEssa é a recompensa de todo o seu esforço e dedicação. Continue assim!\n\nAbaixo segue o resultado da sua última avaliação realizada no dia {date}:\n\n{results}\n\nConte conosco para continuar evoluindo! 💪",
     TEST_RESULT: "Olá {name}, seu resultado no teste foi registrado. Parabéns pelo esforço!",
     ENROLLMENT_CREATED: "Olá {name}, sua matrícula foi confirmada com sucesso!",
     BIRTHDAY: "Parabéns {name}! Desejamos muitas felicidades e saúde neste dia especial! 🎂",

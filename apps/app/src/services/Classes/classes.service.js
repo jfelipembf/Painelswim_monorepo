@@ -44,7 +44,7 @@ export const createClasses = async (data = {}, { weeks = 4 } = {}) => {
         idArea: item.idArea || rest.idArea || null,
       })
 
-      console.log(`[DEBUG] createClasses calling createClassFn for schedule item`, classPayload);
+
       const startT = Date.now();
       try {
         const result = await createClassFn({
@@ -52,7 +52,7 @@ export const createClasses = async (data = {}, { weeks = 4 } = {}) => {
           idBranch,
           classData: classPayload,
         })
-        console.log(`[DEBUG] createClasses success (${Date.now() - startT}ms)`, result.data);
+
         const createdClass = result.data
         created.push(createdClass)
       } catch (err) {
@@ -71,7 +71,7 @@ export const createClasses = async (data = {}, { weeks = 4 } = {}) => {
     const { weekDays, ...rest } = data
     const classPayload = { ...rest, weekday: day ?? null }
 
-    console.log(`[DEBUG] createClasses (weekDays) calling createClassFn for day ${day}`, classPayload);
+
     const startT = Date.now();
     try {
       const result = await createClassFn({
@@ -79,7 +79,7 @@ export const createClasses = async (data = {}, { weeks = 4 } = {}) => {
         idBranch,
         classData: classPayload,
       })
-      console.log(`[DEBUG] createClasses (weekDays) success (${Date.now() - startT}ms)`, result.data);
+
       const createdClass = result.data
       created.push(createdClass)
     } catch (err) {

@@ -104,7 +104,7 @@ export const deleteEnrollment = async (idEnrollment, { ctxOverride = null, enrol
       idBranch: ctx.idBranch,
       idEnrollment,
     }
-    console.log("Calling deleteEnrollment Cloud Function with:", payload)
+
 
     const result = await deleteEnrollmentFn(payload)
 

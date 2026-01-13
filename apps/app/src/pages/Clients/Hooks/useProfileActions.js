@@ -55,9 +55,9 @@ export const useProfileActions = ({
     }
 
     const handleRemoveEnrollment = async enrollment => {
-        console.log("handleRemoveEnrollment called with:", enrollment)
+
         const idToDelete = enrollment.idEnrollment || enrollment.id
-        console.log("ID resolving to:", idToDelete)
+
 
         if (!idToDelete) {
             alert("Erro: ID inválido: idEnrollment=" + enrollment.idEnrollment + " id=" + enrollment.id)
@@ -68,7 +68,7 @@ export const useProfileActions = ({
             await withLoading('remove', async () => {
                 // Pass full enrollment object so service can log cancellation if experimental
                 const res = await deleteEnrollment(idToDelete, { enrollmentData: enrollment })
-                console.log("deleteEnrollment result:", res)
+
 
                 // Atualiza lista local
                 setEnrollmentsState(prev =>

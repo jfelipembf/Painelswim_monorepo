@@ -58,7 +58,7 @@ exports.createStaffUser = functions.region("us-central1").https.onCall(async (da
 
         if (userRecord) {
             // Usuário já existe, reaproveitar UID
-            console.log(`Usuário já existe no Auth (UID: ${userRecord.uid}), vinculando à nova unidade.`);
+
             uid = userRecord.uid;
         } else {
             // 2. Criar usuário no Auth

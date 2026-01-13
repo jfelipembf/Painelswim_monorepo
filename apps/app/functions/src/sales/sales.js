@@ -46,8 +46,8 @@ const detectSaleType = (items) => {
 exports.saveSale = functions.https.onCall(async (data, context) => {
   const { idTenant, idBranch, uid, token } = requireAuthContext(data, context);
   const { idSale: providedIdSale, items, payments, dueDate } = data;
-  console.log(`[saveSale] Start. SaleID: ${providedIdSale || 'NEW'}, Items: ${items?.length}, Payments: ${payments?.length}`);
-  console.log(`[saveSale] Totals:`, JSON.stringify(data.totals));
+
+
 
 
   // 1. Determinar ID e SaleCode
@@ -216,9 +216,9 @@ exports.saveSale = functions.https.onCall(async (data, context) => {
 
   // 5. Processar Recebíveis (Se houver saldo devedor)
   const pending = Number(data.totals?.pending || 0);
-  console.log(`[saveSale] Checking receivables. isNew: ${isNew}, Pending: ${pending}`);
+
   if (isNew && pending > 0) {
-    console.log(`[saveSale] Creating receivable for amount: ${pending}`);
+
     await createReceivableInternal({
       idTenant,
       idBranch,

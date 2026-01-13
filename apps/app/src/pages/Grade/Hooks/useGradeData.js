@@ -42,11 +42,8 @@ export const useGradeData = (referenceDate) => {
                         listClasses(),
                     ])
 
-                    console.log("DEBUG: useGradeData fetched", {
-                        sessionsCount: sess?.length,
-                        hasActivities: acts?.length > 0,
-                        hasStaff: stf?.length > 0
-                    })
+
+
 
                     const rawSessions = Array.isArray(sess) ? sess : []
 

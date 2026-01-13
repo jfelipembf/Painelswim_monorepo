@@ -3,7 +3,7 @@ const admin = require("firebase-admin");
 const axios = require("axios");
 const { getIntegrationConfigInternal } = require("../shared/integrations");
 
-console.log("Loading whatsapp.js module...");
+
 
 if (!admin.apps.length) {
     admin.initializeApp();
@@ -71,8 +71,8 @@ exports.sendWhatsAppMessageInternal = sendWhatsAppMessageInternal;
 exports.sendWhatsAppMessage = functions
     .region("us-central1")
     .https.onCall(async (data, context) => {
-        console.log("--------------- START sendWhatsAppMessage ---------------");
-        console.log("Received data:", JSON.stringify(data));
+
+
 
         if (!context.auth) {
             console.warn("User not authenticated.");

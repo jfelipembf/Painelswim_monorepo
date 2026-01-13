@@ -154,7 +154,7 @@ exports.updateClass = functions.region("us-central1").https.onCall(async (data, 
                 });
 
                 await batch.commit();
-                console.log(`Updated ${sessionsSnap.size} future sessions due to class change.`);
+
             }
         }
 
@@ -177,7 +177,7 @@ exports.updateClass = functions.region("us-central1").https.onCall(async (data, 
                     const batch = db.batch();
                     sessionsToDeleteSnap.docs.forEach(d => batch.delete(d.ref));
                     await batch.commit();
-                    console.log(`Deleted ${sessionsToDeleteSnap.size} future sessions after ${limitIso}`);
+
                 }
 
                 // 2. Terminate Active Enrollments

@@ -11,7 +11,7 @@ exports.checkBirthdayAutomations = functions.pubsub
     .schedule("0 9 * * *") // Daily at 09:00
     .timeZone("America/Sao_Paulo")
     .onRun(async (context) => {
-        console.log("Starting checkBirthdayAutomations...");
+
 
         // 1. Get all active BIRTHDAY automations across all tenants/branches
         // Using Collection Group Query requires an index on 'type' and 'active'
@@ -24,11 +24,11 @@ exports.checkBirthdayAutomations = functions.pubsub
                 .get();
 
             if (automationsSnap.empty) {
-                console.log("No active BIRTHDAY automations found.");
+
                 return null;
             }
 
-            console.log(`Found ${automationsSnap.size} active birthday automations.`);
+
 
             const promises = automationsSnap.docs.map(async (doc) => {
                 const automation = doc.data();
@@ -50,7 +50,7 @@ exports.checkBirthdayAutomations = functions.pubsub
                 const targetMonth = targetDate.getMonth() + 1; // 1-12
                 const targetDay = targetDate.getDate(); // 1-31
 
-                console.log(`Checking branch ${idBranch} for birthdays on ${targetDay}/${targetMonth} (DaysBefore: ${daysBefore})`);
+
 
                 // Query Clients: simpler to query by birthMonth and birthDay if stored separately.
                 // If birthDate is YYYY-MM-DD string, we can't easily query range.
@@ -87,7 +87,7 @@ exports.checkBirthdayAutomations = functions.pubsub
                     }
                 });
 
-                console.log(`Found ${matches.length} clients having birthday on target date.`);
+
 
                 // Process Trigger for each match
                 const triggerPromises = matches.map(client => {
@@ -112,7 +112,7 @@ exports.checkBirthdayAutomations = functions.pubsub
             });
 
             await Promise.all(promises);
-            console.log("Finished processing birthday automations.");
+
 
         } catch (error) {
             console.error("Error in checkBirthdayAutomations:", error);

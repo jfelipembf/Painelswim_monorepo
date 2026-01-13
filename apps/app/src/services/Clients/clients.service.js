@@ -71,7 +71,7 @@ export const createClient = async data => {
 
     // [FUNNEL] Log New Lead
     if (result.data?.id) {
-      console.log("[Funnel] Logging new lead for:", result.data.id)
+
       await logNewLead(result.data.id, { createdBy: 'system' })
     }
 

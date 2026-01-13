@@ -22,7 +22,7 @@ export const loadCrmSegment = async (segmentId, filterDateStart, filterDateEnd) 
     const db = requireDb()
     const ctx = getContext()
 
-    console.log(`Loading CRM Data for segment: ${segmentId}`, { filterDateStart, filterDateEnd })
+
 
     switch (segmentId) {
         case "leads":

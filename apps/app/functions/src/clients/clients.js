@@ -47,7 +47,7 @@ exports.createClient = functions
   .region("us-central1")
   .https.onCall(async (data, context) => {
     try {
-      console.log("createClient started", JSON.stringify(data));
+
       if (!context.auth) {
         throw new functions.https.HttpsError("unauthenticated", "Usuário não autenticado");
       }
@@ -107,7 +107,7 @@ exports.createClient = functions
       payload.createdAt = FieldValue.serverTimestamp();
       payload.updatedAt = FieldValue.serverTimestamp();
 
-      console.log("createClient payload ready:", JSON.stringify(payload));
+
 
       await clientRef.set(payload);
 
@@ -175,8 +175,7 @@ exports.updateClient = functions
       // Ensure backend timestamp
       payload.updatedAt = FieldValue.serverTimestamp();
 
-      console.log("updateClient payload ready:", JSON.stringify(payload));
-      console.log("updateClient payload ready:", JSON.stringify(payload));
+
 
       await clientRef.update(payload);
 

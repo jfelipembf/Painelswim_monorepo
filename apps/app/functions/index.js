@@ -109,6 +109,10 @@ exports.deleteEnrollment = require("./src/enrollments/enrollments").deleteEnroll
 exports.createRecurringEnrollment = require("./src/enrollments/enrollments").createRecurringEnrollment;
 exports.createSingleSessionEnrollment = require("./src/enrollments/enrollments").createSingleSessionEnrollment;
 
+// Evaluations
+exports.onEvaluationWrite = require("./src/evaluations/evaluations").onEvaluationWrite;
+exports.saveEvaluation = require("./src/evaluations/evaluations").saveEvaluation;
+
 // Catalog Contracts (Templates)
 exports.createContract = require("./src/contracts/contracts").createContract;
 exports.updateContract = require("./src/contracts/contracts").updateContract;

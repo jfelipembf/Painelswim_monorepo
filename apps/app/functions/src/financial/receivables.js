@@ -253,7 +253,7 @@ exports.payReceivables = functions.region("us-central1").https.onCall(async (dat
 
       const receivablesSnap = await t.get(query);
 
-      console.log(`[payReceivables] Found ${receivablesSnap.size} receivables for client ${idClient}`);
+
 
       if (receivablesSnap.empty) {
         console.error(`[payReceivables] No receivables found for client ${idClient}`);
@@ -265,19 +265,14 @@ exports.payReceivables = functions.region("us-central1").https.onCall(async (dat
         ...doc.data(),
       }));
 
-      console.log(`[payReceivables] Receivables:`, receivables.map(r => ({
-        id: r.id,
-        balance: r.balance,
-        pending: r.pending,
-        status: r.status
-      })));
+
 
       // Calcular total em aberto (compatibilidade balance/pending)
       const totalPending = receivables.reduce((sum, rec) =>
         sum + Number(rec.balance || rec.pending || 0), 0
       );
 
-      console.log(`[payReceivables] Total pending: ${totalPending}, Payment amount: ${paymentAmount}`);
+
 
       // 2. Distribuir pagamento
       const { distribution, remainingAmount, totalDistributed } = distributePaymentToReceivables(
@@ -285,11 +280,7 @@ exports.payReceivables = functions.region("us-central1").https.onCall(async (dat
         paymentAmount,
       );
 
-      console.log(`[payReceivables] Distribution result:`, {
-        totalDistributed,
-        remainingAmount,
-        distributionCount: distribution.length
-      });
+
 
       if (totalDistributed === 0) {
         console.error(`[payReceivables] totalDistributed is 0. Receivables:`, receivables.map(r => ({

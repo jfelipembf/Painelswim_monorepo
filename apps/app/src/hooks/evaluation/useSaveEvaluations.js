@@ -56,7 +56,16 @@ export const useSaveEvaluations = ({
     }
 
     const excluded = excludedIds instanceof Set ? excludedIds : new Set(excludedIds || [])
-    const activeclients = (Array.isArray(clients) ? clients : []).filter(s => !excluded.has(String(s.id)))
+
+    // Deduplicate clients by ID to prevent double automation triggers
+    const uniqueClientsMap = new Map();
+    (Array.isArray(clients) ? clients : []).forEach(c => {
+      if (c.id && !excluded.has(String(c.id))) {
+        uniqueClientsMap.set(String(c.id), c);
+      }
+    });
+    const activeclients = Array.from(uniqueClientsMap.values());
+
     if (!activeclients.length) return
 
     const draft = draftLevelsByTopicId || {}

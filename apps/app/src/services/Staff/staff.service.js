@@ -53,7 +53,7 @@ export const createStaff = async (staff, { ctxOverride = null } = {}) => {
       idTenant: ctx.idTenant,
       idBranch: ctx.idBranch,
     }
-    console.log("Calling createStaffUser with:", params)
+
     const result = await createStaffFn(params)
     return { id: result.data.uid, ...staff }
   } catch (error) {
@@ -88,7 +88,7 @@ export const updateStaff = async (staff, { ctxOverride = null } = {}) => {
       idTenant: ctx.idTenant,
       idBranch: ctx.idBranch,
     }
-    console.log("Calling updateStaffUser with:", params)
+
     await updateStaffFn(params)
     return staff
   } catch (error) {

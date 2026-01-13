@@ -51,10 +51,26 @@ export const createClientEvaluation = async ({
     updatedByUserId: updatedByUserId != null ? String(updatedByUserId) : null,
   }
 
-  const payload = makeCreatePayload(data, ctx)
+  // REFACTOR: Use Cloud Function for Create to ensure Automations trigger
+  // const payload = makeCreatePayload(data, ctx)
+  // const ref = await addDoc(col, payload)
+  // return { id: ref.id, ...payload }
 
-  const ref = await addDoc(col, payload)
-  return { id: ref.id, ...payload }
+  const { getFirebaseFunctions } = require("../../helpers/firebase_helper");
+  const { httpsCallable } = require("firebase/functions");
+
+  const functions = getFirebaseFunctions();
+  const saveFunc = httpsCallable(functions, "saveEvaluation");
+
+  const result = await saveFunc({
+    idTenant: ctx.idTenant,
+    idBranch: ctx.idBranch,
+    idClient: String(idClient),
+    action: "create",
+    payload: data // Passing raw data, let backend handle timestamps/metadata or we pass it partially
+  });
+
+  return result.data;
 }
 
 export const getLastClientEvaluation = async ({ idClient, idActivity, idTopic, ctxOverride = null }) => {
@@ -150,10 +166,27 @@ export const updateClientEvaluation = async (id, idClient, data, { ctxOverride =
 
   const ref = clientEvaluationDoc(db, ctx, idClient, id)
 
-  const payload = makeUpdatePayload(data)
+  // REFACTOR: Use Cloud Function for Update
+  // const payload = makeUpdatePayload(data)
+  // await updateDoc(ref, payload)
+  // return { id, ...payload }
 
-  await updateDoc(ref, payload)
-  return { id, ...payload }
+  const { getFirebaseFunctions } = require("../../helpers/firebase_helper");
+  const { httpsCallable } = require("firebase/functions");
+
+  const functions = getFirebaseFunctions();
+  const saveFunc = httpsCallable(functions, "saveEvaluation");
+
+  const result = await saveFunc({
+    idTenant: ctx.idTenant,
+    idBranch: ctx.idBranch,
+    idClient: String(idClient),
+    idEvaluation: id,
+    action: "update",
+    payload: data
+  });
+
+  return result.data;
 }
 
 export default {

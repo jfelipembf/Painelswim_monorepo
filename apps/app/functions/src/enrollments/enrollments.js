@@ -116,10 +116,10 @@ exports.createSingleSessionEnrollment = functions.region("us-central1").https.on
 
     // --- AUTOMATION TRIGGER: EXPERIMENTAL_SCHEDULED ---
     // --- AUTOMATION TRIGGER: EXPERIMENTAL_SCHEDULED ---
-    console.log(`[DEBUG] Checking automation trigger for type: ${payload.type}, subtype: ${payload.subtype}`);
+
     if (payload.type === "experimental" || payload.type === "aula_experimental" || payload.subtype === "experimental") {
       try {
-        console.log("[DEBUG] Trigger condition met. Preparing triggerData...");
+
         const formattedDate = formatDate(data.sessionDate);
 
         const getFirstName = (fullName) => {

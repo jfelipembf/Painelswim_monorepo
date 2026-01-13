@@ -16,7 +16,7 @@ const updateSummaries = async ({
   salesDelta = 0, // Novo: Delta de volume de vendas (valor bruto da venda)
 }) => {
   if (!idTenant || !idBranch || !dateStr) {
-    console.log("[updateSummaries] Missing params:", { idTenant, idBranch, dateStr });
+
     return;
   }
 
@@ -67,7 +67,7 @@ const updateSummaries = async ({
 
   try {
     await batch.commit();
-    console.log(`[updateSummaries] Success for ${dateStr}:`, { revenueDelta, expenseDelta, salesDelta });
+
   } catch (err) {
     console.error("[updateSummaries] Error committing batch:", err);
   }

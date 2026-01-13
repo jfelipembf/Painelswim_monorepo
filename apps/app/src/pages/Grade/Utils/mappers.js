@@ -2,12 +2,8 @@ export const mapSessionsToSchedules = (sessions, activities, areas, staff) => {
     const base = (Array.isArray(sessions) ? sessions : []).filter(Boolean)
 
     if (base.length > 0) {
-        console.log("DEBUG: mapSessionsToSchedules", {
-            totalSessions: base.length,
-            totalStaff: staff?.length,
-            sampleSession: base[0],
-            sampleStaff: staff?.[0]
-        })
+
+
     }
 
     const mapped = base.map((sess) => {
