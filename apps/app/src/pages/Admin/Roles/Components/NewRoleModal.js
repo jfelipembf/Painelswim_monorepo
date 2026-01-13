@@ -30,14 +30,20 @@ const NewRoleModal = ({ isOpen, toggle, onSubmit, initialRole, mode = "create" }
 
   const handleSubmit = e => {
     e.preventDefault()
-    if (!name.trim()) return
-    onSubmit({
-      id: name.toLowerCase().replace(/\s+/g, "-"),
+    const data = {
       label: name.trim(),
       description: description.trim() || "Cargo criado manualmente",
       isInstructor,
-      permissions: {},
-    })
+      permissions: initialRole?.permissions || {},
+    }
+
+    if (mode === "create") {
+      data.id = name.toLowerCase().replace(/\s+/g, "-")
+    } else {
+      data.id = initialRole.id
+    }
+
+    onSubmit(data)
   }
 
   return (

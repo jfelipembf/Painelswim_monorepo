@@ -11,6 +11,7 @@ import {
   postFakeLogin,
   postJwtLogin,
 } from "../../../helpers/fakebackend_helper";
+import { hasPermission } from "../../../helpers/permission_helper";
 
 const fireBaseBackend = getFirebaseBackend();
 
@@ -77,6 +78,16 @@ function* loginUser({ payload: { user, history } }) {
       }
 
       const staffData = staffSnap.data();
+      const roleId = staffData?.role?.toLowerCase().replace(/\s+/g, "-") || null;
+      let roleData = null;
+
+      if (roleId) {
+        const roleRef = doc(tenantRef, "branches", idBranch, "roles", roleId);
+        const roleSnap = yield call(getDoc, roleRef);
+        if (roleSnap.exists()) {
+          roleData = { id: roleSnap.id, ...roleSnap.data() };
+        }
+      }
 
       const fullNameFromStaff = staffData
         ? [staffData.firstName, staffData.lastName].filter(Boolean).join(" ")
@@ -92,7 +103,7 @@ function* loginUser({ payload: { user, history } }) {
         idBranch,
         tenantSlug,
         branchSlug,
-        role: staffData?.role || null,
+        role: roleData || staffData?.role || null, // Se achou o objeto, usa ele. Fallback para a string original.
         staff: staffData,
       };
       localStorage.setItem(sessionKey, JSON.stringify(sessionData));
@@ -118,11 +129,16 @@ function* loginUser({ payload: { user, history } }) {
       localStorage.setItem("authUser", JSON.stringify(response));
       yield put(loginSuccess(response));
     }
+
+    // Decidir o destino padrão baseado em permissões
+    const canViewManagement = hasPermission("dashboards_management_view");
+    const targetDashboard = canViewManagement ? "dashboard" : "dashboard/operational";
+
     // Redirecionar mantendo o slug se houver
     if (tenantSlug && branchSlug) {
-      history(`/${tenantSlug}/${branchSlug}/dashboard`);
+      history(`/${tenantSlug}/${branchSlug}/${targetDashboard}`);
     } else {
-      history('/dashboard');
+      history(`/${targetDashboard}`);
     }
   } catch (error) {
     const message = typeof error === "string" ? error : error?.message || "Não foi possível entrar.";

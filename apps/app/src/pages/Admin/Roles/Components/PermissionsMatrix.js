@@ -38,29 +38,49 @@ const PermissionsMatrix = ({
               </tr>
             </thead>
             <tbody>
-              {permissions.map(permission => (
-                <tr key={permission.id}>
-                  <td>
-                    <div className="fw-semibold">{permission.label}</div>
-                  </td>
-                  {roles.map(role => {
-                    const checked = Boolean(role.permissions?.[permission.id])
-                    const inputId = `${role.id}-${permission.id}`
-                    return (
-                      <td key={inputId} className="text-center">
-                        <FormGroup switch className="mb-0 d-inline-flex align-items-center">
-                          <Input
-                            type="switch"
-                            id={inputId}
-                            checked={checked}
-                            disabled={editMode}
-                            onChange={() => onTogglePermission(role.id, permission.id)}
-                          />
-                        </FormGroup>
+              {Object.entries(
+                permissions.reduce((acc, p) => {
+                  const cat = p.category || "GERAL"
+                  if (!acc[cat]) acc[cat] = []
+                  acc[cat].push(p)
+                  return acc
+                }, {})
+              ).map(([category, catPermissions]) => (
+                <React.Fragment key={category}>
+                  <tr className="bg-light bg-opacity-50">
+                    <td colSpan={roles.length + 1} className="py-2">
+                      <span className="badge badge-soft-primary px-3 py-2 fs-6">
+                        {category}
+                      </span>
+                    </td>
+                  </tr>
+                  {catPermissions.map(permission => (
+                    <tr key={permission.id}>
+                      <td className="ps-4">
+                        <div className="fw-semibold">{permission.label}</div>
+                        <div className="text-muted small">{permission.description}</div>
                       </td>
-                    )
-                  })}
-                </tr>
+                      {roles.map(role => {
+                        const isOwnerRole = role.id === "owner" || role.label?.toLowerCase() === "proprietário"
+                        const checked = isOwnerRole ? true : Boolean(role.permissions?.[permission.id])
+                        const inputId = `${role.id}-${permission.id}`
+                        return (
+                          <td key={inputId} className="text-center">
+                            <FormGroup switch className="mb-0 d-inline-flex align-items-center">
+                              <Input
+                                type="switch"
+                                id={inputId}
+                                checked={checked}
+                                disabled={editMode || isOwnerRole}
+                                onChange={() => onTogglePermission(role.id, permission.id)}
+                              />
+                            </FormGroup>
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </React.Fragment>
               ))}
             </tbody>
           </table>

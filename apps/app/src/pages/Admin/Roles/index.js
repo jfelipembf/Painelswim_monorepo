@@ -6,13 +6,14 @@ import PermissionsMatrix from "./Components/PermissionsMatrix"
 import RoleModal from "./Components/NewRoleModal"
 import { setBreadcrumbItems } from "../../../store/actions"
 import { PERMISSIONS, DEFAULT_ROLES } from "./Constants"
-import { ensureDefaultRoles, createRole } from "../../../services/Roles/index"
+import { ensureDefaultRoles, createRole, deleteRole } from "../../../services/Roles/index"
 import { useToast } from "components/Common/ToastProvider"
 import PageLoader from "../../../components/Common/PageLoader"
 import { useLoading } from "../../../hooks/useLoading"
 
 const RolesPage = ({ setBreadcrumbItems }) => {
   const [roles, setRoles] = useState([])
+  const [pendingChanges, setPendingChanges] = useState({}) // { roleId: { ...updatedRole } }
   const [editMode, setEditMode] = useState(false)
   const [selectedRoles, setSelectedRoles] = useState(new Set())
   const [modalOpen, setModalOpen] = useState(false)
@@ -61,20 +62,64 @@ const RolesPage = ({ setBreadcrumbItems }) => {
   }
 
   const handleTogglePermission = (roleId, permissionId) => {
-    if (editMode) return
-    setRoles(prev =>
-      prev.map(role =>
-        role.id === roleId
-          ? {
-            ...role,
-            permissions: {
-              ...role.permissions,
-              [permissionId]: !role.permissions?.[permissionId],
-            },
-          }
-          : role
-      )
-    )
+    if (editMode) {
+      toast.show({ title: "Dica", description: "Saia do modo de edição de nomes para alterar as permissões.", color: "info" })
+      return
+    }
+
+    const baseRole = pendingChanges[roleId] || roles.find(r => r.id === roleId);
+    if (!baseRole) return;
+
+    const updatedRole = {
+      ...baseRole,
+      permissions: {
+        ...(baseRole.permissions || {}),
+        [permissionId]: !baseRole.permissions?.[permissionId],
+      },
+    };
+
+    // Atualiza estado local de roles para feedback visual imediato
+    setRoles(prev => prev.map(role => role.id === roleId ? updatedRole : role));
+
+    // Armazena no buffer de mudanças pendentes
+    setPendingChanges(prev => ({
+      ...prev,
+      [roleId]: updatedRole
+    }));
+  }
+
+  const handleSaveAllChanges = async () => {
+    const changesCount = Object.keys(pendingChanges).length;
+    if (changesCount === 0) return;
+
+    try {
+      await withLoading('submit', async () => {
+        for (const roleId in pendingChanges) {
+          await createRole(pendingChanges[roleId]);
+        }
+        setPendingChanges({});
+        toast.show({ title: "Sucesso", description: "Todas as alterações foram salvas!", color: "success" });
+      });
+    } catch (e) {
+      console.error(e);
+      toast.show({ title: "Erro", description: "Algumas alterações não puderam ser salvas.", color: "danger" });
+    }
+  }
+
+  const handleCancelChanges = () => {
+    // Recarregar os dados do banco para descartar o estado local sujo
+    const load = async () => {
+      try {
+        await withLoading('page', async () => {
+          const seeded = await ensureDefaultRoles(DEFAULT_ROLES)
+          setRoles(seeded)
+          setPendingChanges({})
+        })
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    load()
   }
 
   const handleSelectRole = roleId => {
@@ -86,11 +131,24 @@ const RolesPage = ({ setBreadcrumbItems }) => {
     })
   }
 
-  const handleDeleteSelected = () => {
+  const handleDeleteSelected = async () => {
     if (selectedRoles.size === 0) return
-    setRoles(prev => prev.filter(role => !selectedRoles.has(role.id)))
-    setSelectedRoles(new Set())
-    setEditMode(false)
+    const idsToDelete = Array.from(selectedRoles)
+
+    try {
+      await withLoading('submit', async () => {
+        for (const id of idsToDelete) {
+          await deleteRole(id)
+        }
+        setRoles(prev => prev.filter(role => !selectedRoles.has(role.id)))
+        setSelectedRoles(new Set())
+        setEditMode(false)
+        toast.show({ title: "Sucesso", description: "Cargos excluídos com sucesso.", color: "success" })
+      })
+    } catch (e) {
+      console.error(e)
+      toast.show({ title: "Erro", description: "Erro ao excluir cargos.", color: "danger" })
+    }
   }
 
   const handleOpenCreateModal = () => {
@@ -182,7 +240,17 @@ const RolesPage = ({ setBreadcrumbItems }) => {
     </>
   ) : (
     <>
-      <Button color="light" size="sm" onClick={toggleEditMode}>
+      {Object.keys(pendingChanges).length > 0 && (
+        <>
+          <Button color="success" size="sm" onClick={handleSaveAllChanges} disabled={isLoading('submit')}>
+            {isLoading('submit') ? "Salvando..." : "Salvar Alterações"}
+          </Button>
+          <Button color="light" size="sm" onClick={handleCancelChanges} disabled={isLoading('submit')}>
+            Descartar
+          </Button>
+        </>
+      )}
+      <Button color="light" size="sm" onClick={toggleEditMode} disabled={Object.keys(pendingChanges).length > 0}>
         Editar cargos
       </Button>
       <Button color="primary" size="sm" onClick={handleOpenCreateModal}>

@@ -1,4 +1,4 @@
-import { addDoc, getDocs, setDoc } from "firebase/firestore"
+import { addDoc, deleteDoc, getDocs, setDoc } from "firebase/firestore"
 import { makeCreatePayload } from "../_core/payload"
 import { rolesCol, roleDoc, getContext, getDb } from "./roles.repository"
 
@@ -28,6 +28,13 @@ export const createRole = async (role, { ctxOverride = null } = {}) => {
 
   const docRef = await addDoc(ref, payload)
   return { id: docRef.id, ...payload }
+}
+
+export const deleteRole = async (roleId, { ctxOverride = null } = {}) => {
+  const db = getDb()
+  const ctx = getContext(ctxOverride)
+  const ref = roleDoc(db, ctx, roleId)
+  await deleteDoc(ref)
 }
 
 export const ensureDefaultRoles = async (defaultRoles, { ctxOverride = null } = {}) => {
