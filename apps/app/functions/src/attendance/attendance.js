@@ -4,6 +4,18 @@ const { FieldValue } = require("firebase-admin/firestore");
 const db = admin.firestore();
 
 /**
+ * ============================================================================
+ * ATTENDANCE ACTIONS
+ * ____________________________________________________________________________
+ *
+ * 1. markAttendance: Registra presença/falta de um aluno em determinada sessão.
+ * 2. saveSessionSnapshot: Salva o resumo (snapshot) de quem estava presente.
+ * 3. addExtraParticipantToSession: Adiciona aluno avulso/extra na sessão.
+ *
+ * ============================================================================
+ */
+
+/**
  * Registra a presença de um aluno em uma sessão específica.
  * Salva no histórico do cliente e também prepara para o snapshot da sessão.
  */

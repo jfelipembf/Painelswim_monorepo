@@ -7,6 +7,7 @@ const { createTransactionInternal } = require("../financial/transactions");
 const { createReceivableInternal } = require("../financial/receivables");
 const { addClientCreditInternal } = require("../financial/credits");
 const { createClientContractInternal } = require("../clientContracts/clientContracts");
+const { toISODate } = require("../helpers/date");
 
 const db = admin.firestore();
 
@@ -78,7 +79,7 @@ exports.saveSale = functions.https.onCall(async (data, context) => {
     saleCode,
     idClient: data.idClient || null,
     idEmployeeSale: data.idEmployeeSale || null,
-    saleDate: data.saleDate || new Date().toISOString().split("T")[0],
+    saleDate: data.saleDate || toISODate(new Date()),
     status: data.status || "open",
     requiresEnrollment: Boolean(data.requiresEnrollment),
     enrollmentStatus: data.enrollmentStatus || "pending",
@@ -151,7 +152,7 @@ exports.saveSale = functions.https.onCall(async (data, context) => {
               ...item, // Passa tudo (allowSuspension, allowedWeekDays, etc)
               idClient: data.idClient,
               contractTitle: item.name || item.description || item.label || "Contrato via Venda",
-              startDate: item.startDate || data.saleDate || new Date().toISOString().split("T")[0],
+              startDate: item.startDate || data.saleDate || toISODate(new Date()),
               endDate: item.endDate,
               value: 0, // Já contabilizado na venda
               idSale: saleRef.id,
@@ -197,7 +198,7 @@ exports.saveSale = functions.https.onCall(async (data, context) => {
           saleType: detectSaleType(items),
           source: "contract",
           amount,
-          date: new Date().toISOString().split("T")[0],
+          date: toISODate(new Date()),
           category: "Venda",
           description: `Venda ${saleCode}`,
           idSale: saleRef.id,
@@ -229,7 +230,7 @@ exports.saveSale = functions.https.onCall(async (data, context) => {
         idSale: saleRef.id,
         idClient: data.idClient || null,
         amount: Number(data.totals.pending),
-        dueDate: dueDate || new Date().toISOString().split("T")[0],
+        dueDate: dueDate || toISODate(new Date()),
         status: "open",
         description: `Saldo venda ${saleCode}`,
       },

@@ -11,8 +11,10 @@ const TYPE_PREFIX_MAP = {
   contract: "CONT",
   enrollment: "ENRL",
   receivable: "RCV",
+  client: "CLNT",
   generic: "GEN",
 };
+
 
 const SALE_SUBTYPE_MAP = {
   contract: "CONT",
@@ -44,19 +46,19 @@ const getNextSequentialNumber = async (idTenant, idBranch, typeKey, year) => {
   if (!idTenant || !idBranch) return 1;
 
   const counterRef = db
-      .collection("tenants")
-      .doc(idTenant)
-      .collection("branches")
-      .doc(idBranch)
-      .collection("counters")
-      .doc(`${typeKey}-${year}`);
+    .collection("tenants")
+    .doc(idTenant)
+    .collection("branches")
+    .doc(idBranch)
+    .collection("counters")
+    .doc(`${typeKey}-${year}`);
 
   try {
     const next = await db.runTransaction(async (t) => {
       const snap = await t.get(counterRef);
       const current = snap.exists ? Number(snap.data().value || 0) : 0;
       const value = current + 1;
-      t.set(counterRef, {value}, {merge: true});
+      t.set(counterRef, { value }, { merge: true });
       return value;
     });
     return next;
@@ -76,12 +78,12 @@ const getNextSequentialNumber = async (idTenant, idBranch, typeKey, year) => {
  * @return {Promise<string>} - ID gerado
  */
 exports.generateEntityId = async (
-    idTenant,
-    idBranch,
-    entityType = "generic",
-    options = {},
+  idTenant,
+  idBranch,
+  entityType = "generic",
+  options = {},
 ) => {
-  const {prefix, subtype, date = new Date(), sequential = false} = options;
+  const { prefix, subtype, date = new Date(), sequential = false, digits = 3 } = options;
 
   let basePrefix;
   if (entityType === "sale" && subtype && SALE_SUBTYPE_MAP[subtype]) {
@@ -96,7 +98,7 @@ exports.generateEntityId = async (
   if (sequential) {
     const counterKey = subtype ? `${entityType}-${subtype}` : entityType;
     const next = await getNextSequentialNumber(idTenant, idBranch, counterKey, String(year));
-    const padded = String(next).padStart(3, "0");
+    const padded = String(next).padStart(digits, "0");
     return `${basePrefix}-${year}-${padded}`;
   }
 

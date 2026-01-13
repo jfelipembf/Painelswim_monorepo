@@ -8,7 +8,19 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 /**
- * Save or Update an Automation
+ * ============================================================================
+ * AUTOMATION ACTIONS
+ * ____________________________________________________________________________
+ *
+ * 1. saveAutomation: Salvar ou Atualizar uma Automação.
+ * 2. getAutomations: Buscar Automações de uma Filial.
+ * 3. deleteAutomation: Excluir uma Automação.
+ *
+ * ============================================================================
+ */
+
+/**
+ * Salvar ou Atualizar uma Automação
  * @param {object} data - { idTenant, idBranch, automationId (optional), automationData }
  */
 exports.saveAutomation = functions.region("us-central1").https.onCall(async (data, context) => {
@@ -51,7 +63,7 @@ exports.saveAutomation = functions.region("us-central1").https.onCall(async (dat
 });
 
 /**
- * Get Automations for a Branch
+ * Buscar Automações de uma Filial
  * @param {object} data - { idTenant, idBranch }
  */
 exports.getAutomations = functions.region("us-central1").https.onCall(async (data, context) => {
@@ -88,7 +100,7 @@ exports.getAutomations = functions.region("us-central1").https.onCall(async (dat
 });
 
 /**
- * Delete an Automation
+ * Excluir uma Automação
  * @param {object} data - { idTenant, idBranch, automationId }
  */
 exports.deleteAutomation = functions.region("us-central1").https.onCall(async (data, context) => {

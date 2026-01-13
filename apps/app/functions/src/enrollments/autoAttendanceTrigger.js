@@ -6,28 +6,37 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
+const { toISODate, addDays } = require("../helpers/date");
+
+/**
+ * ============================================================================
+ * AUTO ATTENDANCE TRIGGER
+ * ____________________________________________________________________________
+ *
+ * 1. autoAttendanceTrigger: Job diário para processar presença automática.
+ *
+ * ============================================================================
+ */
 
 /**
  * Cloud Function agendada para rodar todos os dias às 00:00 (meia-noite).
  * Processa sessões do dia anterior que não tiveram o controle de presença realizado.
  * Marca todos os alunos matriculados como presentes por padrão.
  */
+
 module.exports = functions
   .region("us-central1")
   .pubsub.schedule("0 0 * * *")
   .timeZone("America/Sao_Paulo")
   .onRun(async (context) => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayIso = yesterday.toISOString().split("T")[0];
+    const yesterdayIso = toISODate(addDays(new Date(), -1));
 
     try {
-      // 1. Buscar todas as sessões de ontem que não têm controle de presença
-      // Nota: Como sessões estão dentro de subcoleções de branches, precisamos de um collectionGroup
-      // ou iterar por tenants/branches. Para performance, usaremos collectionGroup.
+      // 1. Buscar todas as sessões de ontem
+      // Nota: Removemos o filtro attendanceRecorded == false do query para suportar sessões antigas sem esse campo.
+      // O filtro será feito em memória.
       const sessionsSnap = await db.collectionGroup("sessions")
         .where("sessionDate", "==", yesterdayIso)
-        .where("attendanceRecorded", "==", false)
         .get();
 
       if (sessionsSnap.empty) {
@@ -37,6 +46,9 @@ module.exports = functions
       for (const sessionDoc of sessionsSnap.docs) {
         const sessionData = sessionDoc.data();
         const sessionRef = sessionDoc.ref;
+
+        // Filtro em memória: se já gravou presença, pula.
+        if (sessionData.attendanceRecorded) continue;
 
         // Extrair IDs do path: tenants/{idTenant}/branches/{idBranch}/sessions/{idSession}
         const pathParts = sessionRef.path.split("/");
@@ -91,6 +103,7 @@ module.exports = functions
             status: "present",
             justification: "Presença automática (sistema)",
             enrollmentId: enrollDoc.id,
+            type: "auto",
           };
 
           snapshotData.push(clientEntry);
@@ -99,7 +112,7 @@ module.exports = functions
           const clientAttendanceRef = db.collection("tenants").doc(idTenant)
             .collection("branches").doc(idBranch)
             .collection("clients").doc(idClient)
-            .collection("attendance").doc();
+            .collection("attendance").doc(String(idSession)); // Use ID da sessão fixo para evitar duplicatas
 
           batch.set(clientAttendanceRef, {
             idSession,
@@ -107,12 +120,14 @@ module.exports = functions
             sessionDate: yesterdayIso,
             status: "present",
             justification: "Presença automática (sistema)",
+            type: "auto",
             idTenant,
             idBranch,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          });
+          }, { merge: true });
         }
+
 
         // 4. Atualizar o documento da sessão (Snapshot)
         batch.update(sessionRef, {

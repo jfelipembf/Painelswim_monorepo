@@ -3,6 +3,8 @@ const admin = require("firebase-admin");
 const { FieldValue } = require("firebase-admin/firestore");
 const { requireAuthContext } = require("../shared/context");
 const { generateEntityId } = require("../shared/id");
+const { buildTransactionPayload } = require("../shared/payloads"); // Import added
+const { toISODate } = require("../helpers/date");
 
 const db = admin.firestore();
 
@@ -24,6 +26,10 @@ const getSessionsColl = (idTenant, idBranch) =>
     .doc(idBranch)
     .collection("cashierSessions");
 
+// ============================================================================
+// INTERNAL HELPERS (Funções Internas)
+// ============================================================================
+
 /**
  * Função interna para criar transação.
  * Pode ser usada por outros módulos (ex: Contracts).
@@ -34,8 +40,8 @@ const createTransactionInternal = async (
     idTenant,
     idBranch,
     payload,
-    options = {},
     batch,
+    transaction, // Support for transaction
   },
 ) => {
   const transactionId = await generateEntityId(
@@ -45,9 +51,14 @@ const createTransactionInternal = async (
     { sequential: true },
   );
 
-  const finalPayload = {
-    idTransaction: transactionId,
+  const rawPayload = buildTransactionPayload({
     ...payload,
+    transactionCode: transactionId,
+    idTransaction: transactionId
+  });
+
+  const finalPayload = {
+    ...rawPayload,
     idTenant,
     idBranch,
     createdAt: FieldValue.serverTimestamp(),
@@ -56,7 +67,11 @@ const createTransactionInternal = async (
 
   const ref = getTransactionsColl(idTenant, idBranch);
 
-  if (batch) {
+  if (transaction) {
+    const docRef = ref.doc();
+    transaction.set(docRef, finalPayload);
+    return { id: docRef.id, ...finalPayload };
+  } else if (batch) {
     const docRef = ref.doc();
     batch.set(docRef, finalPayload);
     return { id: docRef.id, ...finalPayload };
@@ -65,6 +80,10 @@ const createTransactionInternal = async (
     return { id: docRef.id, ...finalPayload };
   }
 };
+
+// ============================================================================
+// CALLABLES (Funções chamadas pelo Frontend)
+// ============================================================================
 
 /**
  * Registra uma despesa.
@@ -106,7 +125,7 @@ exports.addExpense = functions.region("us-central1").https.onCall(async (data, c
     type: "expense",
     source: "cashier",
     amount,
-    date: new Date().toISOString().split("T")[0], // YYYY-MM-DD
+    date: toISODate(new Date()), // YYYY-MM-DD
     category: category || "Despesa",
     description,
     method: method || "Dinheiro",
@@ -159,7 +178,7 @@ exports.addSaleRevenue = functions.region("us-central1").https.onCall(async (dat
     saleType: saleType || null,
     source: "contract",
     amount,
-    date: new Date().toISOString().split("T")[0],
+    date: toISODate(new Date()),
     category: "Venda",
     description: description || "Venda",
     idSale: idSale || null,

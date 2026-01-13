@@ -9,9 +9,14 @@ const { FieldValue } = require("firebase-admin/firestore");
 const getCreditsColl = (idTenant, idBranch, idClient) =>
   db.collection("tenants").doc(idTenant).collection("branches").doc(idBranch).collection("clients").doc(idClient).collection("credits");
 
+// ============================================================================
+// INTERNAL HELPERS (Funções Internas)
+// ============================================================================
+
 /**
  * Função interna para adicionar crédito.
  * Suporta batch opcional.
+ * Utilizada por esta e outras functions (ex: vendas).
  */
 const addClientCreditInternal = async ({ idTenant, idBranch, idClient, payload, uid, userToken, batch }) => {
   const finalPayload = {
@@ -40,8 +45,17 @@ const addClientCreditInternal = async ({ idTenant, idBranch, idClient, payload, 
   }
 };
 
+// ============================================================================
+// CALLABLES (Funções chamadas pelo Frontend)
+// ============================================================================
+
 /**
- * Adiciona um crédito para o cliente.
+ * Função Callable para ADICIONAR CRÉDITO.
+ * Nome: addClientCredit
+ *
+ * Função:
+ * 1. Valida valor positivo.
+ * 2. Adiciona registro de crédito ao cliente.
  */
 exports.addClientCredit = functions.region("us-central1").https.onCall(async (data, context) => {
   const { idTenant, idBranch, uid, token } = requireAuthContext(data, context);

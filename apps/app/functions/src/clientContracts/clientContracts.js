@@ -2,144 +2,29 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const { FieldValue } = require("firebase-admin/firestore");
 const { requireAuthContext } = require("../shared/context");
-const { generateEntityId } = require("../shared/id");
-const { createTransactionInternal } = require("../financial/transactions");
-const { buildClientContractPayload } = require("../shared/payloads");
 
 const db = admin.firestore();
 
-
-const getContractsColl = (idTenant, idBranch) =>
-  db.collection("tenants").doc(idTenant).collection("branches").doc(idBranch).collection("clientsContracts");
-
-const getEnrollmentsColl = (idTenant, idBranch) =>
-  db.collection("tenants").doc(idTenant).collection("branches").doc(idBranch).collection("enrollments");
-
-const parseDate = (str) => {
-  if (!str) return null;
-  // Assumes YYYY-MM-DD
-  const parts = str.split("-");
-  if (parts.length !== 3) return null;
-  return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-};
-
-const formatDateString = (date) => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-};
-
-const getToday = () => {
-  // Simple "today" based on server time (usually UTC).
-  // If timezone support is needed, it should be handled with offset.
-  const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-};
+const { parseDate, toISODate, getToday, addDays } = require("../helpers/date");
+const { getContractsColl } = require("./helpers/utils");
+const { createClientContractInternal } = require("./helpers/contractService");
 
 /**
- * Cria um novo contrato de cliente.
+ * ============================================================================
+ * CLIENT CONTRACTS ACTIONS
+ * ____________________________________________________________________________
+ *
+ * 1. createClientContract: Cria um novo contrato de cliente.
+ * 2. scheduleContractSuspension: Agenda ou ativa suspensão de contrato.
+ * 3. cancelClientContract: Cancela um contrato de cliente e limpa pendências.
+ * 4. stopClientContractSuspension: Interrompe uma suspensão ativa ou agendada.
+ *
+ * ============================================================================
  */
 
-/**
- * Internal function to create a client contract.
- */
-const createClientContractInternal = async ({ idTenant, idBranch, uid, data, batch, token }) => {
-  // 1. Validar Datas (Lógica centralizada no backend)
-  const todayStr = new Date().toISOString().split("T")[0];
-  if (data.startDate && data.startDate < todayStr) {
-    // console.warn("Contrato iniciando no passado, mas permitido via backend (auditoria)");
-  }
-  if (data.endDate && data.startDate && data.endDate <= data.startDate) {
-    throw new Error("Data de fim deve ser posterior à data de início.");
-  }
-
-  // 2. Gerar código do contrato
-  const contractCode = await generateEntityId(idTenant, idBranch, "contract", { sequential: true });
-
-  const rawPayload = buildClientContractPayload({
-    ...data,
-    contractCode, // Pass generated code
-    contractTitle: data.contractTitle || data.title || null, // Ensure title availability
-  });
-
-  const payload = {
-    ...rawPayload,
-    idTenant,
-    idBranch,
-    createdAt: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp(),
-    createdBy: uid,
-  };
-
-  const contractsRef = getContractsColl(idTenant, idBranch);
-  const contractDocRef = contractsRef.doc(); // Auto ID
-
-  // Use provided batch or create a new one (if not provided)
-  // Check if batch is valid firebase batch
-  const internalBatch = batch || db.batch();
-
-  internalBatch.set(contractDocRef, payload);
-
-  // Se houver valor e NÃO for via Venda (idSale presente), registrar receita automaticamente ???
-  // Se vier via saveSale, a receita já é tratada lá.
-  // Vamos manter a lógica original: se tiver value > 0 E NÃO for parte de uma venda maior (que trataria o financeiro), cria.
-  // Mas espera, se idSale for passado, assumimos que o financeiro foi tratado pela Venda?
-  // O código original criava transaction se data.value > 0.
-  // Vamos manter, mas cuidado com duplicação.
-  // Se chamado pelo saveSale, data.value pode vir zerado ou tratamos lá.
-
-  if (!data.idSale && Number(data.value) > 0) {
-    try {
-      await createTransactionInternal({
-        idTenant,
-        idBranch,
-        batch: internalBatch,
-        payload: {
-          type: "sale",
-          saleType: "contract",
-          source: "contract",
-          amount: Number(data.value),
-          date: new Date().toISOString().split("T")[0],
-          category: "Venda",
-          description: `Contrato ${contractCode} - ${data.contractTitle || "Sem título"}`,
-          idContract: contractDocRef.id,
-          idClient: data.idClient,
-          method: data.paymentMethod || "Outros",
-          metadata: {
-            contractType: data.contractTitle || "generic",
-            startDate: data.startDate,
-            endDate: data.endDate,
-            idSale: data.idSale || null,
-            registeredBy: token?.name || token?.email || "user",
-            uid,
-          },
-        },
-      });
-    } catch (err) {
-      console.error("Falha ao preparar receita do contrato (ignorado):", err);
-    }
-  }
-
-  // Atualizar status do cliente para "active"
-  const clientRef = db.collection("tenants").doc(idTenant).collection("branches").doc(idBranch).collection("clients").doc(data.idClient);
-  internalBatch.update(clientRef, {
-    status: "active",
-    updatedAt: FieldValue.serverTimestamp(),
-  });
-
-  if (!batch) {
-    await internalBatch.commit();
-  }
-
-  return {
-    id: contractDocRef.id,
-    ...payload,
-  };
-};
-
-// Export internal for use in SALES
+// Export internal for use in SALES (maintaining contract if any other file is importing directly from here)
 exports.createClientContractInternal = createClientContractInternal;
+
 
 
 /**
@@ -209,9 +94,7 @@ exports.scheduleContractSuspension = functions.region("us-central1").https.onCal
         const currentEndDate = parseDate(contract.endDate || contract.endAt);
         if (!currentEndDate) throw new functions.https.HttpsError("failed-precondition", "Contrato sem data de término.");
 
-        const updatedEnd = new Date(currentEndDate);
-        updatedEnd.setDate(updatedEnd.getDate() + daysRequested);
-        newEndDateStr = formatDateString(updatedEnd);
+        newEndDateStr = toISODate(addDays(currentEndDate, daysRequested));
       }
 
       const payload = {
@@ -324,21 +207,9 @@ exports.cancelClientContract = functions.region("us-central1").https.onCall(asyn
   // Limpeza de matrículas e financeiro (fora da transação)
   if (!schedule && result?.status === "canceled") {
     try {
-      // 1. Matrículas
-      const todayStr = formatDateString(today);
-      const enrollmentsRef = getEnrollmentsColl(idTenant, idBranch);
-      const snapshot = await enrollmentsRef.where("idClient", "==", result.idClient).get();
-
-      const batch = db.batch();
-      let count = 0;
-
-      snapshot.forEach((doc) => {
-        const e = doc.data();
-        if (e.type === "recurring" || (e.type === "single-session" && e.sessionDate >= todayStr)) {
-          batch.delete(doc.ref);
-          count++;
-        }
-      });
+      // 1. Matrículas (Using helper)
+      const { cleanEnrollmentsOnCancellation } = require("../enrollments/helpers/enrollmentService");
+      await cleanEnrollmentsOnCancellation({ idTenant, idBranch, idClient: result.idClient });
 
       // 2. Financeiro (Dívidas), se configurado
       const settingsRef = db.doc(`tenants/${idTenant}/branches/${idBranch}/settings/general`);
@@ -372,6 +243,8 @@ exports.cancelClientContract = functions.region("us-central1").https.onCall(asyn
         // Opcional: Se quiser ser agressivo, buscar por idClient e filtrar memory? Pode ser pesado.
 
         if (docsToCancel.length > 0) {
+          const batch = db.batch(); // Re-instantiate batch for this separate op
+
           docsToCancel.forEach(doc => {
             batch.update(doc.ref, {
               status: "canceled",
@@ -379,13 +252,9 @@ exports.cancelClientContract = functions.region("us-central1").https.onCall(asyn
               cancelReason: "Cancelamento de contrato (Automático)",
               updatedAt: FieldValue.serverTimestamp()
             });
-            count++;
           });
+          await batch.commit();
         }
-      }
-
-      if (count > 0) {
-        await batch.commit();
       }
     } catch (e) {
       console.error("Erro na limpeza pós-cancelamento:", e);
@@ -486,20 +355,18 @@ exports.stopClientContractSuspension = functions.region("us-central1").https.onC
         throw new functions.https.HttpsError("failed-precondition", "Contrato sem data de término (plano infinito?)");
       }
 
-      const newContractEndDate = new Date(currentContractEndDate);
-      newContractEndDate.setDate(newContractEndDate.getDate() - unusedDays);
-      const newContractEndDateStr = formatDateString(newContractEndDate);
+      const newContractEndDateStr = toISODate(addDays(currentContractEndDate, -unusedDays));
 
       // Atualizar Suspensão
-      const yesterday = new Date(today.getTime() - msPerDay);
       t.update(suspRef, {
         status: "stopped",
-        endDate: formatDateString(yesterday), // Novo fim da suspensão foi ontem
+        endDate: toISODate(addDays(today, -1)), // Novo fim da suspensão foi ontem
         daysUsed: actuallyUsedDays,
         unusedDays: unusedDays,
         stoppedAt: FieldValue.serverTimestamp(),
         stoppedBy: uid,
       });
+
 
       // Atualizar Contrato
       t.update(contractRef, {

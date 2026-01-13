@@ -1,4 +1,4 @@
-import { collection, doc } from "firebase/firestore"
+import { collection } from "firebase/firestore"
 import { requireDb } from "../_core/db"
 import { requireBranchContext } from "../_core/context"
 

@@ -44,10 +44,10 @@ const Academies = () => {
 
             // 1. Upload Photo if it's a File
             if (photoUrl instanceof File) {
-                console.log("Uploading academy photo...", photoUrl.name);
+
                 const path = `academies/${Date.now()}_${photoUrl.name}`
                 photoUrl = await uploadImage(photoUrl, path)
-                console.log("Photo uploaded successfully:", photoUrl);
+
             }
 
             // Helper to format phone to E.164
@@ -74,7 +74,7 @@ const Academies = () => {
             // 3. Create or Update
             if (selectedAcademy) {
                 // await updateAcademy(selectedAcademy.id, payload)
-                console.log("Update not implemented yet")
+
             } else {
                 await createAcademy(payload)
             }

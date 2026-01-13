@@ -1,48 +1,19 @@
 const functions = require("firebase-functions/v1");
-const admin = require("firebase-admin");
+const { isActive, applyDelta } = require("./helpers/counterHelper");
 
-const db = admin.firestore();
+/**
+ * ============================================================================
+ * CLIENT ENROLLMENT COUNTERS TRIGGERS
+ * ____________________________________________________________________________
+ *
+ * 1. onCreate: Incrementa contadores ao criar matrícula.
+ * 2. onDelete: Decrementa contadores ao remover matrícula.
+ * 3. onUpdate: Atualiza contadores ao mudar status da matrícula.
+ *
+ * ============================================================================
+ */
 
-const isActive = (status) => {
-  const s = String(status || "").toLowerCase();
-  return s === "active";
-};
-
-const clientRef = ({idTenant, idBranch, idClient}) =>
-  db
-      .collection("tenants")
-      .doc(String(idTenant))
-      .collection("branches")
-      .doc(String(idBranch))
-      .collection("clients")
-      .doc(String(idClient));
-
-const applyDelta = async ({idTenant, idBranch, idClient, activeDelta, pastDelta}) => {
-  if (!idTenant || !idBranch || !idClient) return;
-
-  const ref = clientRef({idTenant, idBranch, idClient});
-
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    if (!snap.exists) return;
-
-    const data = snap.data() || {};
-    const nextActive = Math.max(Number(data.enrollmentsActiveCount || 0) + Number(activeDelta || 0), 0);
-    const nextPast = Math.max(Number(data.enrollmentsPastCount || 0) + Number(pastDelta || 0), 0);
-
-    tx.set(
-        ref,
-        {
-          enrollmentsActiveCount: nextActive,
-          enrollmentsPastCount: nextPast,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        },
-        {merge: true},
-    );
-  });
-};
-
-const handleCreate = async ({idTenant, idBranch, enrollment}) => {
+const handleCreate = async ({ idTenant, idBranch, enrollment }) => {
   const idClient = enrollment?.idClient ? String(enrollment.idClient) : null;
   const active = isActive(enrollment?.status);
   await applyDelta({
@@ -54,7 +25,7 @@ const handleCreate = async ({idTenant, idBranch, enrollment}) => {
   });
 };
 
-const handleDelete = async ({idTenant, idBranch, enrollment}) => {
+const handleDelete = async ({ idTenant, idBranch, enrollment }) => {
   const idClient = enrollment?.idClient ? String(enrollment.idClient) : null;
   const active = isActive(enrollment?.status);
   await applyDelta({
@@ -66,7 +37,7 @@ const handleDelete = async ({idTenant, idBranch, enrollment}) => {
   });
 };
 
-const handleUpdate = async ({idTenant, idBranch, before, after}) => {
+const handleUpdate = async ({ idTenant, idBranch, before, after }) => {
   const beforeClient = before?.idClient ? String(before.idClient) : null;
   const afterClient = after?.idClient ? String(after.idClient) : null;
 
@@ -106,45 +77,45 @@ const handleUpdate = async ({idTenant, idBranch, before, after}) => {
   });
 };
 
-module.exports = functions
-    .region("us-central1")
-    .firestore.document("tenants/{idTenant}/branches/{idBranch}/enrollments/{idEnrollment}")
-    .onCreate(async (snap, context) => {
-      const enrollment = snap.data() || {};
-      await handleCreate({
-        idTenant: context?.params?.idTenant,
-        idBranch: context?.params?.idBranch,
-        enrollment,
-      });
-      return null;
+exports.onCreate = functions
+  .region("us-central1")
+  .firestore.document("tenants/{idTenant}/branches/{idBranch}/enrollments/{idEnrollment}")
+  .onCreate(async (snap, context) => {
+    const enrollment = snap.data() || {};
+    await handleCreate({
+      idTenant: context?.params?.idTenant,
+      idBranch: context?.params?.idBranch,
+      enrollment,
+    });
+    return null;
+  });
+
+exports.onDelete = functions
+  .region("us-central1")
+  .firestore.document("tenants/{idTenant}/branches/{idBranch}/enrollments/{idEnrollment}")
+  .onDelete(async (snap, context) => {
+    const enrollment = snap.data() || {};
+    await handleDelete({
+      idTenant: context?.params?.idTenant,
+      idBranch: context?.params?.idBranch,
+      enrollment,
+    });
+    return null;
+  });
+
+exports.onUpdate = functions
+  .region("us-central1")
+  .firestore.document("tenants/{idTenant}/branches/{idBranch}/enrollments/{idEnrollment}")
+  .onUpdate(async (change, context) => {
+    const before = change.before.data() || {};
+    const after = change.after.data() || {};
+
+    await handleUpdate({
+      idTenant: context?.params?.idTenant,
+      idBranch: context?.params?.idBranch,
+      before,
+      after,
     });
 
-module.exports.onDelete = functions
-    .region("us-central1")
-    .firestore.document("tenants/{idTenant}/branches/{idBranch}/enrollments/{idEnrollment}")
-    .onDelete(async (snap, context) => {
-      const enrollment = snap.data() || {};
-      await handleDelete({
-        idTenant: context?.params?.idTenant,
-        idBranch: context?.params?.idBranch,
-        enrollment,
-      });
-      return null;
-    });
-
-module.exports.onUpdate = functions
-    .region("us-central1")
-    .firestore.document("tenants/{idTenant}/branches/{idBranch}/enrollments/{idEnrollment}")
-    .onUpdate(async (change, context) => {
-      const before = change.before.data() || {};
-      const after = change.after.data() || {};
-
-      await handleUpdate({
-        idTenant: context?.params?.idTenant,
-        idBranch: context?.params?.idBranch,
-        before,
-        after,
-      });
-
-      return null;
-    });
+    return null;
+  });

@@ -1,30 +1,45 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const { requireAuthContext } = require("../shared/context");
-
 const { FieldValue } = require("firebase-admin/firestore");
+const { validateClassDaysAgainstContracts } = require("./helpers/validator");
+const { computeEndTime, toISODate } = require("./helpers/dateUtils");
+
 
 const db = admin.firestore();
 
 /**
- * Update a Class.
- * Handles `endDate` logic: removes future sessions and terminates enrollments.
+ * ============================================================================
+ * GERENCIAMENTO DE TURMAS
+ * ____________________________________________________________________________
+ *
+ * 1. updateClass: Atualiza turma e trata conflitos de horário/contrato.
+ * 2. deleteClass: Deleta turma (com validações de segurança).
+ *
+ * ============================================================================
+ */
+
+/**
+ * Atualiza uma turma.
+ * - Trata lógica de `endDate`: remove sessões futuras e encerra matrículas.
+ * - Valida restrições de dias dos contratos dos alunos.
+ * - Atualiza horários das sessões futuras se houver mudança.
  */
 exports.updateClass = functions.region("us-central1").https.onCall(async (data, context) => {
     const { idTenant, idBranch } = requireAuthContext(data, context);
 
-    // Resolve ID and Updates based on payload structure (flat vs wrapped)
+    // Resolver ID e Updates baseados na estrutura (flat vs wrapped)
     const id = data.id || data.idClass;
     let updates = data.classData;
 
-    // If classData is not provided, assume flat structure and remove system fields
+    // Se classData não for fornecido, assumir estrutura plana e remover campos de sistema
     if (!updates) {
         const { id: _id, idClass: _idClass, idTenant: _t, idBranch: _b, ...rest } = data;
         updates = rest;
     }
 
     if (!id) {
-        throw new functions.https.HttpsError("invalid-argument", "Class ID is required");
+        throw new functions.https.HttpsError("invalid-argument", "ID da turma é obrigatório");
     }
 
     const classRef = db.collection("tenants").doc(idTenant).collection("branches").doc(idBranch).collection("classes").doc(id);
@@ -35,76 +50,21 @@ exports.updateClass = functions.region("us-central1").https.onCall(async (data, 
         let shouldUpdateSessions = false;
         const sessionUpdates = {};
 
-        const clientsContractsCol = db.collection("tenants").doc(idTenant).collection("branches").doc(idBranch).collection("clientsContracts");
-
-        // VALIDATION: Check for contract restrictions if changing days
+        // VALIDAÇÃO: Checar restrições de contrato se os dias mudarem
         if (updates.weekDays && Array.isArray(updates.weekDays)) {
-            const newDays = updates.weekDays.map(Number); // Ensure numbers
-
-            // 1. Get Active Enrollments
-            const activeEnrollmentsSnap = await enrollmentsCol
-                .where("idClass", "==", id)
-                .where("status", "==", "active")
-                .get();
-
-            if (!activeEnrollmentsSnap.empty) {
-                const enrollmentPromises = activeEnrollmentsSnap.docs.map(async (doc) => {
-                    const enrollment = doc.data();
-                    const clientId = enrollment.idClient;
-                    const clientName = enrollment.clientName || "Aluno";
-
-                    // 2. Get Active Contract for Client
-                    const contractsSnap = await clientsContractsCol
-                        .where("idClient", "==", clientId)
-                        .where("status", "==", "active")
-                        .limit(1)
-                        .get();
-
-                    if (!contractsSnap.empty) {
-                        const contract = contractsSnap.docs[0].data();
-                        const allowedDays = contract.allowedWeekDays;
-
-                        // If contract has day restrictions (non-empty array)
-                        if (allowedDays && Array.isArray(allowedDays) && allowedDays.length > 0) {
-                            // Check if ALL new days are allowed
-                            const isAllowed = newDays.every(day => allowedDays.includes(Number(day)));
-
-                            if (!isAllowed) {
-                                const dayMap = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-                                const allowedDayNames = allowedDays.map(d => dayMap[Number(d)] || d).join(", ");
-                                return `O aluno(a) ${clientName} possui contrato restrito aos dias: ${allowedDayNames}.`;
-                            }
-                        }
-                    }
-                    return null;
-                });
-
-                const results = await Promise.all(enrollmentPromises);
-                const errors = results.filter(error => error !== null);
-
-                if (errors.length > 0) {
-                    throw new functions.https.HttpsError("failed-precondition", errors.join("\n"));
-                }
-            }
+            const newDays = updates.weekDays.map(Number);
+            await validateClassDaysAgainstContracts({ db, idTenant, idBranch, idClass: id, newDays });
         }
-
-        // Helper to compute end time
-        const computeEndTime = (start, minutes) => {
-            if (!start || !minutes) return "";
-            const [h, m] = start.split(":").map(Number);
-            const date = new Date(0, 0, 0, h, m + Number(minutes));
-            return date.toTimeString().slice(0, 5);
-        };
 
         await db.runTransaction(async (t) => {
             const doc = await t.get(classRef);
             if (!doc.exists) {
-                throw new functions.https.HttpsError("not-found", "Class not found");
+                throw new functions.https.HttpsError("not-found", "Turma não encontrada");
             }
 
             const currentData = doc.data();
 
-            // Check for changes in fields that affect sessions
+            // Verificar mudanças em campos que afetam sessões
             const sessionFields = ["idActivity", "idArea", "idStaff", "maxCapacity", "startTime", "durationMinutes"];
 
             sessionFields.forEach(field => {
@@ -114,27 +74,28 @@ exports.updateClass = functions.region("us-central1").https.onCall(async (data, 
                 }
             });
 
-            // Re-calculate endTime if needed
+            // Recalcular endTime se necessário
             if (sessionUpdates.startTime || sessionUpdates.durationMinutes) {
                 const start = sessionUpdates.startTime || currentData.startTime;
                 const duration = sessionUpdates.durationMinutes || currentData.durationMinutes;
                 const newEndTime = computeEndTime(start, duration);
                 updates.endTime = newEndTime;
-                sessionUpdates.endTime = newEndTime; // Update session endTime too
+                sessionUpdates.endTime = newEndTime; // Atualizar endTime da sessão também
             }
 
-            // Update Class
+            // Atualizar Turma
             t.update(classRef, {
                 ...updates,
                 updatedAt: FieldValue.serverTimestamp(),
             });
         });
 
-        // POST-TRANSACTION: Session Updates
+        // PÓS-TRANSAÇÃO: Atualizações de Sessão
         if (shouldUpdateSessions) {
-            const nowIso = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }).split("/").reverse().join("-");
+            const nowIso = toISODate(new Date());
 
-            // Query future sessions to update
+
+            // Buscar sessões futuras para atualizar
             const sessionsSnap = await sessionsCol
                 .where("idClass", "==", id)
                 .where("sessionDate", ">=", nowIso)
@@ -144,7 +105,7 @@ exports.updateClass = functions.region("us-central1").https.onCall(async (data, 
                 const batch = db.batch();
                 let params = { ...sessionUpdates };
 
-                // Remove undefined keys
+                // Remover chaves undefined
                 Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
 
                 params.updatedAt = FieldValue.serverTimestamp();
@@ -154,20 +115,19 @@ exports.updateClass = functions.region("us-central1").https.onCall(async (data, 
                 });
 
                 await batch.commit();
-
             }
         }
 
-        // POST-TRANSACTION: End Date Cleanup (Existing Logic)
+        // PÓS-TRANSAÇÃO: Limpeza de End Date (Lógica Existente)
         if (updates.endDate) {
-            const limitIso = updates.endDate; // Format: YYYY-MM-DD
+            const limitIso = updates.endDate; // Formato: YYYY-MM-DD
 
-            // Validate date format (simple regex check for YYYY-MM-DD)
+            // Validar formato de data (verificação simples regex para YYYY-MM-DD)
             if (!limitIso || !/^\d{4}-\d{2}-\d{2}$/.test(limitIso)) {
-                console.warn(`Invalid endDate format: ${limitIso}. Skipping end date processing.`);
+                console.warn(`Formato de endDate inválido: ${limitIso}. Pulando processamento de data final.`);
             } else {
 
-                // 1. Delete Sessions after endDate
+                // 1. Deletar sessões após endDate
                 const sessionsToDeleteSnap = await sessionsCol
                     .where("idClass", "==", id)
                     .where("sessionDate", ">", limitIso)
@@ -177,10 +137,9 @@ exports.updateClass = functions.region("us-central1").https.onCall(async (data, 
                     const batch = db.batch();
                     sessionsToDeleteSnap.docs.forEach(d => batch.delete(d.ref));
                     await batch.commit();
-
                 }
 
-                // 2. Terminate Active Enrollments
+                // 2. Encerrar Matrículas Ativas
                 const enrollmentsSnap = await enrollmentsCol
                     .where("idClass", "==", id)
                     .where("status", "==", "active")
@@ -207,35 +166,37 @@ exports.updateClass = functions.region("us-central1").https.onCall(async (data, 
                     }
                 }
             }
-        } // End else valid date
+        }
 
         return { success: true };
 
     } catch (error) {
-        console.error("Error updating class:", error);
+        console.error("Erro ao atualizar turma:", error);
         throw new functions.https.HttpsError("internal", error.message);
     }
 });
 
 
 /**
- * Delete a Class safely.
+ * Deleta uma turma com segurança.
+ * - Impede exclusão se houver alunos ativos.
+ * - Impede exclusão se houver histórico de aulas realizadas.
  */
 exports.deleteClass = functions.region("us-central1").https.onCall(async (data, context) => {
     const { idTenant, idBranch } = requireAuthContext(data, context);
 
-    // Resolve ID (flat or wrapped)
+    // Resolver ID (flat ou wrapped)
     const id = data.id || data.idClass;
 
     if (!id) {
-        throw new functions.https.HttpsError("invalid-argument", "Class ID is required");
+        throw new functions.https.HttpsError("invalid-argument", "ID da turma é obrigatório");
     }
 
     const classRef = db.collection("tenants").doc(idTenant).collection("branches").doc(idBranch).collection("classes").doc(id);
     const enrollmentsCol = db.collection("tenants").doc(idTenant).collection("branches").doc(idBranch).collection("enrollments");
     const sessionsCol = db.collection("tenants").doc(idTenant).collection("branches").doc(idBranch).collection("sessions");
 
-    // 1. Check for Active Enrollments
+    // 1. Verificar Matrículas Ativas
     const activeEnr = await enrollmentsCol
         .where("idClass", "==", id)
         .where("status", "==", "active")
@@ -246,31 +207,23 @@ exports.deleteClass = functions.region("us-central1").https.onCall(async (data, 
         throw new functions.https.HttpsError("failed-precondition", "Não é possível excluir: Existem alunos matriculados ativos nesta turma.");
     }
 
-    // 2. Check for Historical Attendance (Sessions with attendance > 0)
-    // Logic: access previous sessions that have 'attendance' field or specific status?
-    // Usually 'completed' or 'confirmed'
+    // 2. Verificar Histórico de Presença (Sessões com status realizado/fechado)
     const historySessions = await sessionsCol
         .where("idClass", "==", id)
-        .where("status", "in", ["completed", "held"]) // Check your specific status values for "Realizada"
+        .where("status", "in", ["completed", "held"]) // Ajuste conforme seus status de "Realizada"
         .limit(1)
         .get();
 
     if (!historySessions.empty) {
-        // Optional: Allow deletion but keep history? User asked "nao deve ser permitido".
         throw new functions.https.HttpsError("failed-precondition", "Não é possível excluir: Existem aulas realizadas com histórico para esta turma.");
     }
 
-    // 3. Delete Class and Future/Empty Sessions
+    // 3. Deletar Turma e Sessões Futuras/Vazias
     try {
-        // Delete Class
+        // Deletar Turma
         await classRef.delete();
 
-        // Delete ALL sessions for this class (since no history exists, or we only delete future ones?)
-        // If we passed the history check, it means no meaningful history exists.
-        // However, there might be 'scheduled' sessions in the past that weren't realized?
-        // Let's delete ALL sessions to clean up.
-
-        // Batch delete (might need recursive delete for large numbers, keeping it simple for now)
+        // Deletar TODAS as sessões desta turma (já que não há histórico impeditivo)
         const sessions = await sessionsCol.where("idClass", "==", id).get();
 
         const batch = db.batch();
@@ -280,19 +233,11 @@ exports.deleteClass = functions.region("us-central1").https.onCall(async (data, 
             count++;
         });
 
-        // Delete enrollments too? (Historical/inactive ones)
-        // User didn't specify, but usually we keep canceled/finished history.
-        // If we delete the class, the enrollment reference breaks. 
-        // Safest is to KEEP inactive enrollments but they will point to a missing class ID.
-        // Or we deny deletion if ANY enrollment history exists? 
-        // User request: "nao deve ser permitido ... que tem alunos matriculados" (implies active).
-        // Let's assume just active.
-
         if (count > 0) await batch.commit();
 
         return { success: true };
     } catch (error) {
-        console.error("Error deleting class:", error);
+        console.error("Erro ao deletar turma:", error);
         throw new functions.https.HttpsError("internal", error.message);
     }
 });

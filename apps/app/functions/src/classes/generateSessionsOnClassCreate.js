@@ -1,15 +1,17 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
-
 const db = admin.firestore();
+const { generateSessionsForClass } = require("./helpers/sessionGenerator");
 
-const { FieldValue } = require("firebase-admin/firestore");
-
-const addDays = (date, days) => {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d;
-};
+/**
+ * ============================================================================
+ * SESSÕES (TRIGGER)
+ * ____________________________________________________________________________
+ *
+ * 1. generateSessionsOnClassCreate: Trigger para gerar sessões ao criar turma.
+ *
+ * ============================================================================
+ */
 
 // ... (code omitted)
 

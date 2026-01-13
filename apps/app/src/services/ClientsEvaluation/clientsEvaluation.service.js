@@ -1,14 +1,11 @@
 import {
-  addDoc,
   getDocs,
   limit,
   orderBy,
   query,
-  updateDoc,
   where,
 } from "firebase/firestore"
 
-import { makeCreatePayload, makeUpdatePayload } from "../_core/payload"
 import { clientsEvaluationCol, clientEvaluationDoc, getContext, getDb } from "./clientsEvaluation.repository"
 
 export const createClientEvaluation = async ({

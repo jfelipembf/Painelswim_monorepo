@@ -37,7 +37,6 @@ class FirebaseAuthBackend {
 
       // Connect to emulator if on localhost
       if (window.location.hostname === "localhost") {
-
         connectFunctionsEmulator(this.functions, "localhost", 5001);
       }
 

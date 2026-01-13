@@ -9,7 +9,9 @@ const baseValue = {
   description: "",
   color: "#3c5068",
   status: "ativo",
+  active: true,
 }
+
 
 /**
  * Formulário enxuto e responsivo para Atividades.
@@ -68,11 +70,12 @@ const ActivityForm = ({ value = {}, onChange, photoPreview = "", onPhotoChange }
                   type="color"
                   value={form.color}
                   onChange={e => update("color", e.target.value)}
-                  style={{ height: 48, width: 72, padding: 0, maxWidth: 100 }}
+                  style={{ height: 48, width: 72, padding: 0, rounded: 8, maxWidth: 100 }}
                 />
               </FormGroup>
             </Col>
           </Row>
+
 
           <FormGroup>
             <Label>Descrição</Label>

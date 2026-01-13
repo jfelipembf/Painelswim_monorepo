@@ -5,14 +5,22 @@ const { requireAuthContext } = require("../shared/context");
 
 const db = admin.firestore();
 
-
-// Helper para obter coleção
+// Helper para obter coleção (se mantido aqui por simplicidade)
 const getSessionsColl = (idTenant, idBranch) =>
   db.collection("tenants").doc(idTenant).collection("branches").doc(idBranch).collection("cashierSessions");
 
+// ============================================================================
+// CALLABLES (Funções chamadas pelo Frontend)
+// ============================================================================
+
 /**
- * Abre o caixa para o usuário autenticado.
- * Payload: { idTenant, idBranch, openingBalance }
+ * Função Callable para ABRIR Caixa.
+ * Nome: openCashier
+ *
+ * Função:
+ * 1. Verifica saldo inicial positivo.
+ * 2. Verifica se já existe um caixa aberto na unidade.
+ * 3. Cria nova sessão de caixa com status 'open'.
  */
 exports.openCashier = functions.region("us-central1").https.onCall(async (data, context) => {
   const { idTenant, idBranch, uid, token } = requireAuthContext(data, context);
@@ -64,8 +72,13 @@ exports.openCashier = functions.region("us-central1").https.onCall(async (data, 
 });
 
 /**
- * Fecha o caixa.
- * Payload: { idTenant, idBranch, idSession, closingBalance, observations }
+ * Função Callable para FECHAR Caixa.
+ * Nome: closeCashier
+ *
+ * Função:
+ * 1. Verifica se a sessão existe e está aberta.
+ * 2. Atualiza status para 'closed' com data de fechamento e observações.
+ * 3. Registra saldo final.
  */
 exports.closeCashier = functions.region("us-central1").https.onCall(async (data, context) => {
   const { idTenant, idBranch } = requireAuthContext(data, context);

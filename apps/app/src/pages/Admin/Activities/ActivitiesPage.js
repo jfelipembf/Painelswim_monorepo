@@ -68,20 +68,48 @@ const ActivitiesPage = ({ setBreadcrumbItems }) => {
                 <p className="text-muted mb-0 small">Edite ou crie uma atividade.</p>
               </div>
               {selectedId ? (
-                <div className="d-flex align-items-center gap-2">
-                  <Badge color={mapStatusColor(formValue.status || "ativo")} pill>
-                    {formValue.status || "ativo"}
-                  </Badge>
+                <div className="d-flex align-items-center gap-3">
+                  <div className="d-flex align-items-center gap-2">
+                    <div className="form-check form-switch p-0 m-0 d-flex align-items-center">
+                      <input
+                        className="form-check-input m-0 cursor-pointer shadow-none"
+                        type="checkbox"
+                        id="activeSwitch"
+                        checked={formValue.active !== false}
+                        onChange={e => {
+                          const isActive = e.target.checked;
+                          setFormValue(prev => ({
+                            ...prev,
+                            active: isActive,
+                            status: isActive ? "ativo" : "pausado"
+                          }))
+                        }}
+                        style={{ cursor: "pointer", scale: '1.2' }}
+                      />
+                    </div>
+                    <Badge
+                      color={formValue.active !== false ? "success" : "secondary"}
+                      pill
+                      className="px-3 py-1"
+                      style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                    >
+                      {formValue.active !== false ? "Ativa" : "Inativa"}
+                    </Badge>
+                  </div>
+
                   <ButtonLoader
                     color="primary"
                     size="sm"
                     onClick={handleSave}
                     loading={isLoading('save') || uploadingPhoto}
+                    className="px-4"
                   >
                     Salvar
                   </ButtonLoader>
                 </div>
               ) : null}
+
+
             </CardHeader>
             <CardBody>
               {selectedId ? (

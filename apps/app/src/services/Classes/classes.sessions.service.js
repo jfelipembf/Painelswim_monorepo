@@ -75,16 +75,3 @@ export const generateSessionsForAllClasses = async ({
   return results
 }
 
-export const ensureSessions = async ({ targetDate = null } = {}) => {
-  const functions = requireFunctions()
-  if (!functions) throw new Error("Firebase Functions não inicializado")
-
-  const ctx = requireBranchContext()
-  const callable = httpsCallable(functions, "ensureSessions")
-  const res = await callable({
-    idTenant: ctx.idTenant,
-    idBranch: ctx.idBranch,
-    targetDate: targetDate || null,
-  })
-  return res?.data
-}

@@ -1,4 +1,4 @@
-import { getDocs, query, where, orderBy, documentId } from "firebase/firestore"
+import { getDocs, query, where, orderBy } from "firebase/firestore"
 import { requireDb } from "../_core/db"
 import { clientsCol, getContext, listClientsByIdsRepo } from "../Clients/clients.repository"
 import { clientContractsCollection } from "../ClientContracts/clientContracts.repository"

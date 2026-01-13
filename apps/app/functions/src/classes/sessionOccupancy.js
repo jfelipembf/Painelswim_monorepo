@@ -1,9 +1,18 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
-
 const db = admin.firestore();
-
 const { FieldValue } = require("firebase-admin/firestore");
+
+/**
+ * ============================================================================
+ * SESSÕES (OCUPAÇÃO)
+ * ____________________________________________________________________________
+ *
+ * 1. incrementSessionOccupancy: Incrementa contador de alunos na sessão.
+ * 2. decrementSessionOccupancy: Decrementa contador de alunos na sessão.
+ *
+ * ============================================================================
+ */
 
 const requireAuth = (context) => {
   if (!context?.auth) {

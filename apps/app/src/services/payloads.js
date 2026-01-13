@@ -276,6 +276,8 @@ export const buildActivityPayload = (data) => {
     return {
         name: data.name || "Nova Atividade",
         description: data.description || "",
+        color: data.color || "#3c5068",
+        status: data.status || "ativo",
 
         // Instructor override for entire activity
         idStaff: data.idStaff || data.idInstructor || data.instructorId || null,
@@ -290,6 +292,7 @@ export const buildActivityPayload = (data) => {
         photo: data.photo || ""
     }
 }
+
 
 // ============================================================================
 // CATALOG (Produtos e Serviços)

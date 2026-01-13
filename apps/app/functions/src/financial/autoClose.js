@@ -1,9 +1,14 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 
+// ============================================================================
+// SCHEDULED TASKS (Tarefas Agendadas)
+// ============================================================================
+
 /**
- * Fecha automaticamente os caixas abertos se a configuração permitir.
- * Executa todo dia às 23:59.
+ * Fecha automaticamente os caixas abertos.
+ * Frequência: Diariamente às 23:59 (Brasília).
+ * Lógica: Verifica configurações de cada unidade e fecha caixas abertos se `finance.autoCloseCashier` for true.
  */
 const runAutoClose = async (db) => {
   try {
@@ -57,6 +62,7 @@ const runAutoClose = async (db) => {
     console.error("Erro no fechamento automático de caixas:", error);
   }
 };
+
 
 /**
  * Fecha automaticamente os caixas abertos se a configuração permitir.

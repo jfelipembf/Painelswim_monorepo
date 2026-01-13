@@ -37,67 +37,106 @@ const formatDate = value => {
 }
 
 /**
- * Converte objeto Date para string (YYYY-MM-DD)
+ * Adiciona dias a uma data.
+ * @param {Date|string} date 
+ * @param {number} days 
+ * @returns {Date}
  */
-const formatDateString = (date) => {
-    if (!date) return null
-    return date.toISOString().slice(0, 10)
-}
+const addDays = (date, days) => {
+    const d = new Date(date);
+    d.setDate(d.getDate() + days);
+    return d;
+};
 
 /**
- * Zera a hora de um objeto Date para comparar apenas datas
+ * Converte data para string ISO (YYYY-MM-DD).
+ * @param {Date|string} date 
+ * @returns {string|null}
  */
-const normalizeDate = (date) => {
-    if (!date) return null
-    const normalized = new Date(date)
-    normalized.setHours(0, 0, 0, 0)
-    return normalized
-}
+const toISODate = (date) => {
+    if (!date) return null;
+    const d = date instanceof Date ? date : new Date(date);
+    if (Number.isNaN(d.getTime())) return null;
+    return d.toISOString().slice(0, 10);
+};
 
 /**
- * Retorna data atual zerada (apenas data, sem hora)
+ * Encontra a primeira ocorrência de um dia da semana na ou após a data inicial.
+ * @param {string} startDateStr - YYYY-MM-DD
+ * @param {number} weekday - 0 (Domingo) a 6 (Sábado)
+ * @returns {Date}
+ */
+const findFirstWeekdayOnOrAfter = (startDateStr, weekday) => {
+    const start = new Date(startDateStr);
+    const target = Number(weekday);
+
+    for (let i = 0; i < 7; i += 1) {
+        const candidate = addDays(start, i);
+        if (candidate.getDay() === target) return candidate;
+    }
+    return start;
+};
+
+/**
+ * Calcula o horário de término baseado no início e duração em minutos.
+ * @param {string} start - HH:mm
+ * @param {number} minutes 
+ * @returns {string} HH:mm
+ */
+const computeEndTime = (start, minutes) => {
+    if (!start || !minutes) return "";
+    const [h, m] = start.split(":").map(Number);
+    const date = new Date(0, 0, 0, h, m + Number(minutes));
+    return date.toTimeString().slice(0, 5);
+};
+
+/**
+ * Converte data ISO para chave de mês (YYYY-MM).
+ * @param {string} isoDate - Data formato YYYY-MM-DD.
+ * @returns {string|null} - Chave do mês ou null.
+ */
+const toMonthKey = (isoDate) => {
+    if (!isoDate || typeof isoDate !== "string") return null;
+    if (isoDate.length < 7) return null;
+    return isoDate.slice(0, 7);
+};
+
+/**
+ * Retorna o range de datas (início e fim) para um mês.
+ * @param {string} monthKey - Chave do mês (YYYY-MM).
+ * @returns {{start: string, end: string}|null}
+ */
+const monthRangeFromKey = (monthKey) => {
+    if (!monthKey || !/^\d{4}-\d{2}$/.test(monthKey)) return null;
+    const start = `${monthKey}-01`;
+    const [y, m] = monthKey.split("-").map(Number);
+    const endDate = new Date(Date.UTC(y, m, 0));
+    const end = endDate.toISOString().slice(0, 10);
+    return { start, end };
+};
+
+/**
+ * Retorna objeto Date para hoje (meia-noite local)
+ * @returns {Date}
  */
 const getToday = () => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    return today
-}
-
-/**
- * Compara duas datas ignorando horas
- * Retorna: -1 (data1 < data2), 0 (igual), 1 (data1 > data2)
- */
-const compareDates = (date1, date2) => {
-    const d1 = normalizeDate(date1)
-    const d2 = normalizeDate(date2)
-
-    if (d1 < d2) return -1
-    if (d1 > d2) return 1
-    return 0
-}
-
-/**
- * Verifica se data1 é anterior a data2 (ignorando horas)
- */
-const isDateBefore = (date1, date2) => {
-    return compareDates(date1, date2) === -1
-}
-
-/**
- * Verifica se data1 é posterior ou igual a data2 (ignorando horas)
- */
-const isDateAfterOrEqual = (date1, date2) => {
-    return compareDates(date1, date2) >= 0
-}
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+};
 
 module.exports = {
     formatDate,
     parseDate,
     parseFirestoreDate,
-    formatDateString,
-    normalizeDate,
+    toISODate,
+    normalizeDate: toISODate,
     getToday,
-    compareDates,
-    isDateBefore,
-    isDateAfterOrEqual
+    addDays,
+    findFirstWeekdayOnOrAfter,
+    computeEndTime,
+    toMonthKey,
+    monthRangeFromKey,
 };
+
+
+

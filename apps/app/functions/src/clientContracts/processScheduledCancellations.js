@@ -1,17 +1,25 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const db = admin.firestore();
+const { toISODate, toMonthKey } = require("../helpers/date");
 
 /**
- * Processa cancelamentos programados cuja data de cancelamento já chegou.
- * Roda diariamente às 00:02 (America/Sao_Paulo), logo após as suspensões.
+ * ============================================================================
+ * SCHEDULED CANCELLATIONS PROCESSOR
+ * ____________________________________________________________________________
+ *
+ * 1. processScheduledCancellations: Task agendada que processa cancelamentos 
+ *    que foram programados para hoje. Roda diariamente às 00:02 (America/Sao_Paulo),
+ *    logo após as suspensões.
+ *
+ * ============================================================================
  */
 module.exports = functions
   .region("us-central1")
   .pubsub.schedule("2 0 * * *")
   .timeZone("America/Sao_Paulo")
   .onRun(async () => {
-    const todayIso = new Date().toISOString().slice(0, 10);
+    const todayIso = toISODate(new Date());
     const scheduledSnapshot = await db
       .collectionGroup("clientsContracts")
       .where("status", "==", "scheduled_cancellation")
@@ -103,7 +111,7 @@ module.exports = functions
         .doc(contract.idBranch)
         .collection("dailySummary")
         .doc(todayIso);
-      const monthId = todayIso.slice(0, 7);
+      const monthId = toMonthKey(todayIso);
       const monthlyRef = db
         .collection("tenants")
         .doc(contract.idTenant)

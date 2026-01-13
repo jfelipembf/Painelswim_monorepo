@@ -14,6 +14,8 @@ exports.processScheduledCancellations =
   require("./src/clientContracts/processScheduledCancellations");
 exports.processSuspensionEnds =
   require("./src/suspensions/processSuspensionEnds");
+exports.processExpiredContracts =
+  require("./src/clientContracts/processExpiredContracts");
 
 exports.generateSessionsOnClassCreate =
   require("./src/classes/generateSessionsOnClassCreate");
@@ -36,11 +38,11 @@ exports.autoAttendanceProcess =
 
 exports.attendanceMonthlyOnAttendanceWrite =
   require("./src/attendance/attendanceMonthlyTriggers").onAttendanceWrite;
-exports.attendanceMonthlyOnEnrollmentWrite =
-  require("./src/attendance/attendanceMonthlyTriggers").onEnrollmentWrite;
+
 
 exports.enrollmentClientCountersOnCreate =
-  require("./src/enrollments/clientEnrollmentCounters");
+  require("./src/enrollments/clientEnrollmentCounters").onCreate;
+
 exports.enrollmentClientCountersOnDelete =
   require("./src/enrollments/clientEnrollmentCounters").onDelete;
 exports.enrollmentClientCountersOnUpdate =
@@ -55,7 +57,7 @@ exports.funnelTrackCancellation = require("./src/leads/funnel").trackExperimenta
 // Financeiro
 exports.autoCloseCashier = require("./src/financial/autoClose").autoCloseCashier;
 exports.processContractDefaultCancellation = require("./src/financial/scheduledTasks").processContractDefaultCancellation;
-exports.processSalesDeletion = require("./src/financial/scheduledTasks").processSalesDeletion;
+
 exports.onFinancialTransactionWrite = require("./src/financial/financialTriggers").onFinancialTransactionWrite;
 exports.onSaleWrite = require("./src/financial/financialTriggers").onSaleWrite;
 exports.onClientContractWrite = require("./src/clientContracts/clientContractTriggers").onClientContractWrite;
@@ -92,6 +94,7 @@ exports.generateClassSessions = require("./src/classes/classes").generateClassSe
 exports.createClass = require("./src/classes/classes").createClass;
 exports.updateClass = require("./src/classes/manageClass").updateClass;
 exports.deleteClass = require("./src/classes/manageClass").deleteClass;
+exports.ensureSessionsHorizon = require("./src/classes/ensureSessionsHorizon");
 
 // Events
 exports.createEvent = require("./src/events/events").createEvent;

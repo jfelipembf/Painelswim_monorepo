@@ -2,76 +2,13 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 
 const db = admin.firestore();
-const { FieldValue } = require("firebase-admin/firestore");
+const { toISODate } = require("../helpers/date");
+const { updateSummaries } = require("./helpers/summaryHelper");
 
-/**
- * Atualiza os contadores em dailySummary e monthlySummary
- */
-const updateSummaries = async ({
-  idTenant,
-  idBranch,
-  dateStr,
-  revenueDelta = 0,
-  expenseDelta = 0,
-  salesDelta = 0, // Novo: Delta de volume de vendas (valor bruto da venda)
-}) => {
-  if (!idTenant || !idBranch || !dateStr) {
+// ============================================================================
+// TRIGGERS (Gatilhos do Firestore)
+// ============================================================================
 
-    return;
-  }
-
-  if (revenueDelta === 0 && expenseDelta === 0 && salesDelta === 0) return;
-
-  const monthId = dateStr.slice(0, 7); // YYYY-MM
-
-  const dailyRef = db
-    .collection("tenants").doc(idTenant)
-    .collection("branches").doc(idBranch)
-    .collection("dailySummary").doc(dateStr);
-
-  const monthlyRef = db
-    .collection("tenants").doc(idTenant)
-    .collection("branches").doc(idBranch)
-    .collection("monthlySummary").doc(monthId);
-
-  const batch = db.batch();
-
-  // Daily updates
-  const dailyUpdates = { updatedAt: FieldValue.serverTimestamp() };
-  if (revenueDelta !== 0) {
-    dailyUpdates.totalRevenue = FieldValue.increment(revenueDelta);
-  }
-  if (expenseDelta !== 0) {
-    dailyUpdates.totalExpenses = FieldValue.increment(expenseDelta);
-    dailyUpdates.expenses = FieldValue.increment(expenseDelta);
-  }
-  if (salesDelta !== 0) {
-    dailyUpdates.salesDay = FieldValue.increment(salesDelta);
-  }
-
-  // Monthly updates
-  const monthlyUpdates = { updatedAt: FieldValue.serverTimestamp() };
-  if (revenueDelta !== 0) {
-    monthlyUpdates.totalRevenue = FieldValue.increment(revenueDelta);
-  }
-  if (expenseDelta !== 0) {
-    monthlyUpdates.totalExpenses = FieldValue.increment(expenseDelta);
-    monthlyUpdates.expenses = FieldValue.increment(expenseDelta);
-  }
-  if (salesDelta !== 0) {
-    monthlyUpdates.salesMonth = FieldValue.increment(salesDelta);
-  }
-
-  batch.set(dailyRef, dailyUpdates, { merge: true });
-  batch.set(monthlyRef, monthlyUpdates, { merge: true });
-
-  try {
-    await batch.commit();
-
-  } catch (err) {
-    console.error("[updateSummaries] Error committing batch:", err);
-  }
-};
 
 /**
  * Trigger para Transações Financeiras (Fluxo de Caixa)
@@ -89,7 +26,7 @@ exports.onFinancialTransactionWrite = functions
     const getValues = (data) => {
       if (!data) return { revenue: 0, expense: 0, date: null };
       const amount = Number(data.amount || 0);
-      const date = data.date || (data.createdAt?.toDate ? data.createdAt.toDate().toISOString().slice(0, 10) : null);
+      const date = data.date || (data.createdAt?.toDate ? toISODate(data.createdAt.toDate()) : null);
 
       // Sale = receita positiva
       if (data.type === "sale") return { revenue: amount, expense: 0, date };
@@ -151,7 +88,7 @@ exports.onSaleWrite = functions
       if (!data) return { amount: 0, date: null };
       // Usamos o valor líquido da venda (net) para as estatísticas de vendas
       const amount = Number(data.totals?.net || 0);
-      const date = data.saleDate || (data.createdAt?.toDate ? data.createdAt.toDate().toISOString().slice(0, 10) : null);
+      const date = data.saleDate || (data.createdAt?.toDate ? toISODate(data.createdAt.toDate()) : null);
       return { amount, date };
     };
 

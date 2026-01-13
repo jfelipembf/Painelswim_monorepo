@@ -1,17 +1,27 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
+const { toISODate, addDays } = require("../helpers/date");
+
+// ============================================================================
+// SCHEDULED TASKS (Tarefas Agendadas)
+// ============================================================================
 
 /**
  * Rotina diária para cancelar contratos com inadimplência superior ao configurado.
- * Roda às 01:00 AM (America/Sao_Paulo).
+ * Frequência: Diariamente às 01:00 AM (Brasília).
+ * Lógica:
+ * 1. Verifica configuração `activeContractCancellation`.
+ * 2. Busca recebíveis em atraso acima do limite de dias.
+ * 3. Identifica clientes inadimplentes.
+ * 4. Cancela contratos ativos desses clientes.
  */
 exports.processContractDefaultCancellation = functions
     .region("us-central1")
     .pubsub.schedule("0 1 * * *")
     .timeZone("America/Sao_Paulo")
-    .onRun(async (context) => {
+    .onRun(async (_) => {
         const db = admin.firestore();
-        const now = new Date();
+
 
         try {
             // 1. Iterar Tenants/Units para ler configurações
@@ -35,9 +45,8 @@ exports.processContractDefaultCancellation = functions
                     if (cancelDays <= 0) continue; // Desativado
 
                     // Calcular data limite: Hoje - cancelDays
-                    const limitDate = new Date();
-                    limitDate.setDate(limitDate.getDate() - cancelDays);
-                    const limitDateIso = limitDate.toISOString().split("T")[0];
+                    const limitDateIso = toISODate(addDays(new Date(), -cancelDays));
+
 
                     // Buscar Recebíveis VENCIDOS antes da data limite e ABERTOS
                     // Recebíveis antigos em aberto = Inadimplência crítica
@@ -112,74 +121,4 @@ exports.processContractDefaultCancellation = functions
         return null;
     });
 
-/**
- * Rotina diária para excluir vendas pendentes (abandono de carrinho) após X dias.
- * Roda às 02:00 AM.
- */
-exports.processSalesDeletion = functions
-    .region("us-central1")
-    .pubsub.schedule("0 2 * * *")
-    .timeZone("America/Sao_Paulo")
-    .onRun(async (context) => {
-        const db = admin.firestore();
 
-        try {
-            const tenantsSnap = await db.collection("tenants").get();
-            for (const tenantDoc of tenantsSnap.docs) {
-                const tenantId = tenantDoc.id;
-                const branchesSnap = await db.collection(`tenants/${tenantId}/branches`).get();
-
-                for (const branchDoc of branchesSnap.docs) {
-                    const branchId = branchDoc.id;
-
-                    const settingsRef = db.doc(`tenants/${tenantId}/branches/${branchId}/settings/general`);
-                    const settingsSnap = await settingsRef.get();
-                    if (!settingsSnap.exists) continue;
-
-                    const settings = settingsSnap.data();
-                    const deleteDays = Number(settings.finance?.deleteSalesAfterDays || 0);
-
-                    if (deleteDays <= 0) continue;
-
-                    const limitDate = new Date();
-                    limitDate.setDate(limitDate.getDate() - deleteDays);
-                    const limitDateIso = limitDate.toISOString(); // Timestamp comparision if sales use timestamp or ISO string?
-                    // Sales user `saleDate` (YYYY-MM-DD) or `createdAt` (Timestamp)?
-                    // Schema checks: `createdAt` is serverTimestamp.
-                    // Firestore queries on timestamps require Date objects.
-
-                    const salesRef = db.collection(`tenants/${tenantId}/branches/${branchId}/sales`);
-
-                    // Buscar vendas "open" antigas
-                    const oldSalesSnap = await salesRef
-                        .where("status", "==", "open")
-                        .where("createdAt", "<=", limitDate)
-                        .get();
-
-                    if (oldSalesSnap.empty) continue;
-
-                    const batch = db.batch();
-                    let count = 0;
-
-                    oldSalesSnap.docs.forEach(doc => {
-                        // Deletar a venda
-                        batch.delete(doc.ref);
-
-                        // Itens (subcoleção) - Batch delete tem limite de 500, se tiver muitos itens pode estourar
-                        // Mas vendas abandonadas geralmente são pequenas.
-                        // Firestore não deleta subcoleções automaticamente. Precisamos listar e deletar.
-                        // Para não estourar a memória/tempo, vamos deletar apenas a venda PAI. 
-                        // As subcoleções ficam órfãs (custo de armazenamento, mas não aparecem na query)
-                        // O ideal é usar recursiveDelete do firebase-tools mas aqui é código.
-                        // Vamos tentar deletar itens se for pouco.
-                        count++;
-                    });
-
-                    if (count > 0) await batch.commit();
-                }
-            }
-        } catch (e) {
-            console.error("Erro na rotina de exclusão de vendas:", e);
-        }
-        return null;
-    });

@@ -4,5 +4,7 @@ export const INITIAL_ACTIVITY_FORM = {
   description: "",
   color: "#3c5068",
   status: "ativo",
+  active: true,
   objectives: [],
 }
+

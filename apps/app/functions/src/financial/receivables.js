@@ -4,6 +4,8 @@ const { FieldValue } = require("firebase-admin/firestore");
 const { requireAuthContext } = require("../shared/context");
 const { generateEntityId } = require("../shared/id");
 const { buildReceivablePayload } = require("../shared/payloads");
+const { toISODate } = require("../helpers/date");
+const { distributePaymentToReceivables } = require("./helpers/paymentHelper");
 
 const db = admin.firestore();
 
@@ -29,31 +31,25 @@ const createReceivableInternal = async (
     uid,
     userToken,
     batch,
+    transaction, // New support for transaction
   },
 ) => {
-  const receivableCode = await generateEntityId(
+  // If specific code provided in payload, use it (useful for partial payments pre-calc), else generate.
+  const receivableCode = payload.receivableCode || await generateEntityId(
     idTenant,
     idBranch,
     "receivable",
     { sequential: true },
   );
 
-  const rawPayload = buildReceivablePayload(payload);
+  const rawPayload = buildReceivablePayload({
+    ...payload,
+    receivableCode
+  });
 
+  // System Metadata (campos de auditoria não devem ir no builder genérico)
   const finalPayload = {
     ...rawPayload,
-    receivableCode,
-    // Add missing fields not in builder but required by backend
-    amountPaid: Number(payload.amountPaid || 0),
-    paymentType: payload.paymentType || null,
-    cardAcquirer: payload.cardAcquirer || null,
-    cardFlag: payload.cardFlag || null,
-    authorization: payload.authorization || null,
-    currentInstallment: payload.currentInstallment || 1,
-    totalInstallments: payload.totalInstallments || 1,
-    competenceDate: payload.competenceDate || payload.dueDate || new Date().toISOString().split("T")[0],
-
-    // System Metadata
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
     createdBy: uid,
@@ -64,7 +60,11 @@ const createReceivableInternal = async (
 
   const ref = getReceivablesColl(idTenant, idBranch);
 
-  if (batch) {
+  if (transaction) {
+    const docRef = ref.doc();
+    transaction.set(docRef, finalPayload);
+    return { id: docRef.id, ...finalPayload };
+  } else if (batch) {
     const docRef = ref.doc();
     batch.set(docRef, finalPayload);
     return { id: docRef.id, ...finalPayload };
@@ -154,47 +154,7 @@ exports.deleteReceivable = functions.region("us-central1").https.onCall(async (d
   }
 });
 
-/**
- * Helper: Distribui um valor de pagamento entre recebíveis em aberto
- * Usa estratégia FIFO (mais antigos primeiro)
- */
-const distributePaymentToReceivables = (receivables, totalPayment) => {
-  // Ordenar por dueDate (mais antigo primeiro)
-  const sorted = [...receivables].sort((a, b) => {
-    const dateA = new Date(a.dueDate || "9999-12-31");
-    const dateB = new Date(b.dueDate || "9999-12-31");
-    return dateA.getTime() - dateB.getTime();
-  });
 
-  let remaining = Number(totalPayment);
-  const distribution = [];
-
-  for (const receivable of sorted) {
-    if (remaining <= 0) break;
-
-    // Compatibilidade: balance (novo) ou pending (legado)
-    const pending = Number(receivable.balance || receivable.pending || 0);
-    if (pending <= 0) continue;
-
-    const amountToPay = Math.min(remaining, pending);
-
-    distribution.push({
-      idReceivable: receivable.id,
-      originalPending: pending,
-      amountToPay,
-      newPending: pending - amountToPay,
-      willBeFullyPaid: (pending - amountToPay) === 0,
-    });
-
-    remaining -= amountToPay;
-  }
-
-  return {
-    distribution,
-    remainingAmount: remaining,
-    totalDistributed: Number(totalPayment) - remaining,
-  };
-};
 
 /**
  * Paga recebíveis em aberto (saldo devedor).
@@ -293,43 +253,39 @@ exports.payReceivables = functions.region("us-central1").https.onCall(async (dat
       }
 
       // 3. Criar transação financeira
-      const transactionsRef = db
-        .collection("tenants")
-        .doc(idTenant)
-        .collection("branches")
-        .doc(idBranch)
-        .collection("financialTransactions");
+      // 3. Criar transação financeira
+      // Import lazy to avoid circular dependency issues at top level if any (though likely none)
+      const { createTransactionInternal } = require("./transactions");
 
-      const transactionPayload = {
-        type: "receivablePayment",
-        description: `Pagamento de saldo devedor - ${distribution.length} recebível(is)`,
-        idClient,
+      const { id: transactionId } = await createTransactionInternal({
         idTenant,
         idBranch,
-        transactionCode, // ID Estruturado
-        method: paymentMethod,
-        amount: -totalDistributed, // Negativo pois é pagamento (saída do cliente)
-        date: paymentDate || new Date().toISOString().split("T")[0],
-        status: "completed",
-        receivableIds: distribution.map(d => d.idReceivable),
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-        createdBy: uid,
-        createdByName: token?.name || token?.email || "System",
-      };
+        transaction: t,
+        payload: {
+          transactionCode, // ID Estruturado pré-gerado
+          type: "receivablePayment",
+          description: `Pagamento de saldo devedor - ${distribution.length} recebível(is)`,
+          idClient,
+          method: paymentMethod,
+          amount: -totalDistributed, // Negativo pois é pagamento (saída do cliente)
+          date: paymentDate || toISODate(new Date()),
+          status: "completed",
+          receivableIds: distribution.map(d => d.idReceivable),
 
-      // Adicionar campos de cartão se fornecidos
-      if (paymentMethod === "credito" || paymentMethod === "debito") {
-        if (authorization) transactionPayload.cardAuthorization = authorization;
-        if (acquirer) transactionPayload.cardAcquirer = acquirer;
-        if (brand) transactionPayload.cardBrand = brand;
-        if (paymentMethod === "credito" && installments) {
-          transactionPayload.cardInstallments = Number(installments);
+          // Card fields
+          cardAuthorization: authorization,
+          cardAcquirer: acquirer,
+          cardBrand: brand,
+          cardInstallments: installments,
+
+          metadata: {
+            registeredBy: token?.name || token?.email || "System",
+            uid
+          }
         }
-      }
-
-      const transactionRef = transactionsRef.doc();
-      t.set(transactionRef, transactionPayload);
+      });
+      // const transactionRef = transactionsRef.doc(); -- handled by internal
+      // t.set(transactionRef, transactionPayload);
 
       // 4. Atualizar cada receivable
       const updatedReceivables = [];
@@ -367,39 +323,31 @@ exports.payReceivables = functions.region("us-central1").https.onCall(async (dat
       const stillPending = totalPending - totalDistributed;
 
       if (stillPending > 0 && nextDueDate) {
-        const newReceivableRef = receivablesRef.doc();
-
-        const newReceivablePayload = {
-          idClient,
-          idTenant,
-          idBranch,
-          receivableCode: newReceivableCode, // ID Estruturado
-          description: "Saldo devedor remanescente - Pagamento parcial",
-          amount: stillPending,
-          paid: 0,
-          amountPaid: 0,
-          pending: stillPending,
-          balance: stillPending, // Compatibilidade com vendas
-          status: "open",
-          dueDate: nextDueDate,
-          competenceDate: nextDueDate,
-          paymentType: null,
-          currentInstallment: 1,
-          totalInstallments: 1,
-          createdAt: FieldValue.serverTimestamp(),
-          updatedAt: FieldValue.serverTimestamp(),
-          createdBy: uid,
-          createdByName: token?.name || token?.email || "System",
-          notes: `Criado automaticamente após pagamento parcial de R$ ${totalDistributed.toFixed(2)} em ${paymentDate || new Date().toISOString().split("T")[0]}`,
-        };
-
-        t.set(newReceivableRef, newReceivablePayload);
-        newReceivableId = newReceivableRef.id;
+        if (stillPending > 0 && nextDueDate) {
+          // Usar a função internal com transaction para reuso seguro de código
+          const { id } = await createReceivableInternal({
+            idTenant,
+            idBranch,
+            uid,
+            userToken: token,
+            transaction: t,
+            payload: {
+              receivableCode: newReceivableCode, // ID Estruturado pré-gerado
+              idClient,
+              description: "Saldo devedor remanescente - Pagamento parcial",
+              amount: stillPending,
+              pending: stillPending,
+              dueDate: nextDueDate,
+              notes: `Criado automaticamente após pagamento parcial de R$ ${totalDistributed.toFixed(2)} em ${paymentDate || toISODate(new Date())}`,
+            }
+          });
+          newReceivableId = id;
+        }
       }
 
       return {
         success: true,
-        transactionId: transactionRef.id,
+        transactionId,
         totalPaid: totalDistributed,
         totalPending,
         stillPending,

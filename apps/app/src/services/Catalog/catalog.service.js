@@ -8,7 +8,8 @@ import {
   getContext,
   getDb
 } from "./catalog.repository"
-import { buildProductPayload } from "../payloads"
+import { buildServicePayload } from "../payloads"
+
 
 /** PRODUCTS */
 
@@ -73,8 +74,9 @@ export const createService = async (data, id = null, { ctxOverride = null } = {}
   const db = getDb()
   const ctx = getContext(ctxOverride)
 
-  const productData = buildProductPayload(data)
-  const payload = makeCreatePayload(productData, ctx)
+  const serviceData = buildServicePayload(data)
+  const payload = makeCreatePayload(serviceData, ctx)
+
 
   if (id) {
     const ref = serviceDoc(db, ctx, id)

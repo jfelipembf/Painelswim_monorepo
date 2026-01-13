@@ -1,10 +1,8 @@
-/**
- * ENTITY PAYLOAD BUILDERS (NodeJS/CommonJS version)
- */
-
 const asString = (val) => (val !== undefined && val !== null ? String(val) : null);
+const { toISODate } = require("../helpers/date");
 
 const buildAddress = (data) => {
+
     let source = data
     let street = ""
 
@@ -28,7 +26,18 @@ const buildAddress = (data) => {
     }
 }
 
+exports.buildAddress = buildAddress;
+
+
+const deriveFullName = (data) => {
+    const { firstName, lastName, name } = data;
+    return name || [firstName, lastName].filter(Boolean).join(" ").trim();
+}
+
+exports.deriveFullName = deriveFullName;
+
 exports.buildClientPayload = (data) => {
+
     const {
         firstName,
         lastName,
@@ -86,7 +95,7 @@ exports.buildClientContractPayload = (data) => {
         contractTitle: data.contractTitle || data.title || "",
         contractCode: data.contractCode || null,
         status: data.status || "active",
-        startDate: data.startDate || new Date().toISOString().split("T")[0],
+        startDate: data.startDate || toISODate(new Date()),
         endDate: data.endDate || null,
         requiresEnrollment: Boolean(data.requiresEnrollment),
         maxWeeklyEnrollments: Number(data.maxWeeklyEnrollments || 0),
@@ -108,14 +117,62 @@ exports.buildReceivablePayload = (data) => {
         idClient: asString(data.idClient),
         idSale: asString(data.idSale),
         idContract: asString(data.idContract),
+        receivableCode: data.receivableCode || null, // Allow passing specific code
         amount: Number(data.amount || 0),
-        balance: Number(data.balance !== undefined ? data.balance : data.amount || 0),
-        dueDate: data.dueDate || new Date().toISOString().split("T")[0],
+        amountPaid: Number(data.amountPaid || 0),
+        balance: Number(data.balance !== undefined ? data.balance : (data.amount || 0) - (data.amountPaid || 0)),
+        dueDate: data.dueDate || toISODate(new Date()),
         paidAt: data.paidAt || null,
         status: data.status || "open",
         description: data.description || "Saldo Devedor",
         paymentType: data.paymentType || null,
-        competenceDate: data.competenceDate || data.dueDate || new Date().toISOString().split("T")[0],
+        competenceDate: data.competenceDate || data.dueDate || toISODate(new Date()),
+
+        // Installments
+        currentInstallment: Number(data.currentInstallment || 1),
+        totalInstallments: Number(data.totalInstallments || 1),
+
+        // Card Info
+        cardAcquirer: data.cardAcquirer || null,
+        cardFlag: data.cardFlag || null,
+        authorization: data.authorization || null,
+
+        notes: data.notes || "",
+    }
+}
+
+exports.buildTransactionPayload = (data) => {
+    return {
+        // Core
+        idTransaction: data.idTransaction || null, // Allow passing specific ID
+        transactionCode: data.transactionCode || null,
+
+        type: data.type || "expense",
+        category: data.category || "Geral",
+        description: data.description || "",
+        amount: Number(data.amount || 0),
+        date: data.date || toISODate(new Date()),
+        method: data.method || "Dinheiro",
+        status: data.status || "completed",
+
+        // Relationships
+        source: data.source || "manual",
+        idSale: asString(data.idSale),
+        idContract: asString(data.idContract),
+        idProduct: asString(data.idProduct),
+        idService: asString(data.idService),
+        idClient: asString(data.idClient),
+
+        // Collections
+        receivableIds: Array.isArray(data.receivableIds) ? data.receivableIds : [],
+
+        // Card Specifics
+        cardAuthorization: data.cardAuthorization || data.authorization || null,
+        cardAcquirer: data.cardAcquirer || data.acquirer || null,
+        cardBrand: data.cardBrand || data.brand || null,
+        cardInstallments: data.cardInstallments ? Number(data.cardInstallments) : null,
+
+        metadata: data.metadata || {},
     }
 }
 
@@ -125,7 +182,7 @@ exports.buildClientDebtPayload = (data) => {
         idSale: asString(data.idSale),
         amount: Number(data.amount || 0),
         balance: Number(data.balance !== undefined ? data.balance : data.amount || 0),
-        dueDate: data.dueDate || new Date().toISOString().split("T")[0],
+        dueDate: data.dueDate || toISODate(new Date()),
         status: data.status || "open",
         description: data.description || "Dívida",
         createdAt: data.createdAt || null,

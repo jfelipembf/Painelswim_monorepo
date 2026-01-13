@@ -1,11 +1,21 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const db = admin.firestore();
-const { processTrigger } = require("./automationHelper");
+const { processTrigger } = require("./helpers/helper");
 
 /**
- * Scheduled function to check for birthday automations.
- * Runs every day at 09:00 Sao_Paulo time.
+ * ============================================================================
+ * SCHEDULED AUTOMATIONS
+ * ____________________________________________________________________________
+ *
+ * 1. checkBirthdayAutomations: Função agendada para verificar automações de aniversário.
+ *
+ * ============================================================================
+ */
+
+/**
+ * Função agendada para verificar automações de aniversário.
+ * Executa todos os dias às 09:00 (Horário de São Paulo).
  */
 exports.checkBirthdayAutomations = functions.pubsub
     .schedule("0 9 * * *") // Daily at 09:00
@@ -13,9 +23,9 @@ exports.checkBirthdayAutomations = functions.pubsub
     .onRun(async (context) => {
 
 
-        // 1. Get all active BIRTHDAY automations across all tenants/branches
-        // Using Collection Group Query requires an index on 'type' and 'active'
-        // Index: automations (collectionId) -> fields: type: ASC, active: ASC
+        // 1. Buscar todas as automações de ANIVERSÁRIO ativas em todos os tenants/filiais
+        // O uso de Collection Group Query requer um índice em 'type' e 'active'
+        // Índice: automations (collectionId) -> campos: type: ASC, active: ASC
 
         try {
             const automationsSnap = await db.collectionGroup("automations")
@@ -32,16 +42,16 @@ exports.checkBirthdayAutomations = functions.pubsub
 
             const promises = automationsSnap.docs.map(async (doc) => {
                 const automation = doc.data();
-                // Get parent Branch and Tenant IDs from doc ref path
-                // Path: tenants/{idTenant}/branches/{idBranch}/automations/{autoId}
+                // Obter IDs da Filial e Tenant pai a partir do caminho do doc ref
+                // Caminho: tenants/{idTenant}/branches/{idBranch}/automations/{autoId}
                 const pathSegments = doc.ref.path.split("/");
                 const idTenant = pathSegments[1];
                 const idBranch = pathSegments[3];
 
-                // Determine target birthday date
-                // Default: Today. If config.daysBefore is set (e.g. 1), we check for birthdays X days from now? 
-                // Usually "Birthday" message is sent ON the day, but support "daysBefore" if needed.
-                // If daysBefore > 0, it means we send logic for "Upcoming Birthday".
+                // Determinar a data alvo do aniversário
+                // Padrão: Hoje. Se config.daysBefore estiver definido (ex: 1), verificamos aniversários daqui a X dias?
+                // Normalmente a mensagem de "Aniversário" é enviada NO dia, mas suportamos "daysBefore" se necessário.
+                // Se daysBefore > 0, significa que enviamos lógica para "Aniversário Chegando".
 
                 const daysBefore = automation.config?.daysBefore || 0;
                 const targetDate = new Date();
@@ -52,15 +62,15 @@ exports.checkBirthdayAutomations = functions.pubsub
 
 
 
-                // Query Clients: simpler to query by birthMonth and birthDay if stored separately.
-                // If birthDate is YYYY-MM-DD string, we can't easily query range.
-                // We'll assume we iterate active clients or use an existing structure.
-                // For efficiency, let's fetch 'clients' collection where status == 'active'.
+                // Consultar Clientes: mais simples consultar por birthMonth e birthDay se armazenados separadamente.
+                // Se birthDate for string YYYY-MM-DD, não podemos consultar intervalo facilmente.
+                // Vamos assumir que iteramos clientes ativos ou usamos uma estrutura existente.
+                // Para eficiência, vamos buscar a coleção 'clients' onde status == 'active'.
 
-                // IMPORTANT: Querying all clients might be expensive if many. 
-                // Ideally, clients should have 'birthMonth' and 'birthDay' fields indexed.
-                // IF NOT, we have to fetch all and filter in memory (danger for large bases).
-                // Let's assume we filter in memory for now as I don't want to migrate DB.
+                // IMPORTANTE: Consultar todos os clientes pode ser custoso se houver muitos.
+                // Idealmente, clientes deveriam ter campos 'birthMonth' e 'birthDay' indexados.
+                // SE NÃO, temos que buscar tudo e filtrar em memória (perigo para bases grandes).
+                // Vamos assumir que filtramos em memória por enquanto, pois não quero migrar o DB.
 
                 const clientsRef = db
                     .collection("tenants")
@@ -70,17 +80,24 @@ exports.checkBirthdayAutomations = functions.pubsub
                     .collection("clients");
 
                 const clientsSnap = await clientsRef
-                    .where("status", "==", "active") // Only active clients?
+                    .where("status", "==", "active") // Apenas clientes ativos?
                     .get();
 
                 const matches = [];
 
+                // Iterar sobre os snapshots para filtrar em memória
                 clientsSnap.forEach(clientDoc => {
                     const client = clientDoc.data();
-                    if (!client.birthDate) return;
 
-                    // Parse birthDate (expecting YYYY-MM-DD)
-                    const [y, m, d] = client.birthDate.split("-").map(Number);
+                    // Validar se birthDate existe e se é uma string válida
+                    if (!client.birthDate || typeof client.birthDate !== "string") return;
+
+                    // Parsear data de nascimento (esperando YYYY-MM-DD, ex: "1984-10-16")
+                    const parts = client.birthDate.split("-");
+                    if (parts.length !== 3) return; // formato inválido
+
+                    const m = Number(parts[1]); // Mês (1-12)
+                    const d = Number(parts[2]); // Dia (1-31)
 
                     if (m === targetMonth && d === targetDay) {
                         matches.push(client);
@@ -89,22 +106,22 @@ exports.checkBirthdayAutomations = functions.pubsub
 
 
 
-                // Process Trigger for each match
+                // Processar Gatilho para cada correspondência
                 const triggerPromises = matches.map(client => {
                     const data = {
                         name: client.name || "Aluno",
-                        professional: "", // Not applicable for birthday
-                        date: `${targetDay}/${targetMonth}`, // Birthday string
+                        professional: "", // Não aplicável para aniversário
+                        date: `${targetDay}/${targetMonth}`, // String de aniversário
                         time: "",
                         phone: client.phone || client.mobile || client.whatsapp
                     };
 
-                    // We call processTrigger but we need to bypass 'fetching automation' again 
-                    // because processTrigger fetches the automation by type. 
-                    // To be efficient, processTrigger normally fetches. 
-                    // Here we HAD the automation doc, but processTrigger restarts logic.
-                    // It's fine for reuse, simply overhead. 
-                    // For better efficiency, we could call sendWhatsApp directly, but let's stick to processTrigger for consistency.
+                    // Chamamos processTrigger, mas precisamos ignorar 'buscar automação' novamente 
+                    // porque processTrigger busca a automação por tipo. 
+                    // Para ser eficiente, processTrigger normalmente busca. 
+                    // Aqui JÁ TÍNHAMOS o doc da automação, mas processTrigger reinicia a lógica.
+                    // Tudo bem para reutilização, apenas overhead. 
+                    // Para melhor eficiência, poderíamos chamar sendWhatsApp diretamente, mas vamos manter processTrigger pela consistência.
                     return processTrigger(idTenant, idBranch, "BIRTHDAY", data);
                 });
 
