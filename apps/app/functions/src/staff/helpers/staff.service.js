@@ -3,6 +3,7 @@ const admin = require("firebase-admin");
 const { FieldValue } = require("firebase-admin/firestore");
 const { requireAuthContext } = require("../../shared/context");
 const { sendWhatsAppMessageInternal } = require("../../notifications/whatsapp");
+const { saveAuditLog } = require("../../shared/audit");
 
 /**
  * Lógica para criar um usuário da equipe (Staff)
@@ -140,6 +141,17 @@ async function createStaffUserLogic(data, context) {
             phone
         });
 
+        // Registrar Log de Auditoria
+        await saveAuditLog({
+            idTenant,
+            idBranch,
+            uid: context.auth.uid,
+            action: "STAFF_CREATE",
+            targetId: uid,
+            description: `Criou o colaborador ${displayName} (${finalRole})`,
+            metadata: { email, role: finalRole, roleId }
+        });
+
         return {
             success: true,
             uid,
@@ -154,15 +166,15 @@ async function createStaffUserLogic(data, context) {
 
 // Helper para enviar mensagem de boas-vindas (Executado após criação)
 async function sendWelcomeMessage(idTenant, idBranch, staffData) {
-    console.log(`[WelcomeMessage] Iniciando envio para ${staffData.firstName} (${staffData.email})`);
+
     try {
         if (!staffData.phone) {
-            console.log("[WelcomeMessage] Falha: Sem telefone.");
+
             return;
         }
 
         // Buscar Tenant e Branch para pegar Slugs
-        console.log(`[WelcomeMessage] Buscando dados de Tenant (${idTenant}) e Branch (${idBranch})...`);
+
         const tenantSnap = await admin.firestore().collection("tenants").doc(idTenant).get();
         const branchSnap = await admin.firestore().collection("tenants").doc(idTenant).collection("branches").doc(idBranch).get();
 
@@ -178,7 +190,7 @@ async function sendWelcomeMessage(idTenant, idBranch, staffData) {
         const branchSlug = branchData.slug || idBranch;
 
         const url = `https://app.painelswim.com/${tenantSlug}/${branchSlug}/`;
-        console.log(`[WelcomeMessage] URL gerada: ${url}`);
+
 
         const message = `Olá ${staffData.firstName}, seja bem vindo, ao painel swim para seu acesso use a URL abaixo. criamos uma senha provisoria para voce
 
@@ -189,9 +201,9 @@ ${url}
 
 altera a sua senha por seguranca apos o primeiro acesso e tenha um otimo dia de trabalho`;
 
-        console.log(`[WelcomeMessage] Enviando via WhatsApp para ${staffData.phone}...`);
+
         await sendWhatsAppMessageInternal(idTenant, idBranch, staffData.phone, message);
-        console.log("[WelcomeMessage] Sucesso: Mensagem enviada.");
+
 
     } catch (err) {
         console.error("[WelcomeMessage] Erro CATASTRÓFICO:", err);
@@ -302,6 +314,20 @@ async function updateStaffUserLogic(data, context) {
 
         // Merge payload e remoção de campos antigos
         await staffRef.set({ ...firestorePayload, ...fieldsToRemove }, { merge: true });
+
+        // Registrar Log de Auditoria
+        await saveAuditLog({
+            idTenant,
+            idBranch,
+            uid: context.auth.uid,
+            action: "STAFF_UPDATE",
+            targetId: id,
+            description: `Atualizou os dados do colaborador ${displayName}`,
+            metadata: {
+                updates: Object.keys(firestorePayload),
+                email
+            }
+        });
 
         return {
             success: true,

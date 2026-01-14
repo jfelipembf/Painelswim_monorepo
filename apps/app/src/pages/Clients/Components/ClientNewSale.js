@@ -20,6 +20,8 @@ import { useSalesData } from "../Hooks/useSalesData"
 import { useSalesForm } from "../Hooks/useSalesForm"
 import { useSalesActions } from "../Hooks/useSalesActions"
 import { paymentTabs } from "../Constants/salesDefaults"
+import { getClient } from "../../../services/Clients/clients.service"
+import { useState, useEffect } from "react"
 
 const formatCurrency = value =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(value || 0))
@@ -31,6 +33,15 @@ const ClientNewSale = () => {
   const idClient = searchParams.get("idClient") || ctx?.idClient || null
 
   const { itemsByTab, isLoading: isLoadingData } = useSalesData()
+  const [clientName, setClientName] = useState("")
+
+  useEffect(() => {
+    if (idClient) {
+      getClient(idClient).then(c => {
+        if (c?.name) setClientName(c.name)
+      }).catch(err => console.warn("Erro ao carregar nome do cliente para auditoria", err))
+    }
+  }, [idClient])
 
   const {
     saleTab, setSaleTab,
@@ -54,6 +65,7 @@ const ClientNewSale = () => {
 
   const { handleFinalize, isLoading: isLoadingAction } = useSalesActions({
     idClient,
+    clientName, // Passando nome para auditoria
     saleTab,
     selectedItem,
     diff,

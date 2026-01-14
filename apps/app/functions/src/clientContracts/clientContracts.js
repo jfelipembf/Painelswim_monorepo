@@ -2,6 +2,7 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const { FieldValue } = require("firebase-admin/firestore");
 const { requireAuthContext } = require("../shared/context");
+const { saveAuditLog } = require("../shared/audit");
 
 const db = admin.firestore();
 
@@ -38,9 +39,33 @@ exports.createClientContract = functions.region("us-central1").https.onCall(asyn
   }
 
   try {
-    return await createClientContractInternal({
+    const result = await createClientContractInternal({
       idTenant, idBranch, uid, token, data
     });
+
+    // Auditoria
+    try {
+      const clientName = data.clientName || (data.client?.name) || (data.client ? `${data.client.firstName || ''} ${data.client.lastName || ''}`.trim() : null);
+      const staffName = token?.name || token?.email || uid;
+
+      await saveAuditLog({
+        idTenant, idBranch, uid,
+        userName: staffName,
+        action: "CLIENT_CONTRACT_CREATE",
+        targetId: result.id,
+        description: `Venda de contrato realizada para o cliente ${data.idClient}: ${result.contractTitle || 'Sem título'}`,
+        metadata: {
+          idClient: data.idClient,
+          clientName: clientName,
+          value: data.value,
+          title: result.contractTitle
+        }
+      });
+    } catch (auditError) {
+      console.error("Falha silenciosa na auditoria de criação de contrato:", auditError);
+    }
+
+    return result;
   } catch (error) {
     console.error("Erro ao criar contrato:", error);
     throw new functions.https.HttpsError("internal", "Erro ao criar contrato.");
@@ -51,7 +76,7 @@ exports.createClientContract = functions.region("us-central1").https.onCall(asyn
  * Agendar ou ativar suspensão de contrato.
  */
 exports.scheduleContractSuspension = functions.region("us-central1").https.onCall(async (data, context) => {
-  const { idTenant, idBranch, uid } = requireAuthContext(data, context);
+  const { idTenant, idBranch, uid, token } = requireAuthContext(data, context);
   const { idClientContract, startDate, endDate, reason } = data;
 
   if (!idClientContract) throw new functions.https.HttpsError("invalid-argument", "ID do contrato é obrigatório.");
@@ -128,6 +153,30 @@ exports.scheduleContractSuspension = functions.region("us-central1").https.onCal
       t.update(contractRef, updates);
     });
 
+    // Auditoria
+    try {
+      const clientName = data.clientName || (data.client?.name) || (data.client ? `${data.client.firstName || ''} ${data.client.lastName || ''}`.trim() : null);
+      const staffName = token?.displayName || token?.name || token?.email || uid;
+
+      await saveAuditLog({
+        idTenant, idBranch, uid,
+        userName: staffName,
+        action: "CLIENT_CONTRACT_SUSPEND",
+        targetId: idClientContract,
+        description: `Agendou suspensão do contrato ${idClientContract} (${startDate} a ${endDate})`,
+        metadata: {
+          idClient: data.idClient,
+          clientName: clientName,
+          startDate,
+          endDate,
+          reason,
+          status: shouldActivateNow ? "active" : "scheduled"
+        }
+      });
+    } catch (auditError) {
+      console.error("Falha silenciosa na auditoria de suspensão:", auditError);
+    }
+
     return {
       success: true,
       id: suspRef.id,
@@ -149,7 +198,7 @@ exports.scheduleContractSuspension = functions.region("us-central1").https.onCal
  * Cancelar contrato.
  */
 exports.cancelClientContract = functions.region("us-central1").https.onCall(async (data, context) => {
-  const { idTenant, idBranch, uid } = requireAuthContext(data, context);
+  const { idTenant, idBranch, uid, token } = requireAuthContext(data, context);
   const { idClientContract, reason, refundRevenue, schedule, cancelDate } = data;
 
   if (!idClientContract) throw new functions.https.HttpsError("invalid-argument", "ID do contrato é obrigatório.");
@@ -224,7 +273,7 @@ exports.cancelClientContract = functions.region("us-central1").https.onCall(asyn
         let debtsQuery = receivablesRef.where("status", "==", "open");
 
         // Tenta filtrar por idContract se existir, ou idSale
-        // Como o Firestore não faz OR nativo entre campos diferentes facilmente na mesma query sem indices complexos, 
+        // Como o Firestore não faz OR nativo entre campos diferentes facilmente na mesma query sem indices complexos,
         // vamos priorizar idSale se houver, ou buscar ambos se necessário.
         // Simplificação: Se tiver idSale, usa. Se não, tenta idContract se o receivable tiver esse campo (nosso model tem idSale e metadata).
 
@@ -259,6 +308,31 @@ exports.cancelClientContract = functions.region("us-central1").https.onCall(asyn
     } catch (e) {
       console.error("Erro na limpeza pós-cancelamento:", e);
       // Não falha a requisição principal pois o contrato já foi cancelado
+    }
+  }
+
+  // Auditoria
+  if (result?.status === "canceled" || result?.status === "scheduled_cancellation") {
+    try {
+      const clientName = data.clientName || (data.client?.name) || (data.client ? `${data.client.firstName || ''} ${data.client.lastName || ''}`.trim() : null);
+      const staffName = token?.displayName || token?.name || token?.email || uid;
+
+      await saveAuditLog({
+        idTenant, idBranch, uid,
+        userName: staffName,
+        action: result.status === "canceled" ? "CLIENT_CONTRACT_CANCEL" : "CLIENT_CONTRACT_SCHEDULE_CANCEL",
+        targetId: idClientContract,
+        description: `Cancelamento de contrato: ${idClientContract} (Motivo: ${reason || 'Não informado'})`,
+        metadata: {
+          idClient: result.idClient,
+          clientName: clientName,
+          reason,
+          refundRevenue,
+          schedule
+        }
+      });
+    } catch (auditError) {
+      console.error("Falha silenciosa na auditoria de cancelamento:", auditError);
     }
   }
 
@@ -384,6 +458,21 @@ exports.stopClientContractSuspension = functions.region("us-central1").https.onC
         newContractEndDate: newContractEndDateStr,
       };
     });
+
+    // Auditoria
+    try {
+      await saveAuditLog({
+        idTenant, idBranch, uid,
+        action: "CLIENT_CONTRACT_SUSPEND_STOP",
+        targetId: idClientContract,
+        description: `Interrompeu suspensão do contrato ${idClientContract}`,
+        metadata: { idSuspension, result }
+      });
+    } catch (auditError) {
+      console.error("Falha silenciosa na auditoria de interrupção de suspensão:", auditError);
+    }
+
+    return result;
   } catch (error) {
     console.error("ERRO [stopClientContractSuspension]:", error);
     if (error instanceof functions.https.HttpsError) throw error;

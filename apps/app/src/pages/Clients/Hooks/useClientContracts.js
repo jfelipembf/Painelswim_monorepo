@@ -9,7 +9,7 @@ import {
 } from "../../../services/ClientContracts"
 import { buildContractKey } from "../Utils/contractsUtils"
 
-export const useClientContracts = (contracts, idClient, onRefresh) => {
+export const useClientContracts = (contracts, idClient, clientName, onRefresh) => {
     const [selectedId, setSelectedId] = useState(() => {
         if (contracts.length > 0) {
             return buildContractKey(contracts[0], 0)
@@ -69,6 +69,8 @@ export const useClientContracts = (contracts, idClient, onRefresh) => {
             await withLoading('suspend', async () => {
                 const response = await scheduleContractSuspension({
                     idClientContract: selected.id,
+                    idClient, // Added
+                    clientName, // Added
                     startDate: suspendForm.start,
                     endDate: suspendForm.end,
                     reason: suspendForm.reason,
@@ -119,6 +121,8 @@ export const useClientContracts = (contracts, idClient, onRefresh) => {
             await withLoading('stop-suspension', async () => {
                 const response = await stopContractSuspension({
                     idClientContract: selected.id,
+                    idClient, // Added
+                    clientName, // Added
                     idSuspension
                 })
 
@@ -174,6 +178,8 @@ export const useClientContracts = (contracts, idClient, onRefresh) => {
                 // eslint-disable-next-line no-unused-vars
                 const result = await cancelClientContract({
                     idClientContract,
+                    idClient, // Added
+                    clientName, // Added
                     reason: cancelForm.reason,
                     canceledBy: null, // TODO: pegar do usuário logado
                     refundRevenue: false,

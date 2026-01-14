@@ -3,6 +3,7 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const { FieldValue } = require("firebase-admin/firestore");
 const { requireAuthContext } = require("../shared/context");
+const { saveAuditLog } = require("../shared/audit");
 
 const { buildContractPayload } = require("../shared/payloads");
 
@@ -36,6 +37,16 @@ exports.createContract = functions.region("us-central1").https.onCall(async (dat
   try {
     const ref = getContractsColl(idTenant, idBranch);
     const docRef = await ref.add(payload);
+
+    // Auditoria
+    await saveAuditLog({
+      idTenant, idBranch, uid,
+      action: "CONTRACT_TEMPLATE_CREATE",
+      targetId: docRef.id,
+      description: `Criou novo modelo de contrato/plano: ${payload.label}`,
+      metadata: { label: payload.label, type: payload.type }
+    });
+
     return { id: docRef.id, ...payload };
   } catch (error) {
     console.error("Error creating contract:", error);
@@ -68,6 +79,17 @@ exports.updateContract = functions.region("us-central1").https.onCall(async (dat
   try {
     const ref = getContractsColl(idTenant, idBranch).doc(idContract);
     await ref.update(payload);
+
+    // Auditoria
+    await saveAuditLog({
+      idTenant, idBranch,
+      uid: context.auth.uid,
+      action: "CONTRACT_TEMPLATE_UPDATE",
+      targetId: idContract,
+      description: `Atualizou o modelo de contrato: ${idContract}`,
+      metadata: { updates: Object.keys(payload) }
+    });
+
     return { id: idContract, ...payload };
   } catch (error) {
     console.error("Error updating contract:", error);

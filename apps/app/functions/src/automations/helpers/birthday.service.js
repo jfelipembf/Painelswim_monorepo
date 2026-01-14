@@ -10,7 +10,7 @@ const { processTrigger } = require("./helper");
  * 3. Verifica se há automações de aniversário configuradas e processa (ex: 3 dias antes).
  */
 async function processDailyBirthdays() {
-    console.log("[BirthdayCheck] Starting daily process...");
+
 
     // 1. Iterar sobre todos os Tenants/Branches
     // Nota: Em escala muito grande, isso deve processado via PubSub/Queue por branch.
@@ -18,7 +18,7 @@ async function processDailyBirthdays() {
     const branchesSnap = await db.collectionGroup("branches").get();
 
     if (branchesSnap.empty) {
-        console.log("[BirthdayCheck] No branches found.");
+
         return;
     }
 
@@ -37,7 +37,7 @@ async function processDailyBirthdays() {
     });
 
     await Promise.all(promises);
-    console.log("[BirthdayCheck] Finished.");
+
 }
 
 /**
@@ -108,7 +108,7 @@ async function processBranchBirthdays(idTenant, idBranch) {
             const targetMonth = targetDate.getMonth() + 1;
             const targetDay = targetDate.getDate();
 
-            console.log(`[BirthdayCheck] Branch ${idBranch} - Checking Automation ${autoDoc.id} (DaysBefore: ${daysBefore}) -> Target: ${targetDay}/${targetMonth}`);
+
 
             // Filtrar clientes para esta automação
             const matches = clients.filter(c => c.dobMonth === targetMonth && c.dobDay === targetDay);

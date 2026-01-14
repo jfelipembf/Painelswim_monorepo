@@ -3,6 +3,7 @@ const admin = require("firebase-admin");
 const { FieldValue } = require("firebase-admin/firestore");
 const db = admin.firestore();
 const { generateSessionsForClass } = require("./helpers/sessionGenerator");
+const { saveAuditLog } = require("../shared/audit");
 
 /**
  * ============================================================================
@@ -117,6 +118,16 @@ exports.createClass = functions
       idClass: classRef.id,
       classData: payload,
       weeks: 4
+    });
+
+    // Auditoria
+    await saveAuditLog({
+      idTenant, idBranch,
+      uid: context.auth.uid,
+      action: "CLASS_CREATE",
+      targetId: classRef.id,
+      description: `Criou nova turma: ${classData.title || classData.name || classRef.id}`,
+      metadata: { title: classData.title || classData.name }
     });
 
     return { id: classRef.id, ...payload };

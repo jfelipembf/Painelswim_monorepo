@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useLoading } from "../../../hooks/useLoading"
 import { getStaffDailyStats, getStaffMonthlyStats, getStaffMonthlyExperimentals, getBirthdaySummary } from "../../../services/Summary/operational.service"
-import { getStaffTasks } from "../../../services/Tasks/tasks.service"
+import { getStaffTasks, completeTask } from "../../../services/Tasks/tasks.service"
 import { getAuthUser } from "../../../helpers/permission_helper"
 import { formatCurrency } from "../Utils/dashboardUtils"
 
@@ -58,6 +58,23 @@ export const useOperationalDashboardLogic = () => {
 
     const refreshTasks = () => load()
 
+    const markTaskAsCompleted = async (taskId) => {
+        // Optimistic Update
+        const previousTasks = [...tasks];
+        setTasks(currentTasks =>
+            currentTasks.map(t => t.id === taskId ? { ...t, status: 'completed' } : t)
+        );
+
+        try {
+            await completeTask(taskId);
+        } catch (e) {
+            console.error("Failed to complete task", e);
+            // Revert on failure
+            setTasks(previousTasks);
+            throw e; // Let component handle error toast
+        }
+    }
+
     const reports = useMemo(() => {
         return [
             {
@@ -101,6 +118,7 @@ export const useOperationalDashboardLogic = () => {
         experimentals,
         tasks,
         birthdays, // [NEW] Return birthdays
-        refreshTasks
+        refreshTasks,
+        markTaskAsCompleted
     }
 }

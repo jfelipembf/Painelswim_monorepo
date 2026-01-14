@@ -2,6 +2,7 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const { FieldValue } = require("firebase-admin/firestore");
 const { requireAuthContext } = require("../shared/context");
+const { saveAuditLog } = require("../shared/audit");
 const { generateEntityId } = require("../shared/id");
 const { buildReceivablePayload } = require("../shared/payloads");
 const { toISODate } = require("../helpers/date");
@@ -86,13 +87,37 @@ exports.addReceivable = functions.region("us-central1").https.onCall(async (data
   }
 
   try {
-    return await createReceivableInternal({
+    const result = await createReceivableInternal({
       idTenant,
       idBranch,
       payload: data,
       uid,
       userToken: token,
     });
+
+    // Auditoria
+    try {
+      const clientName = data.clientName || (data.client?.name) || (data.client ? `${data.client?.firstName || ''} ${data.client?.lastName || ''}`.trim() : null);
+      const staffName = token?.name || token?.email || uid;
+
+      await saveAuditLog({
+        idTenant, idBranch, uid,
+        userName: staffName,
+        action: "FINANCIAL_RECEIVABLE_ADD",
+        targetId: result.id,
+        description: `Criou conta a receber manual para o cliente ${data.idClient}: R$ ${amount.toFixed(2)}`,
+        metadata: {
+          idClient: data.idClient,
+          clientName: clientName,
+          amount,
+          dueDate: data.dueDate
+        }
+      });
+    } catch (auditError) {
+      console.error("Falha silenciosa na auditoria de recebível:", auditError);
+    }
+
+    return result;
   } catch (error) {
     console.error("Erro ao criar recebível:", error);
     throw new functions.https.HttpsError("internal", "Erro ao salvar conta a receber.");
@@ -127,6 +152,16 @@ exports.updateReceivable = functions.region("us-central1").https.onCall(async (d
 
   try {
     await ref.update(payload);
+
+    // Auditoria
+    await saveAuditLog({
+      idTenant, idBranch, uid,
+      action: "FINANCIAL_RECEIVABLE_UPDATE",
+      targetId: idReceivable,
+      description: `Atualizou conta a receber ${idReceivable}`,
+      metadata: { updates: Object.keys(payload) }
+    });
+
     return { id: idReceivable, ...payload };
   } catch (error) {
     console.error("Erro ao atualizar recebível:", error);
@@ -147,6 +182,15 @@ exports.deleteReceivable = functions.region("us-central1").https.onCall(async (d
 
   try {
     await ref.delete();
+
+    // Auditoria
+    await saveAuditLog({
+      idTenant, idBranch, uid,
+      action: "FINANCIAL_RECEIVABLE_DELETE",
+      targetId: idReceivable,
+      description: `Removeu conta a receber ${idReceivable}`
+    });
+
     return { success: true, id: idReceivable };
   } catch (error) {
     console.error("Erro ao remover recebível:", error);
@@ -353,10 +397,60 @@ exports.payReceivables = functions.region("us-central1").https.onCall(async (dat
         stillPending,
         isPartialPayment: stillPending > 0,
         newReceivableId,
-        receivablesUpdated: updatedReceivables.length,
+        receivablesUpdate: updatedReceivables.length,
         receivables: updatedReceivables,
       };
     });
+
+    // Auditoria
+    try {
+      const clientName = data.clientName || (data.client?.name) || (data.client ? `${data.client?.firstName || ''} ${data.client?.lastName || ''}`.trim() : null);
+      const staffName = token?.name || token?.email || uid;
+
+      await saveAuditLog({
+        idTenant, idBranch, uid,
+        userName: staffName,
+        action: "FINANCIAL_RECEIVABLE_PAY",
+        targetId: idClient,
+        description: `Realizou quitação de saldo devedor para o cliente ${idClient}. Total pago: R$ ${amount.toFixed(2)}`,
+        metadata: {
+          idClient,
+          clientName: clientName,
+          paymentMethod,
+          amount,
+          receivablesCount: receivableIds?.length || 0,
+          isPartial: (result.stillPending || 0) > 0
+        }
+      });
+    } catch (auditError) {
+      console.error("Falha silenciosa na auditoria de pagamento:", auditError);
+    }
+
+    // Auditoria do Novo Recebível (se for pagamento parcial)
+    if (result.isPartialPayment && result.newReceivableId) {
+      try {
+        const clientName = data.clientName || (data.client?.name) || (data.client ? `${data.client?.firstName || ''} ${data.client?.lastName || ''}`.trim() : null);
+        const staffName = token?.name || token?.email || uid;
+
+        await saveAuditLog({
+          idTenant, idBranch, uid,
+          userName: staffName,
+          action: "FINANCIAL_RECEIVABLE_ADD",
+          targetId: idClient,
+          description: `Novo saldo devedor gerado após pagamento parcial para o cliente ${idClient}: R$ ${result.stillPending.toFixed(2)}`,
+          metadata: {
+            idClient,
+            clientName: clientName,
+            amount: result.stillPending,
+            isPartialRemainder: true
+          }
+        });
+      } catch (auditError) {
+        console.error("Falha silenciosa na auditoria do recebível remanescente:", auditError);
+      }
+    }
+
+    return result;
   } catch (error) {
     console.error("ERRO [payReceivables]:", error);
     if (error instanceof functions.https.HttpsError) throw error;

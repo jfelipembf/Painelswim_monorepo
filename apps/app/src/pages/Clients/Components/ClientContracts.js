@@ -20,7 +20,7 @@ import { getStatusLabel } from "../../../helpers/status"
 
 // Inline functions removed (buildContractKey)
 
-const ClientContracts = ({ contracts = [], idClient = null, onRefresh = null }) => {
+const ClientContracts = ({ contracts = [], idClient = null, clientName = "", onRefresh = null }) => {
   const {
     selectedId,
     setSelectedId,
@@ -45,7 +45,7 @@ const ClientContracts = ({ contracts = [], idClient = null, onRefresh = null }) 
     handleCancel,
     isLoading,
     selectedOverride
-  } = useClientContracts(contracts, idClient, onRefresh)
+  } = useClientContracts(contracts, idClient, clientName, onRefresh)
 
 
   const handlePlaceholderSubmit = e => {

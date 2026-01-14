@@ -25,6 +25,7 @@ import CollaboratorProfile from "../pages/Collaborators/Components/Profile"
 import CRMPage from "../pages/CRM"
 import IntegrationsPage from "../pages/Management/Integrations"
 import AutomationsPage from "../pages/Management/Automations"
+import AuditLogPage from "../pages/Management/AuditLog"
 import { Navigate } from "react-router-dom"
 
 // Authentication related pages
@@ -74,6 +75,7 @@ const userRoutes = [
   { path: "/management/evaluation-levels", component: <EvaluationLevelsPage />, permissions: ["management_evaluation_levels"] },
   { path: "/management/integrations", component: <IntegrationsPage />, permissions: ["management_integrations"] },
   { path: "/management/automations", component: <AutomationsPage />, permissions: ["management_automations"] },
+  { path: "/management/audit-log", component: <AuditLogPage />, permissions: ["management_audit_log"] },
   { path: "/evaluation", component: <Evaluation />, permissions: ["management_evaluation_run"] },
   { path: "/admin/settings", component: <SettingsPage />, permissions: ["admin_settings"] },
   // // //profile

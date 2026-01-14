@@ -2,6 +2,7 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const db = admin.firestore();
 const { toISODate, toMonthKey } = require("../helpers/date");
+const { saveAuditLog } = require("../shared/audit");
 
 /**
  * Processa o fim de suspensões ativas cuja data de término já chegou.
@@ -104,6 +105,16 @@ module.exports = functions
             await monthlyRef.update({
               suspendedCount: admin.firestore.FieldValue.increment(-1),
               activeAvg: admin.firestore.FieldValue.increment(1),
+            });
+
+            // Auditoria
+            await saveAuditLog({
+              idTenant: contract.idTenant,
+              idBranch: contract.idBranch,
+              uid: "system",
+              action: "SYSTEM_CONTRACT_REACTIVATE_AFTER_SUSPENSION",
+              targetId: contractRef.id,
+              description: `Contrato ${contractRef.id} reativado automaticamente após fim da suspensão.`
             });
           }
         });

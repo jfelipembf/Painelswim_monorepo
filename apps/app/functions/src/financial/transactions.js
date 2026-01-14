@@ -5,6 +5,7 @@ const { requireAuthContext } = require("../shared/context");
 const { generateEntityId } = require("../shared/id");
 const { buildTransactionPayload } = require("../shared/payloads"); // Import added
 const { toISODate } = require("../helpers/date");
+const { saveAuditLog } = require("../shared/audit");
 
 const db = admin.firestore();
 
@@ -137,7 +138,18 @@ exports.addExpense = functions.region("us-central1").https.onCall(async (data, c
   };
 
   try {
-    return await createTransactionInternal({ idTenant, idBranch, payload });
+    const result = await createTransactionInternal({ idTenant, idBranch, payload });
+
+    // Auditoria
+    await saveAuditLog({
+      idTenant, idBranch, uid,
+      action: "FINANCIAL_EXPENSE_ADD",
+      targetId: result.id,
+      description: `Registrou despesa: ${description} (${category})`,
+      metadata: { amount, category, method }
+    });
+
+    return result;
   } catch (error) {
     console.error("Erro ao registrar despesa:", error);
     throw new functions.https.HttpsError(
@@ -196,7 +208,18 @@ exports.addSaleRevenue = functions.region("us-central1").https.onCall(async (dat
   };
 
   try {
-    return await createTransactionInternal({ idTenant, idBranch, payload });
+    const result = await createTransactionInternal({ idTenant, idBranch, payload });
+
+    // Auditoria
+    await saveAuditLog({
+      idTenant, idBranch, uid,
+      action: "FINANCIAL_REVENUE_ADD",
+      targetId: result.id,
+      description: `Registrou receita: ${description || 'Venda'} (R$ ${amount.toFixed(2)})`,
+      metadata: { amount, method, saleType }
+    });
+
+    return result;
   } catch (error) {
     console.error("Erro ao registrar receita:", error);
     throw new functions.https.HttpsError("internal", "Erro ao salvar receita.");
@@ -230,6 +253,16 @@ exports.updateFinancialTransaction = functions.region("us-central1").https.onCal
 
   try {
     await ref.update(payload);
+
+    // Auditoria
+    await saveAuditLog({
+      idTenant, idBranch, uid,
+      action: "FINANCIAL_TRANSACTION_UPDATE",
+      targetId: idTransaction,
+      description: `Atualizou transação financeira ${idTransaction}`,
+      metadata: { updates: Object.keys(payload) }
+    });
+
     return { id: idTransaction, ...payload };
   } catch (error) {
     console.error("Erro ao atualizar transação:", error);
@@ -250,6 +283,16 @@ exports.deleteFinancialTransaction = functions.region("us-central1").https.onCal
 
   try {
     await ref.delete();
+
+    // Auditoria
+    await saveAuditLog({
+      idTenant, idBranch,
+      uid: context.auth.uid,
+      action: "FINANCIAL_TRANSACTION_DELETE",
+      targetId: idTransaction,
+      description: `Removeu transação financeira ${idTransaction}`
+    });
+
     return { success: true, id: idTransaction };
   } catch (error) {
     console.error("Erro ao remover transação:", error);

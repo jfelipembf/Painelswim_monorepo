@@ -12,7 +12,7 @@ import { useOperationalDashboardLogic } from "./Hooks/useOperationalDashboardLog
 
 const OperationalDashboard = (props) => {
     document.title = "Dashboard Operacional | Painel Swim"
-    const { reports, experimentals, tasks, birthdays, refreshTasks, isLoading } = useOperationalDashboardLogic()
+    const { reports, experimentals, tasks, birthdays, refreshTasks, markTaskAsCompleted, isLoading } = useOperationalDashboardLogic()
 
     const breadcrumbItems = [
         { title: "Dashboard", link: "#" },
@@ -32,7 +32,12 @@ const OperationalDashboard = (props) => {
                     <ExperimentalTracker experimentals={experimentals} isLoading={isLoading} />
                 </Col>
                 <Col xl="9" md="6">
-                    <OperationalAlerts tasks={tasks} birthdays={birthdays} refreshTasks={refreshTasks} />
+                    <OperationalAlerts
+                        tasks={tasks}
+                        birthdays={birthdays}
+                        refreshTasks={refreshTasks}
+                        markTaskAsCompleted={markTaskAsCompleted}
+                    />
                 </Col>
             </Row>
         </React.Fragment>

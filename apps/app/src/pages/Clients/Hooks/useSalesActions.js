@@ -11,6 +11,7 @@ import { getAuthUser } from "../../../helpers/permission_helper"
 
 export const useSalesActions = ({
     idClient,
+    clientName, // Added
     saleTab,
     selectedItem,
     diff,
@@ -69,6 +70,7 @@ export const useSalesActions = ({
 
                 const sale = await createSale({
                     idClient: idClient || null,
+                    clientName: clientName || "", // Added
                     idStaff: user?.uid || null,
                     staffName: user?.displayName || "",
                     requiresEnrollment: itemType === "contract" ? Boolean(item.raw?.requiresEnrollment) : false,

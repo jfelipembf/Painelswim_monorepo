@@ -1,26 +1,22 @@
-import { addDoc, getDocs, orderBy, query, serverTimestamp, updateDoc, where } from "firebase/firestore"
-import { tasksCol, taskDoc, getContext, getDb } from "./tasks.repository"
+import { getDocs, orderBy, query, where } from "firebase/firestore"
+import { httpsCallable } from "firebase/functions"
+import { requireFunctions } from "../_core/functions"
+import { tasksCol, getContext, getDb } from "./tasks.repository"
 
 /**
- * Cria uma nova tarefa.
+ * Cria uma nova tarefa com auditoria via Cloud Function.
  */
 export const createTask = async (taskData) => {
-    const db = getDb()
+    const fns = requireFunctions()
     const ctx = getContext()
-    const ref = tasksCol(db, ctx)
+    const createTaskFn = httpsCallable(fns, "createTask")
 
-    const payload = {
-        description: taskData.description,
-        dueDate: taskData.dueDate,
-        assignedStaffIds: taskData.assignedStaffIds || [],
-        createdBy: taskData.createdBy,
-        status: 'pending',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-    }
-
-    const docRef = await addDoc(ref, payload)
-    return { id: docRef.id, ...payload }
+    const result = await createTaskFn({
+        ...taskData,
+        idTenant: ctx.idTenant,
+        idBranch: ctx.idBranch
+    })
+    return result.data
 }
 
 /**
@@ -44,19 +40,16 @@ export const getStaffTasks = async (uid) => {
 }
 
 /**
- * Marca uma tarefa como concluída com auditoria.
+ * Marca uma tarefa como concluída com auditoria via Cloud Function.
  */
-export const completeTask = async (taskId, uid) => {
-    const db = getDb()
+export const completeTask = async (taskId) => {
+    const fns = requireFunctions()
     const ctx = getContext()
-    const docRef = taskDoc(db, ctx, taskId)
+    const completeTaskFn = httpsCallable(fns, "completeTask")
 
-    await updateDoc(docRef, {
-        status: 'completed',
-        completedAt: serverTimestamp(),
-        completedBy: uid,
-        updatedAt: serverTimestamp()
+    return await completeTaskFn({
+        taskId,
+        idTenant: ctx.idTenant,
+        idBranch: ctx.idBranch
     })
-
-    return { id: taskId, status: 'completed' }
 }

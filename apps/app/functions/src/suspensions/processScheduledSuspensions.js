@@ -2,6 +2,7 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const db = admin.firestore();
 const { toISODate, addDays, toMonthKey } = require("../helpers/date");
+const { saveAuditLog } = require("../shared/audit");
 
 /**
  * Processa suspensões programadas cuja data de início já chegou.
@@ -110,6 +111,17 @@ module.exports = functions
         });
         await monthlyRef.update({
           suspendedCount: admin.firestore.FieldValue.increment(1),
+        });
+
+        // Auditoria (Dentro da transação para garantir idTenant/idBranch)
+        await saveAuditLog({
+          idTenant: contract.idTenant,
+          idBranch: contract.idBranch,
+          uid: "system",
+          action: "SYSTEM_CONTRACT_SUSPEND_SCHEDULED",
+          targetId: contractRef.id,
+          description: `Suspensão programada ativada pelo sistema para o contrato ${contractRef.id}`,
+          metadata: { startDate: suspension.startDate, endDate: suspension.endDate, days: daysRequested }
         });
       });
 

@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { addDoc, getDocs, orderBy, query, setDoc, where } from "firebase/firestore"
+import { getDocs, orderBy, query, setDoc, where } from "firebase/firestore"
 import { httpsCallable } from "firebase/functions"
 import { usePhotoUpload } from "../../hooks/usePhotoUpload"
 import { makeCreatePayload } from "../_core/payload"

@@ -4,6 +4,7 @@ const { requireAuthContext } = require("../shared/context");
 const { FieldValue } = require("firebase-admin/firestore");
 const { validateClassDaysAgainstContracts } = require("./helpers/validator");
 const { computeEndTime, toISODate } = require("./helpers/dateUtils");
+const { saveAuditLog } = require("../shared/audit");
 
 
 const db = admin.firestore();
@@ -167,6 +168,15 @@ exports.updateClass = functions.region("us-central1").https.onCall(async (data, 
                 }
             }
         }
+        // Auditoria
+        await saveAuditLog({
+            idTenant, idBranch,
+            uid: context.auth.uid,
+            action: "CLASS_UPDATE",
+            targetId: id,
+            description: `Atualizou dados da turma: ${id}`,
+            metadata: { updates: Object.keys(updates) }
+        });
 
         return { success: true };
 
@@ -234,6 +244,15 @@ exports.deleteClass = functions.region("us-central1").https.onCall(async (data, 
         });
 
         if (count > 0) await batch.commit();
+
+        // Auditoria
+        await saveAuditLog({
+            idTenant, idBranch,
+            uid: context.auth.uid,
+            action: "CLASS_DELETE",
+            targetId: id,
+            description: `Removeu a turma: ${id}`
+        });
 
         return { success: true };
     } catch (error) {

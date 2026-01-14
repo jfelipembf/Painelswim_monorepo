@@ -3,6 +3,7 @@ const admin = require("firebase-admin");
 const { FieldValue } = require("firebase-admin/firestore");
 const { requireAuthContext } = require("../shared/context");
 const { generateEntityId } = require("../shared/id");
+const { saveAuditLog } = require("../shared/audit");
 const { createTransactionInternal } = require("../financial/transactions");
 const { createReceivableInternal } = require("../financial/receivables");
 const { addClientCreditInternal } = require("../financial/credits");
@@ -258,6 +259,66 @@ exports.saveSale = functions.https.onCall(async (data, context) => {
 
   try {
     await batch.commit();
+
+    // Auditoria
+    if (isNew) {
+      try {
+        const clientName = data.clientName || (data.client?.name) || (data.client ? `${data.client?.firstName || ''} ${data.client?.lastName || ''}`.trim() : null);
+        const staffName = token?.name || token?.email || uid;
+
+        const saleType = detectSaleType(items);
+        await saveAuditLog({
+          idTenant, idBranch, uid,
+          userName: staffName,
+          action: "SALE_CREATE",
+          targetId: saleRef.id,
+          description: `Nova venda realizada (${saleCode}). Total: ${salePayload.totals.net}`,
+          metadata: {
+            idClient: data.idClient,
+            clientName: clientName,
+            items: Array.isArray(items) ? items.map(i => ({ type: i.itemType || i.type, name: i.name || i.description })) : []
+          }
+        });
+
+        // Se houver contrato na venda, logamos também a criação do contrato para visibilidade clara no log
+        const contractItems = Array.isArray(items) ? items.filter(i => i.itemType === "contract" || i.type === "contract") : [];
+        if (contractItems.length > 0) {
+          for (const item of contractItems) {
+            await saveAuditLog({
+              idTenant, idBranch, uid,
+              userName: staffName,
+              action: "CLIENT_CONTRACT_CREATE",
+              targetId: data.idClient,
+              description: `Contrato criado via venda ${saleCode}: ${item.name || item.description}`,
+              metadata: {
+                idSale: saleRef.id,
+                idClient: data.idClient,
+                clientName: clientName
+              }
+            });
+          }
+        }
+        // Se houver saldo devedor na venda, logamos também a criação do recebível
+        if (isNew && Number(data.totals?.pending || 0) > 0) {
+          await saveAuditLog({
+            idTenant, idBranch, uid,
+            userName: staffName,
+            action: "FINANCIAL_RECEIVABLE_ADD",
+            targetId: saleRef.id,
+            description: `Saldo devedor gerado via venda ${saleCode}: R$ ${Number(data.totals.pending).toFixed(2)}`,
+            metadata: {
+              idSale: saleRef.id,
+              idClient: data.idClient,
+              clientName: clientName,
+              amount: Number(data.totals.pending)
+            }
+          });
+        }
+      } catch (auditError) {
+        console.error("Falha silenciosa na auditoria da venda:", auditError);
+      }
+    }
+
     return {
       id: saleRef.id,
       saleCode,

@@ -2,6 +2,7 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const db = admin.firestore();
 const { toISODate, toMonthKey } = require("../helpers/date");
+const { saveAuditLog } = require("../shared/audit");
 
 /**
  * ============================================================================
@@ -140,6 +141,17 @@ module.exports = functions
         contractsCanceledMonth: admin.firestore.FieldValue.increment(1),
         churnMonth: admin.firestore.FieldValue.increment(1),
         activeAvg: admin.firestore.FieldValue.increment(-1), // Decrementa clientes ativos
+      });
+
+      // Auditoria
+      await saveAuditLog({
+        idTenant: contract.idTenant,
+        idBranch: contract.idBranch,
+        uid: "system",
+        action: "SYSTEM_CONTRACT_CANCEL_SCHEDULED",
+        targetId: docSnap.id,
+        description: `Cancelamento programado efetivado pelo sistema para o contrato ${docSnap.id}`,
+        metadata: { cancelDate: contract.cancelDate, reason: contract.cancelReason }
       });
 
       processedCount += 1;

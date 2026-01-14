@@ -1,6 +1,7 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const db = admin.firestore();
+const { saveAuditLog } = require("../shared/audit");
 
 /**
  * Cria um evento.
@@ -39,6 +40,16 @@ exports.createEvent = functions
     };
 
     await eventRef.set(payload, { merge: true });
+
+    // Auditoria
+    await saveAuditLog({
+      idTenant, idBranch,
+      uid: context.auth.uid,
+      action: "EVENT_CREATE",
+      targetId: eventRef.id,
+      description: `Criou/Atualizou evento: ${eventData.title || eventRef.id}`,
+      metadata: { title: eventData.title }
+    });
 
     return { id: eventRef.id, ...payload };
   });
@@ -82,6 +93,16 @@ exports.updateEvent = functions
 
     await eventRef.update(payload);
 
+    // Auditoria
+    await saveAuditLog({
+      idTenant, idBranch,
+      uid: context.auth.uid,
+      action: "EVENT_UPDATE",
+      targetId: id,
+      description: `Atualizou evento: ${id}`,
+      metadata: { updates: Object.keys(eventData) }
+    });
+
     return { id, ...payload };
   });
 
@@ -113,6 +134,15 @@ exports.deleteEvent = functions
       .collection("events")
       .doc(id);
     await eventRef.delete();
+
+    // Auditoria
+    await saveAuditLog({
+      idTenant, idBranch,
+      uid: context.auth.uid,
+      action: "EVENT_DELETE",
+      targetId: id,
+      description: `Removeu evento: ${id}`
+    });
 
     return { success: true };
   });

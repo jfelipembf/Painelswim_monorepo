@@ -1,6 +1,7 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const { requireAuthContext } = require("../shared/context");
+const { saveAuditLog } = require("../shared/audit");
 
 const db = admin.firestore();
 const { FieldValue } = require("firebase-admin/firestore");
@@ -71,7 +72,7 @@ exports.addClientCredit = functions.region("us-central1").https.onCall(async (da
   }
 
   try {
-    return await addClientCreditInternal({
+    const result = await addClientCreditInternal({
       idTenant,
       idBranch,
       idClient,
@@ -79,6 +80,17 @@ exports.addClientCredit = functions.region("us-central1").https.onCall(async (da
       uid,
       userToken: token,
     });
+
+    // Auditoria
+    await saveAuditLog({
+      idTenant, idBranch, uid,
+      action: "FINANCIAL_CREDIT_ADD",
+      targetId: idClient,
+      description: `Adicionou R$ ${creditAmount.toFixed(2)} em crédito para o cliente ${idClient}`,
+      metadata: { idClient, amount: creditAmount, reason: data.description }
+    });
+
+    return result;
   } catch (error) {
     console.error("Erro ao adicionar crédito ao cliente:", error);
     throw new functions.https.HttpsError("internal", "Erro ao salvar crédito.");
@@ -117,6 +129,15 @@ exports.consumeClientCredit = functions.region("us-central1").https.onCall(async
       });
     });
 
+    // Auditoria
+    await saveAuditLog({
+      idTenant, idBranch, uid,
+      action: "FINANCIAL_CREDIT_CONSUME",
+      targetId: idClient,
+      description: `Consumiu R$ ${value.toFixed(2)} de crédito do cliente ${idClient}`,
+      metadata: { idClient, idCredit, amount: value }
+    });
+
     return { success: true };
   } catch (error) {
     console.error("Erro ao consumir crédito:", error);
@@ -138,6 +159,16 @@ exports.deleteClientCredit = functions.region("us-central1").https.onCall(async 
 
   try {
     await ref.delete();
+
+    // Auditoria
+    await saveAuditLog({
+      idTenant, idBranch,
+      uid: context.auth.uid,
+      action: "FINANCIAL_CREDIT_DELETE",
+      targetId: idClient,
+      description: `Removeu registro de crédito ${idCredit} do cliente ${idClient}`
+    });
+
     return { success: true, id: idCredit };
   } catch (error) {
     console.error("Erro ao remover crédito:", error);

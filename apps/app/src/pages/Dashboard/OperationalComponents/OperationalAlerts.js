@@ -1,23 +1,24 @@
 import React, { useState } from "react";
 import { Card, CardBody, Row, Col, Input, Button } from "reactstrap";
 import TaskModal from "./TaskModal";
-import { completeTask } from "../../../services/Tasks/tasks.service";
+// completeTask import removed, now handled by the hook
 import { getAuthUser } from "../../../helpers/permission_helper";
 import { useToast } from "../../../components/Common/ToastProvider";
 
-const OperationalAlerts = ({ tasks = [], birthdays = [], refreshTasks }) => {
+const OperationalAlerts = ({ tasks = [], birthdays = [], refreshTasks, markTaskAsCompleted }) => {
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA'));
     const toast = useToast();
 
     const authUser = getAuthUser();
-    const idTenant = authUser.tenant?.id || authUser.tenant?.idTenant || localStorage.getItem("idTenant");
 
     const handleTaskCheck = async (taskId) => {
         try {
-            await completeTask(idTenant, taskId);
+            if (markTaskAsCompleted) {
+                await markTaskAsCompleted(taskId);
+            }
             toast.show({ title: "Sucesso", description: "Tarefa concluída!", color: "success" });
-            if (refreshTasks) refreshTasks();
+            // refreshTasks is now secondary as state is updated optimistically
         } catch (error) {
             console.error("Erro ao concluir tarefa:", error);
             toast.show({ title: "Erro", description: "Não foi possível concluir a tarefa.", color: "danger" });

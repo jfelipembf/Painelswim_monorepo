@@ -337,6 +337,14 @@ const SidebarContent = props => {
                       </Link>
                     </li>
                   )}
+                  {hasPermission("management_audit_log") && (
+                    <li>
+                      <Link to={buildPath("/management/audit-log")}>
+                        <i className="mdi mdi-clipboard-list-outline"></i>
+                        <span>Logs de Auditoria</span>
+                      </Link>
+                    </li>
+                  )}
                 </ul>
               </li>
             )}

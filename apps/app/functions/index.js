@@ -138,6 +138,10 @@ exports.getAutomations = require("./src/automations/automations").getAutomations
 exports.deleteAutomation = require("./src/automations/automations").deleteAutomation;
 exports.checkBirthdayAutomations = require("./src/automations/scheduled").checkBirthdayAutomations;
 
+// Tasks
+exports.completeTask = require("./src/tasks/tasks").completeTask;
+exports.createTask = require("./src/tasks/tasks").createTask;
+
 
 
 

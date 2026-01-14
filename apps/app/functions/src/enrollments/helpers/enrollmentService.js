@@ -58,7 +58,7 @@ const createRecurringEnrollmentInternal = async ({ idTenant, idBranch, uid, data
  * Lógica interna para criar matrícula avulsa (single-session) e disparar automações.
  */
 const createSingleSessionEnrollmentInternal = async ({ idTenant, idBranch, uid, data }) => {
-    console.log("[DEBUG] createSingleSessionEnrollmentInternal received:", { idTenant, idBranch, uid, data });
+
     const payload = {
         ...data,
         idTenant,

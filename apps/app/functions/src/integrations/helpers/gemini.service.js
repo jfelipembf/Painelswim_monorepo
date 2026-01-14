@@ -48,17 +48,17 @@ const analyzeExpense = async (apiKey, text = "", imageBase64 = null, mimeType = 
     }
 
     try {
-        console.log("[DEBUG] Gemini Prompt enviando...");
+
         const response = await axios.post(endpoint, {
             contents: [{ parts: parts }]
         });
 
-        console.log("[DEBUG] Gemini Raw Response:", JSON.stringify(response.data));
+
 
         const candidates = response.data?.candidates;
         if (candidates && candidates.length > 0) {
             let content = candidates[0].content.parts[0].text;
-            console.log("[DEBUG] Gemini Content String:", content);
+
 
             // Limpa markdown se houver (```json ... ```)
             content = content.replace(/```json/g, "").replace(/```/g, "").trim();

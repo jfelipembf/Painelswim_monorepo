@@ -31,7 +31,7 @@ const ensureEvolutionInstance = async (baseUrl, apiKey, instanceName) => {
             }
         });
 
-        console.log(`EvolutionService: Instância '${instanceName}' criada/verificada com sucesso.`);
+
     } catch (error) {
         // Loga aviso se falhar (ex: já existe), mas não impede o salvamento da config
         const errorMsg = error.response ? JSON.stringify(error.response.data) : error.message;

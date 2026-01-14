@@ -212,6 +212,7 @@ export const buildClassPayload = (data) => {
 export const buildSalePayload = (data) => {
     return {
         idClient: data.idClient,
+        clientName: data.clientName || "", // Added for audit enrichment
         idSeller: data.idSeller || data.salesRepId || null,
         idStaff: data.idStaff || null,
         staffName: data.staffName || "",
@@ -452,6 +453,7 @@ export const buildReceivablePayload = (data) => {
     return {
         // Link to Source
         idClient: data.idClient,
+        clientName: data.clientName || "", // Added for audit enrichment
         idSale: data.idSale || null,
         idContract: data.idContract || null,
 

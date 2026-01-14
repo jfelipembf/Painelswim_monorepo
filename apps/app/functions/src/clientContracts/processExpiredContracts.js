@@ -12,6 +12,7 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const db = admin.firestore();
 const { toISODate } = require("../helpers/date");
+const { saveAuditLog } = require("../shared/audit");
 
 /**
  * Rotina diária para finalizar contratos expirados.
@@ -50,6 +51,16 @@ module.exports = functions
                     finishedAt: admin.firestore.FieldValue.serverTimestamp(),
                     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
                     finishedBy: "system", // Auto-expiration
+                });
+
+                // Auditoria (Dentro da transação)
+                await saveAuditLog({
+                    idTenant, idBranch,
+                    uid: "system",
+                    action: "SYSTEM_CONTRACT_EXPIRED",
+                    targetId: contractRef.id,
+                    description: `Contrato ${contractRef.id} finalizado automaticamente por atingir a data de término (${endDate})`,
+                    metadata: { endDate }
                 });
             });
 
@@ -101,6 +112,6 @@ module.exports = functions
         });
 
         await Promise.all(processPromises);
-        console.log(`Processed ${processedCount} expired contracts.`);
+
         return null;
     });

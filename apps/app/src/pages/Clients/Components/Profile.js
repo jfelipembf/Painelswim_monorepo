@@ -180,7 +180,12 @@ const ClientProfile = ({ setBreadcrumbItems }) => {
             )}
             {activeTab === "Financeiro" && (
               <Col md="12">
-                <ClientFinancial financial={financial} idClient={clientId} onRefresh={refetch} />
+                <ClientFinancial
+                  financial={financial}
+                  idClient={clientId}
+                  clientName={profile.name} // Added
+                  onRefresh={refetch}
+                />
               </Col>
             )}
             {activeTab === "Matrículas" && (
@@ -208,7 +213,12 @@ const ClientProfile = ({ setBreadcrumbItems }) => {
             )}
             {activeTab === "Contratos" && (
               <Col md="12">
-                <ClientContracts contracts={contracts} onRefresh={refetch} />
+                <ClientContracts
+                  contracts={contracts}
+                  idClient={clientId}
+                  clientName={profile.name} // Added
+                  onRefresh={refetch}
+                />
               </Col>
             )}
             {activeTab === "Avaliação" && (

@@ -12,7 +12,7 @@ import { BRAND_OPTIONS } from "../../Financial/Acquirers/Constants/acquirersDefa
 
 import { formatCurrency, renderMethod, calculateFinancialSummary } from "../Utils/financialUtils"
 
-const ClientFinancial = ({ financial = [], idClient, onRefresh }) => {
+const ClientFinancial = ({ financial = [], idClient, clientName, onRefresh }) => {
   const [selected, setSelected] = useState(null)
   const [paymentModal, setPaymentModal] = useState(false)
   const [receivables, setReceivables] = useState([])
@@ -89,6 +89,7 @@ const ClientFinancial = ({ financial = [], idClient, onRefresh }) => {
       await withLoading('pay', async () => {
         await payReceivables({
           idClient,
+          clientName, // Added
           amount: paymentAmount,
           paymentMethod: paymentForm.method,
           paymentDate: paymentForm.date,

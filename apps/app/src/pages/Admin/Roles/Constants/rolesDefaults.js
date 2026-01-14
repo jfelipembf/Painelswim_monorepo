@@ -137,6 +137,12 @@ export const PERMISSIONS = [
     description: "Gerenciar fluxos automatizados de mensagens.",
     category: "GERENCIAL",
   },
+  {
+    id: "management_audit_log",
+    label: "Logs de auditoria",
+    description: "Visualizar histórico de ações administrativas e automações.",
+    category: "GERENCIAL",
+  },
 ]
 
 const ALL_TRUE_PERMISSIONS = PERMISSIONS.reduce((acc, permission) => {
@@ -187,6 +193,7 @@ export const DEFAULT_ROLES = [
       management_event_plan: true,
       management_integrations: true,
       management_automations: true,
+      management_audit_log: true,
       sales_purchase: true,
     },
   },
