@@ -56,15 +56,47 @@ const fetchBase64FromMessage = async (baseUrl, apiKey, instanceName, messageData
         convertToMp4: false
     };
 
-    const response = await axios.post(url, payload, {
-        headers: {
-            apikey: apiKey,
-            "Content-Type": "application/json"
-        }
-    });
+    const maxRetries = 3;
+    let attempt = 0;
+    let lastError;
 
-    // Retorno esperado: { base64: "..." }
-    return response.data?.base64;
+    while (attempt < maxRetries) {
+        try {
+            const response = await axios.post(url, payload, {
+                headers: {
+                    apikey: apiKey,
+                    "Content-Type": "application/json"
+                },
+                timeout: 15000 // 15s timeout
+            });
+
+            // Retorno esperado: { base64: "..." }
+            return response.data?.base64;
+
+        } catch (error) {
+            lastError = error;
+            attempt++;
+            const isDnsError = error.code === 'EAI_AGAIN' || error.message.includes('EAI_AGAIN');
+
+            if (isDnsError && attempt < maxRetries) {
+                console.warn(`EvolutionService: Retry ${attempt}/${maxRetries} for fetchBase64 due to DNS error.`);
+                await new Promise(res => setTimeout(res, 2000)); // Wait 2s
+            } else if (attempt < maxRetries && error.response && error.response.status >= 500) {
+                // Retry on server errors too
+                console.warn(`EvolutionService: Retry ${attempt}/${maxRetries} for fetchBase64 due to 5xx error.`);
+                await new Promise(res => setTimeout(res, 2000));
+            } else {
+                // If 4xx or other error, break immediately (unless it's a flaky 429?)
+                // For now, let's keep retrying only on network/DNS or 500.
+                if (!isDnsError && (!error.response || error.response.status < 500)) {
+                    throw error;
+                }
+                await new Promise(res => setTimeout(res, 2000));
+            }
+        }
+    }
+
+    throw lastError;
 };
 
 module.exports = {
