@@ -365,6 +365,16 @@ const SidebarContent = props => {
               </li>
             )}
           </ul>
+
+          <ul className="metismenu list-unstyled" id="side-menu-help">
+            <li className="menu-title">Suporte</li>
+            <li>
+              <Link to={buildPath("/help")} className="waves-effect">
+                <i className="mdi mdi-help-circle-outline"></i>
+                <span>Central de Ajuda</span>
+              </Link>
+            </li>
+          </ul>
         </div>
       </SimpleBar>
     </React.Fragment>

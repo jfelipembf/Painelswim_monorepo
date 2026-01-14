@@ -43,6 +43,7 @@ import LockScreen from "../pages/AuthenticationInner/auth-lock-screen"
 // Dashboard
 import Dashboard from "../pages/Dashboard/index"
 import OperationalDashboard from "../pages/Dashboard/OperationalDashboard"
+import HelpPage from "../pages/Help/index"
 
 
 //Extra Pages
@@ -83,6 +84,10 @@ const userRoutes = [
   { path: "/clients", component: <Navigate to="/clients/list" replace />, permissions: ["members_manage"] },
   { path: "/clients/list", component: <ClientsList />, permissions: ["members_manage"] },
   { path: "/collaborators/list", component: <CollaboratorsList />, permissions: ["collaborators_manage"] },
+
+  // Help Center
+  { path: "/help", component: <HelpPage /> },
+  { path: "/help/:topic", component: <HelpPage /> },
 
   { path: "/pages-blank", component: <PagesBlank /> },
   { path: "/pages-403", component: <Pages403 /> },

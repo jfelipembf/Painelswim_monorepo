@@ -5,7 +5,7 @@ import { Link, useParams } from 'react-router-dom';
 const Pages403 = () => {
     document.title = "403 Acesso Negado | Painel Swim";
     const { tenant, branch } = useParams();
-    const dashboardLink = tenant && branch ? `/${tenant}/${branch}/dashboard` : "/dashboard";
+    const dashboardLink = tenant && branch ? `/${tenant}/${branch}/dashboard/operational` : "/dashboard/operational";
 
     return (
         <React.Fragment>
