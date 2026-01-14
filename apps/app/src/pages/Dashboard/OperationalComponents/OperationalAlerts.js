@@ -10,7 +10,24 @@ const OperationalAlerts = ({ tasks = [], birthdays = [], refreshTasks }) => {
     const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA'));
     const toast = useToast();
 
-    // ... handleTaskCheck and filteredTasks ...
+    const authUser = getAuthUser();
+    const idTenant = authUser.tenant?.id || authUser.tenant?.idTenant || localStorage.getItem("idTenant");
+
+    const handleTaskCheck = async (taskId) => {
+        try {
+            await completeTask(idTenant, taskId);
+            toast.show({ title: "Sucesso", description: "Tarefa concluída!", color: "success" });
+            if (refreshTasks) refreshTasks();
+        } catch (error) {
+            console.error("Erro ao concluir tarefa:", error);
+            toast.show({ title: "Erro", description: "Não foi possível concluir a tarefa.", color: "danger" });
+        }
+    };
+
+    const filteredTasks = tasks.filter(task => {
+        if (!selectedDate) return true;
+        return task.dueDate === selectedDate;
+    });
 
     const data = {
         avisos: [

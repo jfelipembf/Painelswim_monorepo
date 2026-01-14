@@ -13,8 +13,15 @@ export const INTEGRATIONS_LIST = [
     },
     {
         id: "evolution",
-        title: "Evolution AI",
-        subtitle: "API de WhatsApp",
+        title: "Evolution AI (Geral)",
+        subtitle: "API de WhatsApp (Principal)",
         meta: "Msg"
     },
+    {
+        id: "evolution_financial",
+        title: "Evolution AI (Financeiro)",
+        subtitle: "Robô de Despesas (Pessoal)",
+        meta: "Bot"
+    },
+
 ]

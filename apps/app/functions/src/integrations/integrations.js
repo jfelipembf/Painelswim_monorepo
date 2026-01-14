@@ -33,32 +33,17 @@ exports.saveIntegrationConfig = functions
       );
     }
 
+    // Helper Service Import (Lazy load or top level)
+    const { ensureEvolutionInstance } = require("./helpers/evolution.service");
+
     try {
-      // --- Evolution API Specific Logic ---
-      if (integrationId === 'evolution' && config.baseUrl && config.apiKey && config.instanceName) {
-        const baseUrl = config.baseUrl.replace(/\/$/, "");
-
-        // Try to create instance. If fails, log but continue saving config.
-        const createUrl = `${baseUrl}/instance/create`;
-        const createPayload = {
-          instanceName: config.instanceName,
-          qrcode: true,
-          integration: "WHATSAPP-BAILEYS"
-        };
-
-        try {
-          await axios.post(createUrl, createPayload, {
-            headers: {
-              apikey: config.apiKey,
-              "Content-Type": "application/json"
-            }
-          });
-        } catch (apiError) {
-          // Log warning if creation fails (e.g. already exists) but don't block
-          console.warn("Evolution API Instance creation/verification warning:",
-            apiError.response ? apiError.response.data : apiError.message);
-        }
+      // --- Evolution API & Financial Bot Logic ---
+      // Agora suporta tanto 'evolution' (Geral/Clientes) quanto 'evolution_financial' (Despesas)
+      if (['evolution', 'evolution_financial'].includes(integrationId) && config.baseUrl && config.apiKey && config.instanceName) {
+        // O service cuida de validar e criar a instância
+        await ensureEvolutionInstance(config.baseUrl, config.apiKey, config.instanceName);
       }
+      // -------------------------------------------
       // ------------------------------------
 
       // Salva na subcoleção do branch

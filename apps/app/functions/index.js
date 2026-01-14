@@ -125,6 +125,7 @@ exports.updateStaffUser = require("./src/staff/staff").updateStaffUser;
 // Integrations
 exports.saveIntegrationConfig = require("./src/integrations/integrations").saveIntegrationConfig;
 exports.getIntegrationConfig = require("./src/integrations/integrations").getIntegrationConfig;
+exports.financialWebhook = require("./src/integrations/whatsapp/financialWebhook").financialWebhook;
 
 // Notifications
 // Notifications

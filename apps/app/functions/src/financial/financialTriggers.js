@@ -25,6 +25,10 @@ exports.onFinancialTransactionWrite = functions
 
     const getValues = (data) => {
       if (!data) return { revenue: 0, expense: 0, date: null };
+
+      // Ignore pending transactions
+      if (data.status === 'pending') return { revenue: 0, expense: 0, date: null };
+
       const amount = Number(data.amount || 0);
       const date = data.date || (data.createdAt?.toDate ? toISODate(data.createdAt.toDate()) : null);
 

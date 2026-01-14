@@ -93,9 +93,21 @@ const IntegrationForm = ({ selected }) => {
                     </>
                 )
             case "evolution":
+            case "evolution_financial":
                 return (
                     <>
-                        <h4 className="card-title mb-4">Configuração Evolution AI (WhatsApp)</h4>
+                        <h4 className="card-title mb-4">
+                            {selected === "evolution" ? "Configuração Evolution AI (Whatsapp Clientes)" : "Configuração Robô de Despesas (Pessoal)"}
+                        </h4>
+
+                        <Alert color="info" className="mb-4">
+                            <i className="mdi mdi-information-outline me-2"></i>
+                            {selected === "evolution"
+                                ? "Esta instância será usada para enviar mensagens automáticas de sistema (aniversários, agendamentos)."
+                                : "Esta instância será usada para receber mensagens de despesas. Configure o 'Número Permitido' para garantir que apenas você possa cadastrar."
+                            }
+                        </Alert>
+
                         <FormGroup>
                             <Label>URL da Instância</Label>
                             <Input
@@ -109,13 +121,13 @@ const IntegrationForm = ({ selected }) => {
                             <Label>API Key / Token</Label>
                             <Input
                                 type="password"
-                                placeholder="Token de autenticação"
+                                placeholder="Token de autenticação global"
                                 value={formData.apiKey || ""}
                                 onChange={e => setFormData({ ...formData, apiKey: e.target.value })}
                             />
                         </FormGroup>
                         <FormGroup>
-                            <Label>Nome da Instância</Label>
+                            <Label>Nome da Instância (Ex: {selected === "evolution" ? "SwimMain" : "SwimFinance"})</Label>
                             <Input
                                 type="text"
                                 placeholder="Minha Instância"
@@ -123,6 +135,33 @@ const IntegrationForm = ({ selected }) => {
                                 onChange={e => setFormData({ ...formData, instanceName: e.target.value })}
                             />
                         </FormGroup>
+
+                        {/* [NEW] Whitelist field only for Financial Bot */}
+                        {selected === "evolution_financial" && (
+                            <>
+                                <FormGroup>
+                                    <Label className="text-primary fw-bold">Gemini API Key (Inteligência)</Label>
+                                    <Input
+                                        type="password"
+                                        placeholder="Chave do Google AI Studio"
+                                        value={formData.geminiApiKey || ""}
+                                        onChange={e => setFormData({ ...formData, geminiApiKey: e.target.value })}
+                                    />
+                                    <small className="text-muted">Necessária para ler e entender as despesas.</small>
+                                </FormGroup>
+
+                                <FormGroup>
+                                    <Label className="text-danger fw-bold">Número Permitido (Seu WhatsApp)</Label>
+                                    <Input
+                                        type="text"
+                                        placeholder="5511999999999"
+                                        value={formData.allowedNumber || ""}
+                                        onChange={e => setFormData({ ...formData, allowedNumber: e.target.value })}
+                                    />
+                                    <small className="text-muted">Apenas mensagens vindas deste número serão processadas.</small>
+                                </FormGroup>
+                            </>
+                        )}
                     </>
                 )
             default:

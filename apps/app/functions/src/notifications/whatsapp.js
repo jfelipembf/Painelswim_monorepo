@@ -19,9 +19,9 @@ const db = admin.firestore();
  * Internal function to send WhatsApp message.
  * Can be reused by other Cloud Functions.
  */
-const sendWhatsAppMessageInternal = async (idTenant, idBranch, phone, message) => {
+const sendWhatsAppMessageInternal = async (idTenant, idBranch, phone, message, integrationId = "evolution") => {
     // 1. Get Integration Config
-    const config = await getIntegrationConfigInternal(idTenant, idBranch, "evolution");
+    const config = await getIntegrationConfigInternal(idTenant, idBranch, integrationId);
 
     if (!config || !config.baseUrl || !config.apiKey) {
         console.error("Evolution API not configured.");

@@ -18,7 +18,7 @@ const { processTrigger } = require("./helpers/helper");
  * Executa todos os dias às 09:00 (Horário de São Paulo).
  */
 exports.checkBirthdayAutomations = functions.pubsub
-    .schedule("50 21 * * *") // [TEST] Changed to 21:50 for testing
+    .schedule("10 22 * * *") // [TEST] Changed to 22:10 for testing
     .timeZone("America/Sao_Paulo")
     .onRun(async (context) => {
         try {
