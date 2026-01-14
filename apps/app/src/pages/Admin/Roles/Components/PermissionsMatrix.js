@@ -1,5 +1,6 @@
 import React from "react"
 import { Card, CardBody, CardHeader, FormGroup, Input } from "reactstrap"
+import { BASE_ROLE_IDS } from "../Constants"
 
 const PermissionsMatrix = ({
   permissions = [],
@@ -23,8 +24,11 @@ const PermissionsMatrix = ({
                 <th style={{ minWidth: "280px" }}>Permissões</th>
                 {roles.map(role => (
                   <th key={role.id} className="text-center">
-                    <div className="fw-semibold text-dark">{role.label}</div>
-                    {editMode ? (
+                    <div className="fw-semibold text-dark d-flex align-items-center justify-content-center gap-1">
+                      {role.label}
+                      {BASE_ROLE_IDS.includes(role.id) && <i className="mdi mdi-lock-outline text-muted" title="Cargo base protegido" />}
+                    </div>
+                    {editMode && !BASE_ROLE_IDS.includes(role.id) ? (
                       <FormGroup switch className="mb-0 d-inline-flex align-items-center">
                         <Input
                           type="checkbox"
@@ -33,6 +37,9 @@ const PermissionsMatrix = ({
                         />
                       </FormGroup>
                     ) : null}
+                    {editMode && BASE_ROLE_IDS.includes(role.id) && (
+                      <div className="small text-muted mt-1" style={{ fontSize: '10px' }}>Protegido</div>
+                    )}
                   </th>
                 ))}
               </tr>

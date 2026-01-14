@@ -56,14 +56,41 @@ const sendWhatsAppMessageInternal = async (idTenant, idBranch, phone, message, i
         }
     };
 
-    const response = await axios.post(url, payload, {
-        headers: {
-            apikey: config.apiKey,
-            "Content-Type": "application/json",
-        }
-    });
+    const maxRetries = 3;
+    let attempt = 0;
 
-    return { success: true, data: response.data };
+    while (attempt < maxRetries) {
+        try {
+            const response = await axios.post(url, payload, {
+                headers: {
+                    apikey: config.apiKey,
+                    "Content-Type": "application/json",
+                },
+                timeout: 10000 // 10s timeout
+            });
+
+            return { success: true, data: response.data };
+
+        } catch (error) {
+            attempt++;
+            const isDnsError = error.code === 'EAI_AGAIN' || error.message?.includes('EAI_AGAIN');
+
+            if (isDnsError && attempt < maxRetries) {
+                console.warn(`WhatsAppService: Retry ${attempt}/${maxRetries} due to DNS error.`);
+                await new Promise(res => setTimeout(res, 2000));
+            } else if (attempt < maxRetries && error.response && error.response.status >= 500) {
+                console.warn(`WhatsAppService: Retry ${attempt}/${maxRetries} due to 5xx error.`);
+                await new Promise(res => setTimeout(res, 2000));
+            } else {
+                if (!isDnsError && (!error.response || error.response.status < 500)) {
+                    throw error;
+                }
+                await new Promise(res => setTimeout(res, 2000));
+            }
+        }
+    }
+
+    throw new Error("Failed to send WhatsApp message after multiple retries");
 };
 
 exports.sendWhatsAppMessageInternal = sendWhatsAppMessageInternal;

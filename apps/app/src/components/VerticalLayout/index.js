@@ -31,13 +31,18 @@ const Layout = (props) => {
   const dispatch = useDispatch();
   const selectLayoutState = (state) => state.Layout;
 
-  // Selector para pegar o profile do usuário
-  // Nota: Precisamos garantir que Profile reducer existe e tem userProfile
-  const { userProfile } = useSelector(state => ({
-    userProfile: state.Profile?.userProfile
-  }));
+  // Pegar dados do usuário do localStorage (padrão do projeto)
+  const getUserData = () => {
+    try {
+      const stored = localStorage.getItem("authUser")
+      return stored ? JSON.parse(stored) : null
+    } catch (e) {
+      return null
+    }
+  }
 
-  const isFirstAccess = userProfile?.isFirstAccess === true;
+  const userData = getUserData()
+  const isFirstAccess = userData?.staff?.isFirstAccess === true;
 
   const selectLayoutProperties = createSelector(
     selectLayoutState,

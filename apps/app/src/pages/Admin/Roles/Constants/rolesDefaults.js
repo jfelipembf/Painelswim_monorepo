@@ -149,6 +149,8 @@ const EMPTY_PERMISSIONS = PERMISSIONS.reduce((acc, permission) => {
   return acc
 }, {})
 
+export const BASE_ROLE_IDS = ["proprietario", "gestor", "coordenador", "professor", "recepcionista", "owner"]
+
 export const DEFAULT_ROLES = [
   {
     id: "proprietario",
@@ -192,6 +194,7 @@ export const DEFAULT_ROLES = [
     id: "professor",
     label: "Professor",
     description: "Instrutor que gerencia suas turmas e presenças.",
+    isInstructor: true,
     permissions: {
       ...EMPTY_PERMISSIONS,
       dashboards_management_view: true,

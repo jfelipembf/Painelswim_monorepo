@@ -1,5 +1,6 @@
 const admin = require("firebase-admin");
 
+
 if (!admin.apps.length) {
   admin.initializeApp();
 }
@@ -136,6 +137,8 @@ exports.saveAutomation = require("./src/automations/automations").saveAutomation
 exports.getAutomations = require("./src/automations/automations").getAutomations;
 exports.deleteAutomation = require("./src/automations/automations").deleteAutomation;
 exports.checkBirthdayAutomations = require("./src/automations/scheduled").checkBirthdayAutomations;
+
+
 
 
 

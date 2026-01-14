@@ -44,7 +44,7 @@ export const createStaff = async (staff, { ctxOverride = null } = {}) => {
 
   // Create new staff (Cloud Function)
   const functions = requireFunctions()
-  const createStaffFn = httpsCallable(functions, "createStaffUser")
+  const createStaffFn = httpsCallable(functions, "staffCriarUsuario")
 
   try {
     const payload = buildStaffPayload(staff)
@@ -77,7 +77,7 @@ export const getStaff = async (id, { ctxOverride = null } = {}) => {
 export const updateStaff = async (staff, { ctxOverride = null } = {}) => {
   const ctx = getContext(ctxOverride)
   const functions = requireFunctions()
-  const updateStaffFn = httpsCallable(functions, "updateStaffUser")
+  const updateStaffFn = httpsCallable(functions, "staffAtualizarUsuario")
 
   try {
     if (!staff.id) {

@@ -17,6 +17,7 @@ async function createStaffUserLogic(data, context) {
         firstName,
         lastName,
         role, // Nome do cargo (role)
+        roleId, // ID do cargo (roleId)
         status = "active",
         phone,
         photo,
@@ -24,11 +25,12 @@ async function createStaffUserLogic(data, context) {
         isInstructor,
     } = data;
 
+    // ... (validations omitted for brevity in targetContent, but I'll include them in ReplacementContent)
+
     // Validação de campos obrigatórios
     if (!email || !firstName) {
         const missing = [];
         if (!email) missing.push("email");
-        if (!password) missing.push("password");
         if (!firstName) missing.push("firstName");
 
         console.error("Campos obrigatórios ausentes:", missing, "Data recebida:", data);
@@ -42,7 +44,24 @@ async function createStaffUserLogic(data, context) {
     const displayName = `${firstName} ${lastName || ""}`.trim();
 
     try {
-        // 1. Verificar se usuário já existe no Auth
+        // 1. Sincronizar dados do Cargo (se roleId existir)
+        let finalRole = role || null;
+        let finalIsInstructor = !!isInstructor;
+
+        if (roleId) {
+            const roleRef = admin.firestore()
+                .collection("tenants").doc(idTenant)
+                .collection("branches").doc(idBranch)
+                .collection("roles").doc(roleId);
+            const roleSnap = await roleRef.get();
+            if (roleSnap.exists) {
+                const rData = roleSnap.data();
+                finalRole = rData.label || finalRole;
+                finalIsInstructor = rData.isInstructor !== undefined ? !!rData.isInstructor : finalIsInstructor;
+            }
+        }
+
+        // 2. Verificar se usuário já existe no Auth
         let userRecord;
         try {
             userRecord = await admin.auth().getUserByEmail(email);
@@ -58,7 +77,7 @@ async function createStaffUserLogic(data, context) {
             // Usuário já existe, reaproveitar UID
             uid = userRecord.uid;
         } else {
-            // 2. Criar usuário no Auth
+            // 3. Criar usuário no Auth
             userRecord = await admin.auth().createUser({
                 email,
                 password,
@@ -68,7 +87,7 @@ async function createStaffUserLogic(data, context) {
             uid = userRecord.uid;
         }
 
-        // 3. Criar documento no Firestore (Staff)
+        // 4. Criar documento no Firestore (Staff)
         const staffRef = admin
             .firestore()
             .collection("tenants")
@@ -87,28 +106,22 @@ async function createStaffUserLogic(data, context) {
             displayName,
             email,
             phone: phone || null,
-            role: role || null,
+            role: finalRole,
+            roleId: roleId || null,
             status,
             photo: photo || avatar || null,
             avatar: photo || avatar || null,
-            isInstructor: !!isInstructor, // Importante para diferenciar professores
+            isInstructor: finalIsInstructor,
             isFirstAccess: true, // Força a troca de senha no primeiro login
 
             // Dados Pessoais
             gender: data.gender || null,
             birthDate: data.birthDate || null,
 
-            // Endereço
-            zip: data.zip || null,
-            state: data.state || null,
-            city: data.city || null,
-            neighborhood: data.neighborhood || null,
+            // Endereço (Normalizado apenas no mapa 'address')
             address: data.address || null,
-            number: data.number || null,
-            complement: data.complement || null,
 
             // Dados Profissionais
-            roleId: data.roleId || null,
             hireDate: data.hireDate || null,
             council: data.council || null,
             employmentType: data.employmentType || null,
@@ -141,18 +154,20 @@ async function createStaffUserLogic(data, context) {
 
 // Helper para enviar mensagem de boas-vindas (Executado após criação)
 async function sendWelcomeMessage(idTenant, idBranch, staffData) {
+    console.log(`[WelcomeMessage] Iniciando envio para ${staffData.firstName} (${staffData.email})`);
     try {
         if (!staffData.phone) {
-            console.log("Sem telefone para enviar boas-vindas.");
+            console.log("[WelcomeMessage] Falha: Sem telefone.");
             return;
         }
 
         // Buscar Tenant e Branch para pegar Slugs
+        console.log(`[WelcomeMessage] Buscando dados de Tenant (${idTenant}) e Branch (${idBranch})...`);
         const tenantSnap = await admin.firestore().collection("tenants").doc(idTenant).get();
         const branchSnap = await admin.firestore().collection("tenants").doc(idTenant).collection("branches").doc(idBranch).get();
 
         if (!tenantSnap.exists || !branchSnap.exists) {
-            console.error("Tenant ou Branch não encontrados para enviar mensagem.");
+            console.error("[WelcomeMessage] Erro: Tenant ou Branch não encontrados.");
             return;
         }
 
@@ -163,6 +178,7 @@ async function sendWelcomeMessage(idTenant, idBranch, staffData) {
         const branchSlug = branchData.slug || idBranch;
 
         const url = `https://app.painelswim.com/${tenantSlug}/${branchSlug}/`;
+        console.log(`[WelcomeMessage] URL gerada: ${url}`);
 
         const message = `Olá ${staffData.firstName}, seja bem vindo, ao painel swim para seu acesso use a URL abaixo. criamos uma senha provisoria para voce
 
@@ -171,14 +187,14 @@ senha provisoria: 123456
 
 ${url}
 
-altera a sua senha por seguranca apos o primeiro acesso e tenham um otimo dia de trabalho`;
+altera a sua senha por seguranca apos o primeiro acesso e tenha um otimo dia de trabalho`;
 
+        console.log(`[WelcomeMessage] Enviando via WhatsApp para ${staffData.phone}...`);
         await sendWhatsAppMessageInternal(idTenant, idBranch, staffData.phone, message);
-        console.log("Mensagem de boas-vindas enviada para provider:", staffData.id);
+        console.log("[WelcomeMessage] Sucesso: Mensagem enviada.");
 
     } catch (err) {
-        console.error("Erro ao enviar mensagem de boas-vindas:", err);
-        // Não lançar erro para não falhar a criação do usuário
+        console.error("[WelcomeMessage] Erro CATASTRÓFICO:", err);
     }
 }
 
@@ -197,6 +213,7 @@ async function updateStaffUserLogic(data, context) {
         firstName,
         lastName,
         role,
+        roleId,
         status,
         phone,
         photo,
@@ -215,7 +232,24 @@ async function updateStaffUserLogic(data, context) {
     const now = FieldValue.serverTimestamp();
 
     try {
-        // 1. Atualizar dados no Authentication (se necessário)
+        // 1. Sincronizar dados do Cargo (se roleId existir)
+        let finalRole = role;
+        let finalIsInstructor = isInstructor;
+
+        if (roleId) {
+            const roleRef = admin.firestore()
+                .collection("tenants").doc(idTenant)
+                .collection("branches").doc(idBranch)
+                .collection("roles").doc(roleId);
+            const roleSnap = await roleRef.get();
+            if (roleSnap.exists) {
+                const rData = roleSnap.data();
+                finalRole = rData.label || finalRole;
+                finalIsInstructor = rData.isInstructor !== undefined ? !!rData.isInstructor : finalIsInstructor;
+            }
+        }
+
+        // 2. Atualizar dados no Authentication (se necessário)
         const authUpdates = {};
         if (email) authUpdates.email = email;
         if (password) authUpdates.password = password;
@@ -226,7 +260,7 @@ async function updateStaffUserLogic(data, context) {
             await admin.auth().updateUser(id, authUpdates);
         }
 
-        // 2. Atualizar documento no Firestore
+        // 3. Atualizar documento no Firestore
         const staffRef = admin
             .firestore()
             .collection("tenants")
@@ -243,18 +277,31 @@ async function updateStaffUserLogic(data, context) {
             displayName,
             email,
             phone: phone || null,
-            role: role || null,
+            role: finalRole !== undefined ? finalRole : undefined,
+            roleId: roleId || undefined,
             status: status || "active",
             photo: photo !== undefined ? photo : (avatar !== undefined ? avatar : undefined),
             avatar: photo !== undefined ? photo : (avatar !== undefined ? avatar : undefined),
-            isInstructor: isInstructor !== undefined ? !!isInstructor : undefined,
+            isInstructor: finalIsInstructor !== undefined ? !!finalIsInstructor : undefined,
+            address: data.address || undefined,
             updatedAt: now,
         };
 
-        // Remove chaves undefined
+        // Campos para remover (legacy address)
+        const fieldsToRemove = {
+            zip: FieldValue.delete(),
+            state: FieldValue.delete(),
+            city: FieldValue.delete(),
+            neighborhood: FieldValue.delete(),
+            number: FieldValue.delete(),
+            complement: FieldValue.delete()
+        };
+
+        // Remove chaves undefined do payload
         Object.keys(firestorePayload).forEach(key => firestorePayload[key] === undefined && delete firestorePayload[key]);
 
-        await staffRef.set(firestorePayload, { merge: true });
+        // Merge payload e remoção de campos antigos
+        await staffRef.set({ ...firestorePayload, ...fieldsToRemove }, { merge: true });
 
         return {
             success: true,
@@ -269,5 +316,6 @@ async function updateStaffUserLogic(data, context) {
 
 module.exports = {
     createStaffUserLogic,
-    updateStaffUserLogic
+    updateStaffUserLogic,
+    sendWelcomeMessage
 };

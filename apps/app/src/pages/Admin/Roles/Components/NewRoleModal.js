@@ -11,16 +11,22 @@ import {
   ModalHeader,
 } from "reactstrap"
 
+import { BASE_ROLE_IDS } from "../Constants"
+
 const NewRoleModal = ({ isOpen, toggle, onSubmit, initialRole, mode = "create" }) => {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [isInstructor, setIsInstructor] = useState(false)
 
+  const isBaseRole = mode === "edit" && initialRole && BASE_ROLE_IDS.includes(initialRole.id)
+  const isProfessorLocked = isBaseRole && initialRole.id === "professor"
+
   useEffect(() => {
     if (isOpen && mode === "edit" && initialRole) {
       setName(initialRole.label || "")
       setDescription(initialRole.description || "")
-      setIsInstructor(!!initialRole.isInstructor)
+      // Force instructor true if it's the professor role
+      setIsInstructor(initialRole.id === "professor" ? true : !!initialRole.isInstructor)
     } else if (!isOpen) {
       setName("")
       setDescription("")
@@ -33,7 +39,7 @@ const NewRoleModal = ({ isOpen, toggle, onSubmit, initialRole, mode = "create" }
     const data = {
       label: name.trim(),
       description: description.trim() || "Cargo criado manualmente",
-      isInstructor,
+      isInstructor: isProfessorLocked ? true : isInstructor,
       permissions: initialRole?.permissions || {},
     }
 
@@ -53,6 +59,12 @@ const NewRoleModal = ({ isOpen, toggle, onSubmit, initialRole, mode = "create" }
       </ModalHeader>
       <Form onSubmit={handleSubmit}>
         <ModalBody>
+          {isBaseRole && (
+            <div className="alert alert-info py-2" style={{ fontSize: '13px' }}>
+              <i className="mdi mdi-information-outline me-2" />
+              Este é um cargo base do sistema. O nome e configurações estruturais não podem ser alterados.
+            </div>
+          )}
           <FormGroup>
             <Label for="roleName">Nome do cargo</Label>
             <Input
@@ -61,6 +73,7 @@ const NewRoleModal = ({ isOpen, toggle, onSubmit, initialRole, mode = "create" }
               value={name}
               onChange={e => setName(e.target.value)}
               required
+              disabled={isBaseRole}
             />
           </FormGroup>
           <FormGroup>
@@ -72,14 +85,16 @@ const NewRoleModal = ({ isOpen, toggle, onSubmit, initialRole, mode = "create" }
               placeholder="Breve descrição para identificar o cargo"
               value={description}
               onChange={e => setDescription(e.target.value)}
+              disabled={isBaseRole}
             />
           </FormGroup>
           <FormGroup switch className="d-flex align-items-center gap-2">
             <Input
               type="switch"
               id="isInstructorSwitch"
-              checked={isInstructor}
+              checked={isProfessorLocked ? true : isInstructor}
               onChange={e => setIsInstructor(e.target.checked)}
+              disabled={isProfessorLocked}
             />
             <Label check htmlFor="isInstructorSwitch" className="mb-0">
               Atua como Professor?

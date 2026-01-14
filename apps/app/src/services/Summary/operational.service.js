@@ -1,4 +1,4 @@
-import { getDocs, query, where, Timestamp } from "firebase/firestore"
+import { getDocs, query, where, doc, getDoc } from "firebase/firestore"
 import { requireDb } from "../_core/db"
 import { requireBranchContext } from "../_core/context"
 import { salesCollectionRef } from "../Sales/sales.repository"
@@ -42,8 +42,6 @@ export const getStaffMonthlyStats = async (uid) => {
     const monthId = now.toISOString().slice(0, 7) // YYYY-MM
 
     const salesRef = salesCollectionRef(db, ctx)
-    // Infelizmente o Firebase não permite filtro de prefixo direto com where '=='
-    // Mas podemos filtrar por range: >= "YYYY-MM-01" e <= "YYYY-MM-31"
     const startOfMonth = `${monthId}-01`
     const endOfMonth = `${monthId}-31`
 
@@ -86,7 +84,7 @@ export const getStaffDailyExperimentals = async (uid) => {
         .filter(e =>
             e.type === 'experimental' &&
             e.status === 'active' &&
-            e.sessionDate >= today // Mostra hoje e próximos agendamentos
+            e.sessionDate >= today
         )
         .sort((a, b) => (a.sessionDate || "").localeCompare(b.sessionDate || ""))
 }
@@ -127,25 +125,16 @@ export const getBirthdaySummary = async () => {
     const db = requireDb()
     const ctx = requireBranchContext()
 
-    // Caminho: branches/{branchId}/operationalSummary/birthdays
-    // A função requireBranchContext já retorna o branchId do contexto do usuário
-    // Mas precisamos montar o path correto. 
-    // Na verdade, o helper requireDb retorna apenas o DB instance.
-    // O helper requireBranchContext retorna { idBranch, idTenant, user? }
-
-    // CORREÇÃO: vamos usar doc() e getDoc() que não estão importados ainda
-    const { doc, getDoc } = require("firebase/firestore");
-
     try {
-        const ref = doc(db, "tenants", ctx.idTenant, "branches", ctx.idBranch, "operationalSummary", "birthdays");
-        const snap = await getDoc(ref);
+        const ref = doc(db, "tenants", ctx.idTenant, "branches", ctx.idBranch, "operationalSummary", "birthdays")
+        const snap = await getDoc(ref)
 
         if (snap.exists()) {
-            return snap.data().list || [];
+            return snap.data().list || []
         }
-        return [];
+        return []
     } catch (error) {
-        console.error("Error fetching birthday summary:", error);
-        return [];
+        console.error("Error fetching birthday summary:", error)
+        return []
     }
 }

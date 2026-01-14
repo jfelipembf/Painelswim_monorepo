@@ -1,8 +1,7 @@
 import React, { useState } from "react"
 import { Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, Button, Alert } from "reactstrap"
-import { getFirebaseBackend } from "../../../helpers/firebase_helper"
+import { getFirebaseBackend } from "../../helpers/firebase_helper"
 import { getAuth, updatePassword } from "firebase/auth"
-import { useSelector, useDispatch } from "react-redux"
 import { doc, updateDoc, getFirestore } from "firebase/firestore"
 
 const ForcePasswordChangeModal = ({ isOpen }) => {
@@ -12,15 +11,19 @@ const ForcePasswordChangeModal = ({ isOpen }) => {
     const [loading, setLoading] = useState(false)
     const [success, setSuccess] = useState(false)
 
-    // Acessar dados do tenant/branch/user da store
-    // Nota: Precisamos garantir que idTenant e idBranch estejam disponíveis no contexto ou store
-    // Geralmente 'Layout' tem acesso ao profile.
-    // Vamos tentar pegar do Redux Profile ou Auth.
+    // Pegar dados do usuário e contexto do localStorage
+    const getUserData = () => {
+        try {
+            const authUser = JSON.parse(localStorage.getItem("authUser"))
+            const idTenant = localStorage.getItem("idTenant")
+            const idBranch = localStorage.getItem("idBranch")
+            return { ...authUser, idTenant, idBranch }
+        } catch (e) {
+            return null
+        }
+    }
 
-    // Assumindo que o profile está no Redux state "Profile"
-    const { userProfile } = useSelector(state => ({
-        userProfile: state.Profile.userProfile
-    }))
+    const userData = getUserData()
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -52,30 +55,35 @@ const ForcePasswordChangeModal = ({ isOpen }) => {
 
             // 2. Atualizar flag no Firestore
             // Caminho: tenants/{idTenant}/branches/{idBranch}/staff/{uid}
-            // Precisamos pegar tenant/branch do profile ou da URL. 
-            // Se userProfile tiver idTenant e idBranch, ótimo.
-
-            if (userProfile && userProfile.idTenant && userProfile.idBranch) {
+            if (userData && userData.idTenant && userData.idBranch) {
                 const db = getFirestore()
-                const staffRef = doc(db, "tenants", userProfile.idTenant, "branches", userProfile.idBranch, "staff", currentUser.uid)
+                const staffRef = doc(db, "tenants", userData.idTenant, "branches", userData.idBranch, "staff", currentUser.uid)
 
                 await updateDoc(staffRef, {
                     isFirstAccess: false,
                     updatedAt: new Date()
                 })
 
+                // 3. Atualizar LocalStorage para refletir a mudança imediatamente
+                try {
+                    const authUser = JSON.parse(localStorage.getItem("authUser"))
+                    if (authUser && authUser.staff) {
+                        authUser.staff.isFirstAccess = false
+                        localStorage.setItem("authUser", JSON.stringify(authUser))
+                    }
+                } catch (e) {
+                    console.error("Erro ao atualizar localStorage:", e)
+                }
+
                 setSuccess(true)
 
                 // Pequeno delay para usuário ler a mensagem antes de recarregar/fechar
                 setTimeout(() => {
-                    window.location.reload() // Recarrega para aplicar novo estado (modal some)
+                    window.location.reload() // Recarrega para aplicar novo estado
                 }, 1500)
 
             } else {
-                // Fallback: Se não tiver contexto, talvez erro? 
-                // Mas a senha foi trocada.
-                // Tentar atualizar apenas se possível.
-                console.warn("Contexto de tenant/branch não encontrado no profile. Senha alterada, mas flag não atualizada.")
+                console.warn("Contexto de tenant/branch não encontrado. Senha alterada, mas flag não atualizada localmente.")
                 setSuccess(true)
                 setTimeout(() => {
                     window.location.reload()

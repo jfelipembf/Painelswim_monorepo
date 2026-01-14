@@ -165,6 +165,7 @@ export const buildStaffPayload = (data) => {
         address: buildAddress(data), // Added address
 
         role: data.role || StaffRole.INSTRUCTOR,
+        roleId: data.roleId || null, // NEW: ID-driven link
         isInstructor: !!data.isInstructor,
         active: data.active !== false, // Default true
         photo: data.photo || "",

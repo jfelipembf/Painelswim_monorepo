@@ -5,7 +5,7 @@ import { connect } from "react-redux"
 import PermissionsMatrix from "./Components/PermissionsMatrix"
 import RoleModal from "./Components/NewRoleModal"
 import { setBreadcrumbItems } from "../../../store/actions"
-import { PERMISSIONS, DEFAULT_ROLES } from "./Constants"
+import { PERMISSIONS, DEFAULT_ROLES, BASE_ROLE_IDS } from "./Constants"
 import { ensureDefaultRoles, createRole, deleteRole } from "../../../services/Roles/index"
 import { useToast } from "components/Common/ToastProvider"
 import PageLoader from "../../../components/Common/PageLoader"
@@ -123,6 +123,8 @@ const RolesPage = ({ setBreadcrumbItems }) => {
   }
 
   const handleSelectRole = roleId => {
+    if (BASE_ROLE_IDS.includes(roleId)) return // Bloqueia seleção de cargos base
+
     setSelectedRoles(prev => {
       const next = new Set(prev)
       if (next.has(roleId)) next.delete(roleId)
@@ -133,14 +135,19 @@ const RolesPage = ({ setBreadcrumbItems }) => {
 
   const handleDeleteSelected = async () => {
     if (selectedRoles.size === 0) return
-    const idsToDelete = Array.from(selectedRoles)
+    const idsToDelete = Array.from(selectedRoles).filter(id => !BASE_ROLE_IDS.includes(id))
+
+    if (idsToDelete.length === 0) {
+      toast.show({ title: "Ação bloqueada", description: "Não é possível excluir cargos base.", color: "warning" })
+      return
+    }
 
     try {
       await withLoading('submit', async () => {
         for (const id of idsToDelete) {
           await deleteRole(id)
         }
-        setRoles(prev => prev.filter(role => !selectedRoles.has(role.id)))
+        setRoles(prev => prev.filter(role => !idsToDelete.includes(role.id)))
         setSelectedRoles(new Set())
         setEditMode(false)
         toast.show({ title: "Sucesso", description: "Cargos excluídos com sucesso.", color: "success" })

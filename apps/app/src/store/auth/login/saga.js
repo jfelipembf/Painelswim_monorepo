@@ -78,7 +78,7 @@ function* loginUser({ payload: { user, history } }) {
       }
 
       const staffData = staffSnap.data();
-      const roleId = staffData?.role?.toLowerCase().replace(/\s+/g, "-") || null;
+      const roleId = staffData?.roleId || staffData?.role?.toLowerCase().replace(/\s+/g, "-") || null;
       let roleData = null;
 
       if (roleId) {
