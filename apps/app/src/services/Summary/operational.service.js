@@ -92,6 +92,35 @@ export const getStaffDailyExperimentals = async (uid) => {
 }
 
 /**
+ * Lista aulas experimentais do MÊS para o staff logado.
+ */
+export const getStaffMonthlyExperimentals = async (uid) => {
+    const db = requireDb()
+    const ctx = requireBranchContext()
+    const now = new Date()
+    const monthId = now.toISOString().slice(0, 7) // YYYY-MM
+    const startOfMonth = `${monthId}-01`
+    const endOfMonth = `${monthId}-31`
+
+    const enrollRef = enrollmentsCol(db, ctx)
+    const q = query(
+        enrollRef,
+        where("idStaff", "==", uid)
+    )
+
+    const snap = await getDocs(q)
+    return snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(e =>
+            e.type === 'experimental' &&
+            e.status === 'active' &&
+            e.sessionDate >= startOfMonth &&
+            e.sessionDate <= endOfMonth
+        )
+        .sort((a, b) => (a.sessionDate || "").localeCompare(b.sessionDate || ""))
+}
+
+/**
  * Busca o resumo diário de aniversariantes (cache).
  */
 export const getBirthdaySummary = async () => {

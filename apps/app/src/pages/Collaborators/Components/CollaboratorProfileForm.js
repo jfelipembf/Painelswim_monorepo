@@ -1,9 +1,22 @@
 import React from "react"
 import { Col, Form, FormGroup, Input, Label, Row } from "reactstrap"
 import ButtonLoader from "../../../components/Common/ButtonLoader"
+import { formatTitleCase } from "../../../helpers/string"
 
 const CollaboratorProfileForm = ({ value, onChange, passwordValue, onPasswordChange, onSave, saving, savingPassword, roles = [] }) => {
-  const update = (field, val) => onChange?.(field, val)
+  const update = (field, val) => {
+    let finalValue = val;
+    const fieldsToFormat = [
+      "firstName", "lastName",
+      "city", "neighborhood", "address", "street", "complement", "state"
+    ];
+
+    if (fieldsToFormat.includes(field) && typeof val === "string") {
+      finalValue = formatTitleCase(val);
+    }
+
+    onChange?.(field, finalValue)
+  }
   const updatePwd = (field, val) => onPasswordChange?.(field, val)
 
   const handleSave = () => onSave?.()

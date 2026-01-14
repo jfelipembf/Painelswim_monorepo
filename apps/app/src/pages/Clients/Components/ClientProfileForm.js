@@ -1,14 +1,28 @@
 import React from "react"
 import { Card, CardBody, CardHeader, Col, Form, FormGroup, Input, Label, Row } from "reactstrap"
 
+import { formatTitleCase } from "../../../helpers/string"
 import { GENDER_OPTIONS } from "../../../constants/gender"
 
 const ClientProfileForm = ({ value, onChange, disabled = false }) => {
   const formData = value || {}
+
   const updateField = (field, nextValue) => {
+    let finalValue = nextValue;
+
+    // Campos que devem ser padronizados (Title Case)
+    const fieldsToFormat = [
+      "firstName", "lastName", "guardianName",
+      "city", "neighborhood", "address", "street", "complement", "state"
+    ];
+
+    if (fieldsToFormat.includes(field) && typeof nextValue === "string") {
+      finalValue = formatTitleCase(nextValue);
+    }
+
     onChange?.(prev => {
       const base = typeof prev === "object" && prev !== null ? prev : formData
-      return { ...base, [field]: nextValue }
+      return { ...base, [field]: finalValue }
     })
   }
 

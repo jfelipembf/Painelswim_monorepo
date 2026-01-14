@@ -48,11 +48,11 @@ exports.enrollmentClientCountersOnDelete =
 exports.enrollmentClientCountersOnUpdate =
   require("./src/enrollments/clientEnrollmentCounters").onUpdate;
 
-exports.funnelTrackNewLead = require("./src/leads/funnel").trackNewLead;
-exports.funnelTrackExperimental = require("./src/leads/funnel").trackExperimentalScheduled;
-exports.funnelTrackConversion = require("./src/leads/funnel").trackConversion;
-exports.funnelTrackAttendance = require("./src/leads/funnel").trackExperimentalAttendance;
-exports.funnelTrackCancellation = require("./src/leads/funnel").trackExperimentalDeletion;
+exports.funnelMonitorarNovosLeads = require("./src/leads/funnel").monitorarNovosLeads;
+exports.funnelMonitorarAgendamentoExperimental = require("./src/leads/funnel").monitorarAgendamentoExperimental;
+exports.funnelMonitorarConversao = require("./src/leads/funnel").monitorarConversao;
+exports.funnelMonitorarPresencaExperimental = require("./src/leads/funnel").monitorarPresencaExperimental;
+exports.funnelMonitorarRemocaoExperimental = require("./src/leads/funnel").monitorarRemocaoExperimental;
 
 // Financeiro
 exports.autoCloseCashier = require("./src/financial/autoClose").autoCloseCashier;
@@ -119,8 +119,8 @@ exports.saveEvaluation = require("./src/evaluations/evaluations").saveEvaluation
 // Catalog Contracts (Templates)
 exports.createContract = require("./src/contracts/contracts").createContract;
 exports.updateContract = require("./src/contracts/contracts").updateContract;
-exports.createStaffUser = require("./src/staff/staff").createStaffUser;
-exports.updateStaffUser = require("./src/staff/staff").updateStaffUser;
+exports.staffCriarUsuario = require("./src/staff/staff").criarUsuarioEquipe;
+exports.staffAtualizarUsuario = require("./src/staff/staff").atualizarUsuarioEquipe;
 
 // Integrations
 exports.saveIntegrationConfig = require("./src/integrations/integrations").saveIntegrationConfig;
