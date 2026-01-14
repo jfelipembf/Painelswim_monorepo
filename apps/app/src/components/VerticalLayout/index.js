@@ -24,10 +24,20 @@ import Sidebar from "./Sidebar"
 import Footer from "./Footer"
 import Rightbar from "../CommonForBoth/Rightbar"
 
+import ForcePasswordChangeModal from "../Common/ForcePasswordChangeModal"
+
 const Layout = (props) => {
 
   const dispatch = useDispatch();
   const selectLayoutState = (state) => state.Layout;
+
+  // Selector para pegar o profile do usuário
+  // Nota: Precisamos garantir que Profile reducer existe e tem userProfile
+  const { userProfile } = useSelector(state => ({
+    userProfile: state.Profile?.userProfile
+  }));
+
+  const isFirstAccess = userProfile?.isFirstAccess === true;
 
   const selectLayoutProperties = createSelector(
     selectLayoutState,
@@ -37,7 +47,7 @@ const Layout = (props) => {
       leftSideBarType: layout.leftSideBarType,
       topbarTheme: layout.topbarTheme,
       layoutColor: layout.layoutColor,
-      layoutMode:layout.layoutMode
+      layoutMode: layout.layoutMode
     }));
 
   const {
@@ -60,15 +70,15 @@ const Layout = (props) => {
         dispatch(showRightSidebarAction(false));
       }
     };
-  
+
     //init body click event fot toggle rightbar
     document.body.addEventListener("click", hideRightbar, true);
-  
+
     // Cleanup the event listener on component unmount
     return () => {
       document.body.removeEventListener("click", hideRightbar, true);
     };
-  }, [dispatch]); 
+  }, [dispatch]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -115,7 +125,7 @@ const Layout = (props) => {
   }, [layoutColor, dispatch]);
 
 
-  
+
 
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
@@ -130,6 +140,7 @@ const Layout = (props) => {
 
   return (
     <React.Fragment>
+      <ForcePasswordChangeModal isOpen={isFirstAccess} />
       {/* <div id="preloader">
         <div id="status">
           <div className="spinner-chase">
@@ -168,7 +179,7 @@ const Layout = (props) => {
 Layout.propTypes = {
   changeLayoutWidth: PropTypes.func,
   changeColor: PropTypes.func,
-  changeMode:PropTypes.func,
+  changeMode: PropTypes.func,
   changeSidebarTheme: PropTypes.func,
   changeSidebarType: PropTypes.func,
   changeTopbarTheme: PropTypes.func,

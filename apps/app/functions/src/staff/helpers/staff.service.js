@@ -2,6 +2,7 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const { FieldValue } = require("firebase-admin/firestore");
 const { requireAuthContext } = require("../../shared/context");
+const { sendWhatsAppMessageInternal } = require("../../notifications/whatsapp");
 
 /**
  * Lógica para criar um usuário da equipe (Staff)
@@ -91,6 +92,7 @@ async function createStaffUserLogic(data, context) {
             photo: photo || avatar || null,
             avatar: photo || avatar || null,
             isInstructor: !!isInstructor, // Importante para diferenciar professores
+            isFirstAccess: true, // Força a troca de senha no primeiro login
 
             // Dados Pessoais
             gender: data.gender || null,
@@ -117,6 +119,14 @@ async function createStaffUserLogic(data, context) {
             updatedAt: now,
         });
 
+        // Tentar enviar mensagem de boas-vindas
+        await sendWelcomeMessage(idTenant, idBranch, {
+            id: uid,
+            firstName,
+            email,
+            phone
+        });
+
         return {
             success: true,
             uid,
@@ -128,6 +138,50 @@ async function createStaffUserLogic(data, context) {
         throw new functions.https.HttpsError("internal", "Erro interno ao criar colaborador.", error);
     }
 }
+
+// Helper para enviar mensagem de boas-vindas (Executado após criação)
+async function sendWelcomeMessage(idTenant, idBranch, staffData) {
+    try {
+        if (!staffData.phone) {
+            console.log("Sem telefone para enviar boas-vindas.");
+            return;
+        }
+
+        // Buscar Tenant e Branch para pegar Slugs
+        const tenantSnap = await admin.firestore().collection("tenants").doc(idTenant).get();
+        const branchSnap = await admin.firestore().collection("tenants").doc(idTenant).collection("branches").doc(idBranch).get();
+
+        if (!tenantSnap.exists || !branchSnap.exists) {
+            console.error("Tenant ou Branch não encontrados para enviar mensagem.");
+            return;
+        }
+
+        const tenantData = tenantSnap.data();
+        const branchData = branchSnap.data();
+
+        const tenantSlug = tenantData.slug || idTenant;
+        const branchSlug = branchData.slug || idBranch;
+
+        const url = `https://app.painelswim.com/${tenantSlug}/${branchSlug}/`;
+
+        const message = `Olá ${staffData.firstName}, seja bem vindo, ao painel swim para seu acesso use a URL abaixo. criamos uma senha provisoria para voce
+
+email de acesso: ${staffData.email}
+senha provisoria: 123456
+
+${url}
+
+altera a sua senha por seguranca apos o primeiro acesso e tenham um otimo dia de trabalho`;
+
+        await sendWhatsAppMessageInternal(idTenant, idBranch, staffData.phone, message);
+        console.log("Mensagem de boas-vindas enviada para provider:", staffData.id);
+
+    } catch (err) {
+        console.error("Erro ao enviar mensagem de boas-vindas:", err);
+        // Não lançar erro para não falhar a criação do usuário
+    }
+}
+
 
 /**
  * Lógica para atualizar um usuário da equipe (Staff)
