@@ -154,34 +154,28 @@ export const createSingleSessionEnrollment = async (data) => {
   try {
     const payload = buildEnrollmentPayload(data)
 
+    const result = await createSingleSessionEnrollmentFn({
       ...payload,
-  idTenant,
-  idBranch,
-  clientPhone: data.clientPhone,
-    sessionTime: data.startTime
+      idTenant,
+      idBranch,
+      clientPhone: data.clientPhone,
+      sessionTime: data.startTime
     })
-const result = await createSingleSessionEnrollmentFn({
-  ...payload,
-  idTenant,
-  idBranch,
-  clientPhone: data.clientPhone, // Explicitly pass phone
-  sessionTime: data.startTime // Map startTime to sessionTime for automation template
-})
 
-// [FUNNEL] Log Experimental Scheduled
-if (result.data?.idEnrollment && data.type === 'experimental') {
-  // data: { idClient, idClass, idSession, sessionDate, type, ... }
-  logExperimentalScheduling(data.idClient, {
-    classId: data.idClass,
-    sessionId: data.idSession,
-    date: data.sessionDate,
-    instructorId: data.idStaff || null // If available in data
-  }).catch(err => console.warn('[Funnel] Failed to log experimental scheduling:', err))
-}
+    // [FUNNEL] Log Experimental Scheduled
+    if (result.data?.idEnrollment && data.type === 'experimental') {
+      // data: { idClient, idClass, idSession, sessionDate, type, ... }
+      logExperimentalScheduling(data.idClient, {
+        classId: data.idClass,
+        sessionId: data.idSession,
+        date: data.sessionDate,
+        instructorId: data.idStaff || null // If available in data
+      }).catch(err => console.warn('[Funnel] Failed to log experimental scheduling:', err))
+    }
 
-return result.data
+    return result.data
   } catch (error) {
-  console.error("Erro ao criar matrícula avulsa via função:", error)
-  throw error
-}
+    console.error("Erro ao criar matrícula avulsa via função:", error)
+    throw error
+  }
 }

@@ -80,103 +80,96 @@ export const useEnrollmentActions = ({ clientId, clientName, clientPhone, select
                 if (enrollmentType === ENROLLMENT_TYPES.EXPERIMENTAL) {
                     const user = getAuthUser()
                     for (const s of selectedSessions) {
-
-                        idClient: clientId,
+                        const payload = createExperimentalPayload({
+                            idClient: clientId,
                             clientName,
                             session: s,
-                                user: { uid: user?.uid, name: user?.displayName }
+                            status: "active"
+                        })
+
+
+
+                        await createSingleSessionEnrollment({
+                            ...payload,
+                            clientPhone,
+                            idStaff: user?.uid || null,
+                            staffName: user?.displayName || ""
+                        })
+                    }
+                } else {
+                    // Recurring Logic (Default)
+                    const byClass = {}
+                    selectedSessions.forEach(s => {
+                        const idClass = s.idClass || s.idActivity
+                        byClass[idClass] = byClass[idClass] || []
+                        byClass[idClass].push(s)
                     })
 
-            const payload = createExperimentalPayload({
-                idClient: clientId,
-                clientName,
-                session: s,
-                status: "active"
-            })
+                    for (const idClass of Object.keys(byClass)) {
+                        const list = byClass[idClass]
+                        const first = list[0]
+                        if (!first) continue
+                        const startDate = list
+                            .map(s => s.sessionDate)
+                            .filter(Boolean)
+                            .sort()
+                            .shift()
 
+                        const payload = createRecurringPayload({
+                            idClient: clientId,
+                            clientName,
+                            classData: first,
+                            startDate,
+                            status: "active"
+                        })
 
-
-            await createSingleSessionEnrollment({
-                ...payload,
-                clientPhone,
-                idStaff: user?.uid || null,
-                staffName: user?.displayName || ""
-            })
-        }
-                } else {
-            // Recurring Logic (Default)
-            const byClass = {}
-                    selectedSessions.forEach(s => {
-        const idClass = s.idClass || s.idActivity
-        byClass[idClass] = byClass[idClass] || []
-        byClass[idClass].push(s)
-    })
-
-    for (const idClass of Object.keys(byClass)) {
-        const list = byClass[idClass]
-        const first = list[0]
-        if (!first) continue
-        const startDate = list
-            .map(s => s.sessionDate)
-            .filter(Boolean)
-            .sort()
-            .shift()
-
-        const payload = createRecurringPayload({
-            idClient: clientId,
-            clientName,
-            classData: first,
-            startDate,
-            status: "active"
-        })
-
-        // Ensure legacy fields if needed or rely on helper
-        await createRecurringEnrollment(payload)
-    }
-}
-
-toast.show({ title: enrollmentType === ENROLLMENT_TYPES.EXPERIMENTAL ? "Agendamento realizado" : "Matrícula realizada", color: "success" })
-
-// OTIMISMO: Atualizar ocupação na grade imediatamente
-if (setSessions) {
-    setSessions(prev =>
-        (Array.isArray(prev) ? prev : []).map(sess => {
-            const key = `${sess.idSession || sess.id}|${sess.sessionDate || ""}`
-            if (selectedSessionKeys.includes(key)) {
-                return {
-                    ...sess,
-                    enrolledCount: Number(sess.enrolledCount || 0) + 1
+                        // Ensure legacy fields if needed or rely on helper
+                        await createRecurringEnrollment(payload)
+                    }
                 }
-            }
-            return sess
-        })
-    )
-}
 
-// Mantém na grade: limpa seleção e atualiza lista para bloquear duplicadas
-setSelectedSessionKeys([])
+                toast.show({ title: enrollmentType === ENROLLMENT_TYPES.EXPERIMENTAL ? "Agendamento realizado" : "Matrícula realizada", color: "success" })
 
-// Se tiver setSessions, evitamos reloadPageData completo para não sobreescrever
-// a atualização otimista com dados "stale" do backend ainda não processado.
-// Apenas atualizamos a lista de matrículas existentes.
-if (setSessions && setExistingEnrollments) {
-    const enrollments = await listEnrollmentsByClient(clientId)
-    setExistingEnrollments(enrollments || [])
-} else if (reloadPageData) {
-    await reloadPageData()
-} else if (setExistingEnrollments) {
-    const enrollments = await listEnrollmentsByClient(clientId)
-    setExistingEnrollments(enrollments || [])
-}
+                // OTIMISMO: Atualizar ocupação na grade imediatamente
+                if (setSessions) {
+                    setSessions(prev =>
+                        (Array.isArray(prev) ? prev : []).map(sess => {
+                            const key = `${sess.idSession || sess.id}|${sess.sessionDate || ""}`
+                            if (selectedSessionKeys.includes(key)) {
+                                return {
+                                    ...sess,
+                                    enrolledCount: Number(sess.enrolledCount || 0) + 1
+                                }
+                            }
+                            return sess
+                        })
+                    )
+                }
+
+                // Mantém na grade: limpa seleção e atualiza lista para bloquear duplicadas
+                setSelectedSessionKeys([])
+
+                // Se tiver setSessions, evitamos reloadPageData completo para não sobreescrever
+                // a atualização otimista com dados "stale" do backend ainda não processado.
+                // Apenas atualizamos a lista de matrículas existentes.
+                if (setSessions && setExistingEnrollments) {
+                    const enrollments = await listEnrollmentsByClient(clientId)
+                    setExistingEnrollments(enrollments || [])
+                } else if (reloadPageData) {
+                    await reloadPageData()
+                } else if (setExistingEnrollments) {
+                    const enrollments = await listEnrollmentsByClient(clientId)
+                    setExistingEnrollments(enrollments || [])
+                }
             })
         } catch (e) {
-    console.error("handleEnroll: Erro durante o processo", e)
-    toast.show({ title: "Erro ao matricular", description: e?.message || String(e), color: "danger" })
-}
+            console.error("handleEnroll: Erro durante o processo", e)
+            toast.show({ title: "Erro ao matricular", description: e?.message || String(e), color: "danger" })
+        }
     }
 
-return {
-    handleEnroll,
-    isLoading
-}
+    return {
+        handleEnroll,
+        isLoading
+    }
 }
