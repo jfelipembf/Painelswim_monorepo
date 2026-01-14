@@ -7,6 +7,7 @@ import { formatDateString, getToday } from "../../../helpers/date"
 import { useToast } from "../../../components/Common/ToastProvider"
 import { useLoading } from "../../../hooks/useLoading"
 import { useSystemSettings } from "../../../hooks/useSystemSettings"
+import { getAuthUser } from "../../../helpers/permission_helper"
 
 export const useSalesActions = ({
     idClient,
@@ -64,9 +65,12 @@ export const useSalesActions = ({
                 const gross = baseAmount
                 const net = totalDue
                 const totalPaid = payments.reduce((acc, p) => acc + Number(p.amount || 0), 0)
+                const user = getAuthUser()
 
                 const sale = await createSale({
                     idClient: idClient || null,
+                    idStaff: user?.uid || null,
+                    staffName: user?.displayName || "",
                     requiresEnrollment: itemType === "contract" ? Boolean(item.raw?.requiresEnrollment) : false,
                     enrollmentStatus: itemType === "contract" ? "pending" : null,
                     payments, // Passando pagamentos para processamento no backend

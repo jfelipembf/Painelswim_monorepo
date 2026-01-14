@@ -145,6 +145,7 @@ export const createRecurringEnrollment = async (data) => {
 }
 
 export const createSingleSessionEnrollment = async (data) => {
+  console.log("[DEBUG] createSingleSessionEnrollment service called with:", data)
   const functions = requireFunctions()
   const { idTenant, idBranch } = requireBranchContext()
 
@@ -152,6 +153,13 @@ export const createSingleSessionEnrollment = async (data) => {
 
   try {
     const payload = buildEnrollmentPayload(data)
+    console.log("[DEBUG] createSingleSessionEnrollment final payload for function:", {
+      ...payload,
+      idTenant,
+      idBranch,
+      clientPhone: data.clientPhone,
+      sessionTime: data.startTime
+    })
     const result = await createSingleSessionEnrollmentFn({
       ...payload,
       idTenant,

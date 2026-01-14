@@ -122,8 +122,12 @@ export const buildEnrollmentPayload = (data) => {
         activityName: data.activityName || "",
         className: data.className || "",
 
-        // Instructor Snapshot
+        // Responsible Staff (who scheduled/manages)
         idStaff: data.idStaff || null,
+        staffName: data.staffName || "",
+
+        // Instructor Snapshot (who teaches)
+        instructorId: data.instructorId || null,
         instructorName: data.instructorName || "",
 
         // Time Snapshot
@@ -208,6 +212,8 @@ export const buildSalePayload = (data) => {
     return {
         idClient: data.idClient,
         idSeller: data.idSeller || data.salesRepId || null,
+        idStaff: data.idStaff || null,
+        staffName: data.staffName || "",
 
         // Status
         status: data.status || 'open',

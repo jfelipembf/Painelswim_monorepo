@@ -27,8 +27,12 @@ export const createExperimentalPayload = ({ idClient, clientName, session, statu
         weekday: session.weekday ?? (session.weekDays && session.weekDays[0]) ?? null,
 
         // Instructor Data
-        idStaff: session.idStaff || session.idInstructor || null,
-        instructorName: session.instructorName || session.employeeName || ""
+        instructorId: session.idStaff || session.idInstructor || null,
+        instructorName: session.instructorName || session.employeeName || "",
+
+        // Staff responsible for this enrollment (can be overwritten by caller)
+        idStaff: null,
+        staffName: ""
     }
 }
 

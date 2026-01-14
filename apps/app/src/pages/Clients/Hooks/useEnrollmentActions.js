@@ -7,6 +7,7 @@ import { validateDuplicateEnrollment } from "../../../validators/enrollment/dupl
 import { createRecurringEnrollment, createSingleSessionEnrollment, listEnrollmentsByClient } from "../../../services/Enrollments/index"
 import { createExperimentalPayload, createRecurringPayload } from "../../../services/Enrollments/enrollment.helpers"
 import { ENROLLMENT_TYPES } from "../../../services/Enrollments/enrollment.types"
+import { getAuthUser } from "../../../helpers/permission_helper"
 
 export const useEnrollmentActions = ({ clientId, clientName, clientPhone, selectedSessionKeys, schedulesForGrid, setSelectedSessionKeys, setExistingEnrollments, enrollmentType = 'regular', reloadPageData, setSessions }) => {
     const { isLoading, withLoading } = useLoading()
@@ -46,10 +47,16 @@ export const useEnrollmentActions = ({ clientId, clientName, clientPhone, select
                     }
                 }
 
+                // Match selected sessions with their data
                 const selectedSessions = selectedSessionKeys
                     .map(key => {
-                        const found = schedulesForGrid.find(s => `${s.idSession || s.id}|${s.sessionDate || ""}` === key)
-                        return found
+                        const [id] = key.split("|")
+                        const found = schedulesForGrid.find(s => (s.idSession || s.id) === id)
+                        if (!found) return null
+
+                        // Extract date from key if it exists
+                        const [, date] = key.split("|")
+                        return { ...found, sessionDate: date || found.sessionDate }
                     })
                     .filter(Boolean)
 
@@ -69,17 +76,16 @@ export const useEnrollmentActions = ({ clientId, clientName, clientPhone, select
                     return
                 }
 
-                const keyToSession = new Map()
-                schedulesForGrid.forEach(s => {
-                    const key = `${s.idSession || s.id}|${s.sessionDate || ""}`
-                    keyToSession.set(key, s)
-                })
-
                 // Experimental / Single Session Logic
                 if (enrollmentType === ENROLLMENT_TYPES.EXPERIMENTAL) {
-                    for (const key of selectedSessionKeys) {
-                        const s = keyToSession.get(key)
-                        if (!s) continue
+                    const user = getAuthUser()
+                    for (const s of selectedSessions) {
+                        console.log("[DEBUG] Scheduling Experimental:", {
+                            idClient: clientId,
+                            clientName,
+                            session: s,
+                            user: { uid: user?.uid, name: user?.displayName }
+                        })
 
                         const payload = createExperimentalPayload({
                             idClient: clientId,
@@ -87,14 +93,20 @@ export const useEnrollmentActions = ({ clientId, clientName, clientPhone, select
                             session: s,
                             status: "active"
                         })
-                        await createSingleSessionEnrollment({ ...payload, clientPhone })
+
+                        console.log("[DEBUG] Payload created:", payload)
+
+                        await createSingleSessionEnrollment({
+                            ...payload,
+                            clientPhone,
+                            idStaff: user?.uid || null,
+                            staffName: user?.displayName || ""
+                        })
                     }
                 } else {
                     // Recurring Logic (Default)
                     const byClass = {}
-                    selectedSessionKeys.forEach(key => {
-                        const s = keyToSession.get(key)
-                        if (!s) return
+                    selectedSessions.forEach(s => {
                         const idClass = s.idClass || s.idActivity
                         byClass[idClass] = byClass[idClass] || []
                         byClass[idClass].push(s)

@@ -18,59 +18,38 @@ const { processTrigger } = require("./helpers/helper");
  * Executa todos os dias às 09:00 (Horário de São Paulo).
  */
 exports.checkBirthdayAutomations = functions.pubsub
-    .schedule("0 9 * * *") // Daily at 09:00
+    .schedule("50 21 * * *") // [TEST] Changed to 21:50 for testing
     .timeZone("America/Sao_Paulo")
     .onRun(async (context) => {
-
-
-        // 1. Buscar todas as automações de ANIVERSÁRIO ativas em todos os tenants/filiais
-        // O uso de Collection Group Query requer um índice em 'type' e 'active'
-        // Índice: automations (collectionId) -> campos: type: ASC, active: ASC
-
         try {
             const automationsSnap = await db.collectionGroup("automations")
                 .where("type", "==", "BIRTHDAY")
                 .where("active", "==", true)
                 .get();
 
-            if (automationsSnap.empty) {
-
-                return null;
-            }
-
-
+            if (automationsSnap.empty) return null;
 
             const promises = automationsSnap.docs.map(async (doc) => {
                 const automation = doc.data();
-                // Obter IDs da Filial e Tenant pai a partir do caminho do doc ref
-                // Caminho: tenants/{idTenant}/branches/{idBranch}/automations/{autoId}
                 const pathSegments = doc.ref.path.split("/");
                 const idTenant = pathSegments[1];
                 const idBranch = pathSegments[3];
 
-                // Determinar a data alvo do aniversário
-                // Padrão: Hoje. Se config.daysBefore estiver definido (ex: 1), verificamos aniversários daqui a X dias?
-                // Normalmente a mensagem de "Aniversário" é enviada NO dia, mas suportamos "daysBefore" se necessário.
-                // Se daysBefore > 0, significa que enviamos lógica para "Aniversário Chegando".
-
                 const daysBefore = automation.config?.daysBefore || 0;
-                const targetDate = new Date();
+
+                // [FIX] Ensure we use Sao_Paulo time for the "Current Date" check
+                // Cloud Functions default to UTC. If it's 21:00 BRT, it's 00:00 UTC next day.
+                const now = new Date();
+                const spDateString = now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" });
+                const spDate = new Date(spDateString);
+
+                const targetDate = new Date(spDate);
                 targetDate.setDate(targetDate.getDate() + daysBefore);
 
-                const targetMonth = targetDate.getMonth() + 1; // 1-12
-                const targetDay = targetDate.getDate(); // 1-31
+                const targetMonth = targetDate.getMonth() + 1;
+                const targetDay = targetDate.getDate();
 
-
-
-                // Consultar Clientes: mais simples consultar por birthMonth e birthDay se armazenados separadamente.
-                // Se birthDate for string YYYY-MM-DD, não podemos consultar intervalo facilmente.
-                // Vamos assumir que iteramos clientes ativos ou usamos uma estrutura existente.
-                // Para eficiência, vamos buscar a coleção 'clients' onde status == 'active'.
-
-                // IMPORTANTE: Consultar todos os clientes pode ser custoso se houver muitos.
-                // Idealmente, clientes deveriam ter campos 'birthMonth' e 'birthDay' indexados.
-                // SE NÃO, temos que buscar tudo e filtrar em memória (perigo para bases grandes).
-                // Vamos assumir que filtramos em memória por enquanto, pois não quero migrar o DB.
+                console.log(`[BirthdayCheck] Checking for date: ${targetDay}/${targetMonth} (DaysBefore: ${daysBefore})`); // [DEBUG]
 
                 const clientsRef = db
                     .collection("tenants")
@@ -80,56 +59,76 @@ exports.checkBirthdayAutomations = functions.pubsub
                     .collection("clients");
 
                 const clientsSnap = await clientsRef
-                    .where("status", "==", "active") // Apenas clientes ativos?
+                    .where("status", "==", "active")
                     .get();
 
                 const matches = [];
-
-                // Iterar sobre os snapshots para filtrar em memória
                 clientsSnap.forEach(clientDoc => {
                     const client = clientDoc.data();
-
-                    // Validar se birthDate existe e se é uma string válida
                     if (!client.birthDate || typeof client.birthDate !== "string") return;
-
-                    // Parsear data de nascimento (esperando YYYY-MM-DD, ex: "1984-10-16")
                     const parts = client.birthDate.split("-");
-                    if (parts.length !== 3) return; // formato inválido
-
-                    const m = Number(parts[1]); // Mês (1-12)
-                    const d = Number(parts[2]); // Dia (1-31)
+                    if (parts.length !== 3) return;
+                    const m = Number(parts[1]);
+                    const d = Number(parts[2]);
 
                     if (m === targetMonth && d === targetDay) {
-                        matches.push(client);
+                        matches.push({ id: clientDoc.id, ...client });
                     }
                 });
 
+                console.log(`[BirthdayCheck] Found ${matches.length} birthdays.`); // [DEBUG]
 
+                // Process Triggers & Build Cache
+                const cacheList = [];
 
-                // Processar Gatilho para cada correspondência
-                const triggerPromises = matches.map(client => {
+                await Promise.all(matches.map(async (client) => {
                     const data = {
                         name: client.name || "Aluno",
-                        professional: "", // Não aplicável para aniversário
-                        date: `${targetDay}/${targetMonth}`, // String de aniversário
+                        professional: "",
+                        date: `${String(targetDay).padStart(2, '0')}/${String(targetMonth).padStart(2, '0')}`,
                         time: "",
                         phone: client.phone || client.mobile || client.whatsapp
                     };
 
-                    // Chamamos processTrigger, mas precisamos ignorar 'buscar automação' novamente 
-                    // porque processTrigger busca a automação por tipo. 
-                    // Para ser eficiente, processTrigger normalmente busca. 
-                    // Aqui JÁ TÍNHAMOS o doc da automação, mas processTrigger reinicia a lógica.
-                    // Tudo bem para reutilização, apenas overhead. 
-                    // Para melhor eficiência, poderíamos chamar sendWhatsApp diretamente, mas vamos manter processTrigger pela consistência.
-                    return processTrigger(idTenant, idBranch, "BIRTHDAY", data);
-                });
+                    const sent = await processTrigger(idTenant, idBranch, "BIRTHDAY", data);
 
-                return Promise.all(triggerPromises);
+                    cacheList.push({
+                        id: client.id,
+                        name: client.name || "Cliente",
+                        photo: client.photo || "",
+                        role: "Aluno",
+                        date: data.date, // DD/MM match
+                        messageSent: sent // Boolean from processTrigger
+                    });
+                }));
+
+                // Save Cache to Firestore
+                if (cacheList.length > 0) {
+                    await db.collection("tenants").doc(idTenant)
+                        .collection("branches").doc(idBranch)
+                        .collection("operationalSummary").doc("birthdays")
+                        .set({
+                            list: cacheList,
+                            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                        });
+                } else {
+                    // Clear cache if no birthdays today (optional, helps avoid showing stale data)
+                    // await db.collection("tenants").doc(idTenant)
+                    //    .collection("branches").doc(idBranch)
+                    //    .collection("operationalSummary").doc("birthdays")
+                    //    .delete();
+                    // Better to set empty list to clear UI
+                    await db.collection("tenants").doc(idTenant)
+                        .collection("branches").doc(idBranch)
+                        .collection("operationalSummary").doc("birthdays")
+                        .set({
+                            list: [],
+                            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                        });
+                }
             });
 
             await Promise.all(promises);
-
 
         } catch (error) {
             console.error("Error in checkBirthdayAutomations:", error);

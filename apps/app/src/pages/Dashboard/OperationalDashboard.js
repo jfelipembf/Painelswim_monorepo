@@ -8,9 +8,11 @@ import ExperimentalTracker from "./OperationalComponents/ExperimentalTracker"
 import OperationalAlerts from "./OperationalComponents/OperationalAlerts"
 
 import { setBreadcrumbItems } from "../../store/actions"
+import { useOperationalDashboardLogic } from "./Hooks/useOperationalDashboardLogic"
 
 const OperationalDashboard = (props) => {
     document.title = "Dashboard Operacional | Painel Swim"
+    const { reports, experimentals, tasks, birthdays, refreshTasks, isLoading } = useOperationalDashboardLogic()
 
     const breadcrumbItems = [
         { title: "Dashboard", link: "#" },
@@ -23,14 +25,14 @@ const OperationalDashboard = (props) => {
 
     return (
         <React.Fragment>
-            <OperationalMiniWidgets />
+            <OperationalMiniWidgets reports={reports} isLoading={isLoading} />
 
             <Row>
                 <Col xl="3" md="6">
-                    <ExperimentalTracker />
+                    <ExperimentalTracker experimentals={experimentals} isLoading={isLoading} />
                 </Col>
                 <Col xl="9" md="6">
-                    <OperationalAlerts />
+                    <OperationalAlerts tasks={tasks} birthdays={birthdays} refreshTasks={refreshTasks} />
                 </Col>
             </Row>
         </React.Fragment>

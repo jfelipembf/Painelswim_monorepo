@@ -58,6 +58,7 @@ const createRecurringEnrollmentInternal = async ({ idTenant, idBranch, uid, data
  * Lógica interna para criar matrícula avulsa (single-session) e disparar automações.
  */
 const createSingleSessionEnrollmentInternal = async ({ idTenant, idBranch, uid, data }) => {
+    console.log("[DEBUG] createSingleSessionEnrollmentInternal received:", { idTenant, idBranch, uid, data });
     const payload = {
         ...data,
         idTenant,
@@ -86,7 +87,8 @@ const createSingleSessionEnrollmentInternal = async ({ idTenant, idBranch, uid, 
             let teacherPhone = "";
 
             // Pre-fetch Teacher Info if available
-            if (payload.idStaff) {
+            const idInstructor = payload.instructorId || payload.idStaff;
+            if (idInstructor) {
                 try {
                     const staffRef = db
                         .collection("tenants")
@@ -94,7 +96,7 @@ const createSingleSessionEnrollmentInternal = async ({ idTenant, idBranch, uid, 
                         .collection("branches")
                         .doc(idBranch)
                         .collection("staff")
-                        .doc(payload.idStaff);
+                        .doc(idInstructor);
 
                     const staffSnap = await staffRef.get();
                     if (staffSnap.exists) {

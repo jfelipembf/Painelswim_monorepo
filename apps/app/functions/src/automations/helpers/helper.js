@@ -55,9 +55,12 @@ exports.processTrigger = async (idTenant, idBranch, triggerType, data) => {
 
         if (data.phone && message) {
             await sendWhatsAppMessageInternal(idTenant, idBranch, data.phone, message);
+            return true; // Sucesso
         }
+        return false; // Sem telefone ou mensagem
 
     } catch (error) {
         console.error(`Error processing trigger ${triggerType}:`, error);
+        return false; // Erro
     }
 };

@@ -1,61 +1,94 @@
 import React, { useState } from "react";
-import { Card, CardBody, Row, Col, Input } from "reactstrap";
+import { Card, CardBody, Row, Col, Input, Button } from "reactstrap";
+import TaskModal from "./TaskModal";
+import { completeTask } from "../../../services/Tasks/tasks.service";
+import { getAuthUser } from "../../../helpers/permission_helper";
+import { useToast } from "../../../components/Common/ToastProvider";
 
-const OperationalAlerts = () => {
-    const [checkedItems, setCheckedItems] = useState({});
+const OperationalAlerts = ({ tasks = [], birthdays = [], refreshTasks }) => {
+    const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA'));
+    const toast = useToast();
 
-    const handleCheck = (id) => {
-        setCheckedItems(prev => ({ ...prev, [id]: !prev[id] }));
-    };
+    // ... handleTaskCheck and filteredTasks ...
 
     const data = {
-        pendencias: [
-            { id: "p1", title: "Atestados Vencidos", info: "12 pendentes", date: "Urgente" },
-            { id: "p2", title: "Contratos s/ Assinatura", info: "5 pendentes", date: "Hoje" },
-            { id: "p3", title: "Exames Periódicos", info: "3 pendentes", date: "12 Jan" },
-            { id: "p4", title: "Treinamento NR10", info: "RH aguardando", date: "15 Jan" },
-        ],
         avisos: [
             { id: "a1", title: "Manutenção Piscina B", info: "Das 08:00 às 12:00", date: "Amanhã" },
             { id: "a2", title: "Novo Uniforme", info: "Retirada na recepção", date: "Jan" },
             { id: "a3", title: "Dedetização", info: "Área externa", date: "Sáb" },
         ],
-        aniversariantes: [
-            { id: "b1", title: "João Silva", info: "Setor Operacional", date: "Hoje" },
-            { id: "b2", title: "Maria Souza", info: "Setor Administrativo", date: "15 Jan" },
-        ]
+        // birthdays prop replaces static aniversariantes
     };
 
-    const Column = ({ title, items, showDivider = true }) => {
-        const sortedItems = [...items].sort((a, b) => !!checkedItems[a.id] - !!checkedItems[b.id]);
-
+    const Column = ({ title, items, showDivider = true, isTasks = false, isBirthday = false }) => {
         return (
             <Col md={4} className={showDivider ? "border-end" : ""}>
                 <div className="p-3">
-                    <h5 className="font-size-15 mb-4 fw-bold text-dark">{title}</h5>
-                    {/* Altura interna ajustada para o card de 500px */}
+                    <div className="d-flex justify-content-between align-items-center mb-4">
+                        <div className="d-flex align-items-center gap-2">
+                            <h5 className="font-size-15 mb-0 fw-bold text-dark">{title}</h5>
+                            {isTasks && (
+                                <Input
+                                    type="date"
+                                    bsSize="sm"
+                                    value={selectedDate}
+                                    onChange={(e) => setSelectedDate(e.target.value)}
+                                    style={{ maxWidth: "130px" }}
+                                />
+                            )}
+                        </div>
+
+                        {isTasks && (
+                            <Button
+                                color="primary"
+                                size="sm"
+                                className="rounded-circle p-0"
+                                style={{ width: "22px", height: "22px" }}
+                                onClick={() => setIsTaskModalOpen(true)}
+                            >
+                                <i className="mdi mdi-plus"></i>
+                            </Button>
+                        )}
+                    </div>
                     <div style={{ height: "400px", overflowY: "auto" }} className="custom-scroll">
                         <ol className="activity-feed mb-0 ps-3">
-                            {sortedItems.map((item) => (
-                                <li key={item.id} className="feed-item" style={{
-                                    opacity: checkedItems[item.id] ? 0.5 : 1,
-                                    transition: 'all 0.3s'
-                                }}>
-                                    <div className="feed-item-list d-flex align-items-start gap-2">
-                                        <Input
-                                            type="checkbox"
-                                            checked={!!checkedItems[item.id]}
-                                            onChange={() => handleCheck(item.id)}
-                                            style={{ marginTop: "2px", cursor: "pointer" }}
-                                        />
-                                        <div className={checkedItems[item.id] ? "text-decoration-line-through" : ""}>
-                                            <span className="date mb-1">{item.date}</span>
-                                            <span className="activity-text fw-bold d-block">{item.title}</span>
-                                            <p className="text-muted small mb-0">{item.info}</p>
+                            {items.length === 0 ? (
+                                <li className="text-muted small mt-2">Nada para exibir.</li>
+                            ) : (
+                                items.map((item) => (
+                                    <li key={item.id} className="feed-item">
+                                        <div className="feed-item-list d-flex align-items-start gap-2">
+                                            {isTasks && (
+                                                <Input
+                                                    type="checkbox"
+                                                    checked={item.status === 'completed'}
+                                                    onChange={() => (item.status !== 'completed') ? handleTaskCheck(item.id) : null}
+                                                    style={{ marginTop: "2px", cursor: "pointer" }}
+                                                    disabled={item.status === 'completed'}
+                                                />
+                                            )}
+
+                                            <div style={{ opacity: item.status === 'completed' ? 0.6 : 1, width: '100%' }}>
+                                                <div className="d-flex justify-content-between">
+                                                    <span className="date mb-1">{item.dueDate || item.date}</span>
+                                                    {isBirthday && (
+                                                        <span>
+                                                            {item.messageSent === true && <i className="mdi mdi-check-circle text-success" title="Mensagem Enviada"></i>}
+                                                            {item.messageSent === false && <i className="mdi mdi-close-circle text-danger" title="Erro no Envio"></i>}
+                                                            {item.messageSent === undefined && <i className="mdi mdi-clock-outline text-muted" title="Aguardando"></i>}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className={`activity-text fw-bold d-block ${item.status === 'completed' ? 'text-decoration-line-through' : ''}`}>
+                                                    {item.description || item.title || item.name}
+                                                </span>
+                                                <p className="text-muted small mb-0">{item.info || item.role || ""}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                </li>
-                            ))}
+                                    </li>
+                                ))
+                            )}
                         </ol>
                     </div>
                 </div>
@@ -68,12 +101,18 @@ const OperationalAlerts = () => {
             <Card style={{ height: "500px" }} className="shadow-sm border-0">
                 <CardBody className="p-0">
                     <Row className="g-0">
-                        <Column title="Atividades" items={data.pendencias} />
+                        <Column title="Tarefas" items={filteredTasks} isTasks={true} />
                         <Column title="Avisos" items={data.avisos} />
-                        <Column title="Aniversários" items={data.aniversariantes} showDivider={false} />
+                        <Column title="Aniversários" items={birthdays} showDivider={false} isBirthday={true} />
                     </Row>
                 </CardBody>
             </Card>
+
+            <TaskModal
+                isOpen={isTaskModalOpen}
+                toggle={() => setIsTaskModalOpen(!isTaskModalOpen)}
+                onTaskCreated={refreshTasks}
+            />
 
             <style>{`
                 .activity-feed { list-style: none; }

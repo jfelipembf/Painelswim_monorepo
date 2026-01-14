@@ -4,9 +4,11 @@ import { Spinner } from "reactstrap";
 const Spinners = ({ setLoading }) => {
 
     useEffect(() => {
-        setTimeout(() => {
-            setLoading(false)
-        }, 1000)
+        if (typeof setLoading === 'function') {
+            setTimeout(() => {
+                setLoading(false)
+            }, 1000)
+        }
     }, [setLoading]);
     return (
         <React.Fragment>

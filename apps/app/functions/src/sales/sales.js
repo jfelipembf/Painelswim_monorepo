@@ -78,7 +78,9 @@ exports.saveSale = functions.https.onCall(async (data, context) => {
   const salePayload = {
     saleCode,
     idClient: data.idClient || null,
-    idEmployeeSale: data.idEmployeeSale || null,
+    idEmployeeSale: data.idEmployeeSale || data.idStaff || null,
+    idStaff: data.idStaff || null,
+    staffName: data.staffName || "",
     saleDate: data.saleDate || toISODate(new Date()),
     status: data.status || "open",
     requiresEnrollment: Boolean(data.requiresEnrollment),
