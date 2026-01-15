@@ -351,7 +351,7 @@ const SidebarContent = props => {
   }, [])
 
   useEffect(() => {
-    const mm = new MetisMenu("#side-menu")
+    new MetisMenu("#side-menu")
     return () => {
       // MetisMenu doesn't have a direct destroy but clearing classes helps
       const el = document.getElementById("side-menu")
@@ -411,7 +411,7 @@ const SidebarContent = props => {
         return null
       })
       .filter(Boolean)
-  }, [searchText, hasPermission, hasAnyPermission])
+  }, [searchText, hasPermission, hasAnyPermission, menuConfig])
 
   return (
     <React.Fragment>
@@ -457,26 +457,42 @@ const SidebarContent = props => {
           </div>
 
           <ul className="metismenu list-unstyled" id="side-menu" key={searchText}>
-            {filteredItems.map(item => (
-              <li key={item.id} className={item.forceOpen ? "mm-active" : ""}>
-                <Link to={item.subMenu ? "/#" : buildPath(item.link)} className={`${item.subMenu ? "has-arrow" : ""} waves-effect`}>
-                  <i className={item.icon}></i>
-                  <span>{item.label}</span>
-                </Link>
-                {item.subMenu && (
-                  <ul className={`sub-menu ${item.forceOpen ? "mm-show" : ""}`} aria-expanded={false}>
-                    {item.subMenu.map(sub => (
-                      <li key={sub.id}>
-                        <Link to={buildPath(sub.link)}>
-                          <i className={sub.icon}></i>
-                          <span>{sub.label}</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
+            {filteredItems.map((item, index) => {
+              // Check if this is the help item - add separator before it
+              const isHelpItem = item.id === 'help';
+              const showSeparator = isHelpItem && index > 0;
+
+              return (
+                <React.Fragment key={item.id}>
+                  {showSeparator && (
+                    <li className="menu-title mt-3 mb-2">
+                      <hr className="my-2" style={{ borderColor: 'rgba(255, 255, 255, 0.2)' }} />
+                      <span className="text-uppercase" style={{ fontSize: '11px', fontWeight: '600', color: 'rgba(255, 255, 255, 0.5)', letterSpacing: '0.5px' }}>
+                        Suporte
+                      </span>
+                    </li>
+                  )}
+                  <li className={item.forceOpen ? "mm-active" : ""}>
+                    <Link to={item.subMenu ? "/#" : buildPath(item.link)} className={`${item.subMenu ? "has-arrow" : ""} waves-effect`}>
+                      <i className={item.icon}></i>
+                      <span>{item.label}</span>
+                    </Link>
+                    {item.subMenu && (
+                      <ul className={`sub-menu ${item.forceOpen ? "mm-show" : ""}`} aria-expanded={false}>
+                        {item.subMenu.map(sub => (
+                          <li key={sub.id}>
+                            <Link to={buildPath(sub.link)}>
+                              <i className={sub.icon}></i>
+                              <span>{sub.label}</span>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                </React.Fragment>
+              );
+            })}
           </ul>
         </div>
       </SimpleBar>
