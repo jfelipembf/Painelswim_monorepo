@@ -10,10 +10,12 @@ const TrainingPlanning = (props) => {
 
     document.title = "Planejamento de Treinos | Swim Panel";
 
+    const { setBreadcrumbItems } = props;
+
     useEffect(() => {
         const breadcrumbItems = [{ title: "Gerencial", link: "#" }, { title: "Planejamento de Treinos", link: "#" }];
-        props.setBreadcrumbItems("Planejamento de Treinos", breadcrumbItems);
-    }, [props.setBreadcrumbItems]); // Only re-run if setBreadcrumbItems changes
+        setBreadcrumbItems("Planejamento de Treinos", breadcrumbItems);
+    }, [setBreadcrumbItems]); // Only re-run if setBreadcrumbItems changes
 
     return (
         <React.Fragment>

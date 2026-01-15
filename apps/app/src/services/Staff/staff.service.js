@@ -66,7 +66,7 @@ export const getStaff = async (id, { ctxOverride = null } = {}) => {
   const db = getDb()
   const ctx = getContext(ctxOverride)
   const docRef = staffDoc(db, ctx, id)
-  const snap = await getDocs(query(staffCol(db, ctx), where("id", "==", id))) // or getDoc(docRef) if ID is doc ID
+  await getDocs(query(staffCol(db, ctx), where("id", "==", id))) // or getDoc(docRef) if ID is doc ID
   // Trying direct doc get first if ID is known to be doc ID (which it is for Auth UIDs)
   // Actually, staffDoc uses ID.
   const d = await import("firebase/firestore").then(m => m.getDoc(docRef))

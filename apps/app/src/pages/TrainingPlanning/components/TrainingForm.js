@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, CardBody, CardTitle, Button, Row, Col, Badge } from "reactstrap";
+import { Card, CardBody, Button, Row, Col, Badge } from "reactstrap";
 import WorkoutItem from "./WorkoutItem";
 import { calculateTotalDistance } from "../utils/trainingUtils";
 

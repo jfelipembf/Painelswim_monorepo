@@ -14,7 +14,7 @@ import { TRIGGER_LABELS, TRIGGER_CONFIG } from "./constants/triggers"
 import { setBreadcrumbItems } from "../../../store/actions"
 
 const AutomationsPage = ({ setBreadcrumbItems }) => {
-    const { automations, loading, fetchAutomations, saveAutomation } = useAutomations()
+    const { automations, loading, saveAutomation } = useAutomations()
     const [selectedId, setSelectedId] = useState(null)
 
     // Select the first automation by default when loaded

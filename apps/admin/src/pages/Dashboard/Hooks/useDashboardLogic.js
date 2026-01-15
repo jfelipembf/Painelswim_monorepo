@@ -2,7 +2,7 @@ import { useState, useMemo } from "react"
 
 export const useDashboardLogic = () => {
     // 1. Loading State Management
-    const [loadingStates, setLoadingStates] = useState({
+    const [loadingStates] = useState({
         page: false,
         widgets: false,
         funnel: false,

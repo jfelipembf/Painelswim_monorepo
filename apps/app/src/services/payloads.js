@@ -5,7 +5,6 @@
  * nos nomes dos campos (ex: idClient vs id) e evitar conversões repetidas.
  */
 
-const asString = (val) => (val !== undefined && val !== null ? String(val) : null);
 
 // ============================================================================
 // CLIENT
@@ -31,8 +30,7 @@ export const buildClientPayload = (data) => {
         phone,
         birthDate,
         gender,
-        document, // CPF
-        address, // Address Object
+        document,
         status,
         funnel // Funnel state
     } = data

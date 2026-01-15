@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getFirestore, collection, onSnapshot, query, where } from "firebase/firestore";
+import { getFirestore, collection, onSnapshot, query } from "firebase/firestore";
 import { useToast } from "../../../components/Common/ToastProvider";
 
 const useBranchStaff = (tenantId, branchId) => {

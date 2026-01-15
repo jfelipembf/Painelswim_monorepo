@@ -198,7 +198,7 @@ export const listByStatus = async (db, ctx, status, start, end) => {
         // Add date info
         const dVal = primaryContract[dateField]
         if (dVal) {
-            const [y, m, d] = dVal.split("-")
+            const [, m, d] = dVal.split("-")
             label += ` (${d}/${m})`
         }
 
