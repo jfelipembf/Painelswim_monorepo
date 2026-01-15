@@ -57,7 +57,7 @@ const ConversionFunnel = ({ data, historicalData = [] }) => {
   // History Chart Processing
   const historyView = useMemo(() => {
     const categories = historicalData.map(item => {
-      const [y, m] = item.id.split("-").map(Number)
+      const [, m] = item.id.split("-").map(Number)
       return MONTHS_SHORT[(m || 1) - 1]
     })
     const seriesData = historicalData.map(item => {

@@ -87,7 +87,6 @@ const AcademyBilling = ({ academy }) => {
     }
 
     const status = tenant?.subscriptionStatus || 'unpaid';
-    const activeSubscriptionId = tenant?.stripeSubscriptionId;
 
     const statusMap = {
         'active': { color: 'success', text: 'Ativa' },

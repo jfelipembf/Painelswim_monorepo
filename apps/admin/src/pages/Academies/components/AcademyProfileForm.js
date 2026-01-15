@@ -1,7 +1,6 @@
 import React, { useState } from "react"
 import { Card, CardBody, CardHeader, Col, Form, FormGroup, Input, Label, Row, Button, Badge, InputGroup } from "reactstrap"
 import PropTypes from "prop-types"
-import { GENDER } from "../../../constants/gender"
 import { slugify } from "../../../helpers/url_sanitizer"
 
 const AcademyProfileForm = ({
