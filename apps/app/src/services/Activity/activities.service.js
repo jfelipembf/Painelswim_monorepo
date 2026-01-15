@@ -9,6 +9,7 @@ import {
   query,
   serverTimestamp,
   updateDoc,
+  writeBatch, // IMPORTED HERE
 } from "firebase/firestore"
 
 import { requireDb } from "../_core/db"
@@ -30,8 +31,17 @@ export const listActivities = async ({ ctxOverride = null } = {}) => {
   const ctx = requireBranchContext(ctxOverride)
 
   const col = activitiesCol(db, ctx)
-  const snap = await getDocs(query(col, orderBy("name", "asc")))
-  return snap.docs.map(mapDoc).filter(a => !a?.deleted)
+  // FIX: Remove orderBy("order") because it hides docs without this field
+  const snap = await getDocs(query(col))
+
+  const docs = snap.docs.map(mapDoc).filter(a => !a?.deleted)
+  // Sort in memory: items with 'order' first, then by name
+  return docs.sort((a, b) => {
+    const orderA = a.order ?? 9999
+    const orderB = b.order ?? 9999
+    if (orderA !== orderB) return orderA - orderB
+    return (a.name || "").localeCompare(b.name || "")
+  })
 }
 
 export const getActivity = async (idActivity, { ctxOverride = null } = {}) => {
@@ -57,7 +67,8 @@ export const listActivitiesWithObjectives = async ({ ctxOverride = null } = {}) 
   const ctx = requireBranchContext(ctxOverride)
 
   const col = activitiesCol(db, ctx)
-  const actsSnap = await getDocs(query(col, orderBy("name", "asc")))
+  // FIX: Remove orderBy("order") because it hides docs without this field
+  const actsSnap = await getDocs(query(col))
 
   const activities = await Promise.all(
     actsSnap.docs.map(async docAct => {
@@ -69,7 +80,15 @@ export const listActivitiesWithObjectives = async ({ ctxOverride = null } = {}) 
     })
   )
 
-  return activities.filter(Boolean)
+  const filtered = activities.filter(Boolean)
+
+  // Sort in memory
+  return filtered.sort((a, b) => {
+    const orderA = a.order ?? 9999
+    const orderB = b.order ?? 9999
+    if (orderA !== orderB) return orderA - orderB
+    return (a.name || "").localeCompare(b.name || "")
+  })
 }
 
 /** ===========================
@@ -136,4 +155,24 @@ export const deleteActivity = async (idActivity, { ctxOverride = null, hard = fa
 
   await updateDoc(ref, { deleted: true, updatedAt: serverTimestamp() })
   return true
+}
+/**
+ * Reordena atividades em lote usando Batch Write.
+ * Recebe array de IDs na ordem desejada.
+ */
+export const reorderActivities = async (orderedIds, { ctxOverride = null } = {}) => {
+  if (!orderedIds?.length) return
+
+  const db = requireDb()
+  const ctx = requireBranchContext(ctxOverride)
+
+  const batch = writeBatch(db)
+
+  orderedIds.forEach((id, index) => {
+    const ref = activityDoc(db, ctx, id)
+    // Update order field (index + 1 so it starts at 1)
+    batch.update(ref, { order: index + 1, updatedAt: serverTimestamp() })
+  })
+
+  await batch.commit()
 }

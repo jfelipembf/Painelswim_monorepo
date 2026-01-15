@@ -23,6 +23,7 @@ const SideMenu = ({
   onDragStart,
   onDragOver,
   onDragEnd,
+  hideArrow, // NEW
 }) => {
   const renderItemActions = item => {
     if (!onEdit && !onDelete) return null
@@ -90,9 +91,8 @@ const SideMenu = ({
                   key={item.id}
                   action
                   onClick={() => onSelect?.(item.id)}
-                  className={`border-0 px-2 py-3 side-menu__item ${
-                    isActive ? "side-menu__item--active" : ""
-                  }`}
+                  className={`border-0 px-2 py-3 side-menu__item ${isActive ? "side-menu__item--active" : ""
+                    }`}
                   draggable={item.draggable}
                   onDragStart={() => onDragStart?.(item.id)}
                   onDragOver={e => {
@@ -104,6 +104,9 @@ const SideMenu = ({
                   onDragEnd={onDragEnd}
                 >
                   <div className="d-flex align-items-center gap-2 w-100">
+                    {item.draggable && (
+                      <i className="mdi mdi-drag text-muted fs-4 cursor-grab" style={{ cursor: "grab" }} />
+                    )}
                     <span className="side-menu__index fw-semibold text-muted small">
                       {String(index + 1).padStart(2, "0")}
                     </span>
@@ -119,7 +122,7 @@ const SideMenu = ({
                           {item.meta && (
                             <span className="badge bg-light text-dark">{item.meta}</span>
                           )}
-                          <i className="mdi mdi-chevron-right text-muted" />
+                          {!hideArrow && <i className="mdi mdi-chevron-right text-muted" />}
                           {renderItemActions(item)}
                         </div>
                       </div>
@@ -166,6 +169,7 @@ SideMenu.propTypes = {
   onDragStart: PropTypes.func,
   onDragOver: PropTypes.func,
   onDragEnd: PropTypes.func,
+  hideArrow: PropTypes.bool,
 }
 
 export default SideMenu

@@ -21,6 +21,7 @@ const Kiosk = () => {
         selectedClient,
         evaluations, // Real evaluations from hook
         loadingEvaluations,
+        activityName,
         levelsConfig, // Get config
         handleSelectClient,
         handleClearSelection
@@ -240,7 +241,7 @@ const Kiosk = () => {
                                                 </div>
                                                 <div className="text-start">
                                                     <h5 className="mb-1 fw-bold">{selectedClient.firstName} {selectedClient.lastName}</h5>
-                                                    <span className="text-muted">Estágio 1</span>
+                                                    <span className="text-muted">{activityName}</span>
                                                 </div>
                                             </div>
 

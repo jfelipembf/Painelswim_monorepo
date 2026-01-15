@@ -10,7 +10,9 @@ import OverlayLoader from "components/Common/OverlayLoader"
 
 import { setBreadcrumbItems } from "../../../store/actions"
 import { useActivitiesPage } from "./Hooks"
-import { mapStatusColor } from "./Utils"
+
+
+import ConfirmDialog from "components/Common/ConfirmDialog" // NEW
 
 const ActivitiesPage = ({ setBreadcrumbItems }) => {
   const {
@@ -27,10 +29,19 @@ const ActivitiesPage = ({ setBreadcrumbItems }) => {
     uploadingPhoto,
     handleSave,
     sideItems,
-    activities
+    // DND & Actions
+    handleDragStart,
+    handleDragOver,
+    handleDragEnd,
+    handleEdit,
+    handleDeleteRequest,
+    // Delete
+    showDeleteConfirm,
+    setShowDeleteConfirm,
+    handleConfirmDelete
   } = useActivitiesPage({ setBreadcrumbItems })
 
-  if (isLoading('page') && !activities.length) {
+  if (isLoading('page') && !sideItems.length) { // Use sideItems to check if loaded (activities)
     return <PageLoader />
   }
 
@@ -40,10 +51,17 @@ const ActivitiesPage = ({ setBreadcrumbItems }) => {
         <Col lg="4">
           <SideMenu
             title="Atividades"
-            description="Selecione para editar."
+            description="Arraste para ordenar ou edite."
             items={sideItems}
             selectedId={selectedId}
             onSelect={handleSelect}
+            onEdit={handleEdit} // NEW
+            onDelete={handleDeleteRequest} // NEW
+            hideArrow={true} // NEW
+            // DND Handlers
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
             emptyLabel="Nenhuma atividade cadastrada."
             headerActions={
               <Button
@@ -138,6 +156,16 @@ const ActivitiesPage = ({ setBreadcrumbItems }) => {
           )}
         </Col>
       </Row>
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onCancel={() => setShowDeleteConfirm(false)}
+        onConfirm={handleConfirmDelete}
+        title="Excluir Atividade"
+        message="Tem certeza que deseja excluir esta atividade? Essa ação não pode ser desfeita."
+        confirmColor="danger"
+        confirmText="Sim, excluir"
+      />
     </Container>
   )
 }

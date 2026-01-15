@@ -86,6 +86,12 @@ export const useKiosk = () => {
     }, [clients, searchTerm])
 
     // Effect to fetch evaluations when client is selected
+    // Derived Activity Name
+    const activityName = selectedClient?.activity || selectedClient?.activityName || "Sem matrícula ativa"
+    // Fallback: If user hasn't migrated data yet, we could keep the old fetch, but user requested direct link.
+    // We will trust the user has/will populate this field.
+
+    // Effect to fetch evaluations when client is selected
     useEffect(() => {
         const fetchEvaluations = async () => {
             if (!selectedClient?.id) {
@@ -96,10 +102,11 @@ export const useKiosk = () => {
             setLoadingEvaluations(true)
             try {
                 const { getClientEvaluations } = require("../../../services/ClientsEvaluation/clientsEvaluation.service")
-                const evals = await getClientEvaluations({ idClient: selectedClient.id })
+                const evals = await getClientEvaluations({
+                    idClient: selectedClient.id,
+                    ctxOverride: { idTenant: ids.idTenant, idBranch: ids.idBranch } // FIX: Pass manual context
+                })
 
-                // Sort by logical date (startAt or createdAt) descending
-                // Handle Firestore Timestamp or String
                 const getDate = (e) => {
                     if (e.startAt) return new Date(e.startAt).getTime()
                     if (e.createdAt?.seconds) return e.createdAt.seconds * 1000
@@ -107,8 +114,8 @@ export const useKiosk = () => {
                 }
 
                 const sortedEvals = (evals || []).sort((a, b) => getDate(b) - getDate(a))
-
                 setEvaluations(sortedEvals)
+
             } catch (error) {
                 console.error("Erro ao buscar avaliações no Kiosk:", error)
             } finally {
@@ -123,11 +130,16 @@ export const useKiosk = () => {
     const [levelsConfig, setLevelsConfig] = useState([])
 
     // Fetch Levels Config
+    // Fetch Levels Config
     useEffect(() => {
         const fetchLevels = async () => {
+            if (!ids.idTenant || !ids.idBranch) return // Wait for context
+
             try {
                 const { listEvaluationLevels } = require("../../../services/EvaluationLevels")
-                const levels = await listEvaluationLevels()
+                const levels = await listEvaluationLevels({
+                    ctxOverride: { idTenant: ids.idTenant, idBranch: ids.idBranch } // FIX: Pass manual context
+                })
                 if (Array.isArray(levels)) {
                     // Sort by value just in case
                     setLevelsConfig(levels.sort((a, b) => a.value - b.value))
@@ -137,7 +149,7 @@ export const useKiosk = () => {
             }
         }
         fetchLevels()
-    }, [])
+    }, [ids]) // Depend on ids
 
     const handleSelectClient = (client) => {
         setSelectedClient(client)
@@ -159,6 +171,7 @@ export const useKiosk = () => {
         filteredClients,
         selectedClient,
         evaluations,
+        activityName,
         loadingEvaluations,
         levelsConfig, // Expose config
         handleSelectClient,

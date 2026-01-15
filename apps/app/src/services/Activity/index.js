@@ -3,10 +3,16 @@
 export * from "./activities.constants"
 export * from "./activities.repository"
 
-export * from "./activities.service"
-export * from "./activities.objectives.service"
-export * from "./activities.import.service"
-
-export { createActivity as createActivityWithSchedule } from "./activities.service"
+export {
+    listActivities,
+    getActivity,
+    listActivitiesWithObjectives,
+    createActivity,
+    updateActivity,
+    deleteActivity,
+    reorderActivities,
+    // Alias
+    createActivity as createActivityWithSchedule,
+} from "./activities.service"
 
 export { useActivityPhotoUpload } from "./activities.photo"
