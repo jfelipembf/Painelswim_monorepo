@@ -39,6 +39,7 @@ import Login1 from "../pages/AuthenticationInner/Login"
 import Register1 from "../pages/AuthenticationInner/Register"
 import Recoverpw from "../pages/AuthenticationInner/Recoverpw"
 import LockScreen from "../pages/AuthenticationInner/auth-lock-screen"
+import StaffSelfRegister from "../pages/Authentication/StaffSelfRegister"
 
 // Dashboard
 import Dashboard from "../pages/Dashboard/index"
@@ -108,6 +109,9 @@ const authRoutes = [
   { path: "/pages-register", component: <Register1 /> },
   { path: "/page-recoverpw", component: <Recoverpw /> },
   { path: "/auth-lock-screen", component: <LockScreen /> },
+
+  // Public Staff Registration
+  { path: "/simple-register/:tenantId/:branchId", component: <StaffSelfRegister /> },
 ]
 
 export { userRoutes, authRoutes }
