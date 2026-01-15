@@ -27,7 +27,7 @@ export const useSystemSettings = () => {
     return () => {
       mounted = false
     }
-  }, []) // Carrega apenas uma vez ao montar
+  }, [withLoading]) // Carrega apenas uma vez ao montar
 
   return { settings }
 }

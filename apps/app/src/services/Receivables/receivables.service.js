@@ -1,4 +1,4 @@
-import { collection, getDocs, query, where } from "firebase/firestore"
+import { getDocs, query, where } from "firebase/firestore"
 import { httpsCallable } from "firebase/functions"
 import { requireFunctions } from "../_core/functions"
 import { receivablesCol, getContext, getDb } from "./receivables.repository"

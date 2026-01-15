@@ -1,6 +1,5 @@
 import React, { useState } from "react"
-import { Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, Button, Alert } from "reactstrap"
-import { getFirebaseBackend } from "../../helpers/firebase_helper"
+import { Modal, ModalHeader, ModalBody, Form, FormGroup, Label, Input, Button, Alert } from "reactstrap"
 import { getAuth, updatePassword } from "firebase/auth"
 import { doc, updateDoc, getFirestore } from "firebase/firestore"
 

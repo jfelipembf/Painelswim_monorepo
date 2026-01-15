@@ -45,7 +45,6 @@ const ClientProfile = ({ setBreadcrumbItems }) => {
     branch,
     formData,
     setFormData,
-    avatarPreview,
     setAvatarPreview,
     activeTab,
     setActiveTab,

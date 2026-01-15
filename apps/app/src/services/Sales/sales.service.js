@@ -2,13 +2,10 @@
 // @ts-check
 
 import {
-  addDoc,
   doc,
   getDoc,
   getDocs,
   query,
-  serverTimestamp,
-  updateDoc,
   where,
 } from "firebase/firestore"
 import { httpsCallable } from "firebase/functions"

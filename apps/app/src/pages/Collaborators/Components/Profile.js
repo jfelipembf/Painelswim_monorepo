@@ -82,7 +82,7 @@ const CollaboratorProfile = ({ setBreadcrumbItems }) => {
       }
     }
     loadStaff()
-  }, [staffId, toast])
+  }, [staffId, toast, withLoading])
 
   const updateField = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))

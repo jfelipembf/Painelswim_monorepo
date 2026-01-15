@@ -3,7 +3,7 @@ import { Row, Col, Card, CardBody, CardHeader, Alert, Input, Label } from "react
 import { useSelector } from "react-redux"
 import { httpsCallable } from "firebase/functions"
 import { getFirebaseFunctions, getFirebaseDb } from "../../../../helpers/firebase_helper"
-import { collection, query, where, getDocs, limit, orderBy } from "firebase/firestore"
+import { collection, query, where, getDocs, limit } from "firebase/firestore"
 import AsyncSelect from "react-select/async"
 
 import ButtonLoader from "../../../../components/Common/ButtonLoader"

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react"
-import { Button, Col, Row, FormGroup, Label, Input } from "reactstrap"
+import { Button, Col, Row } from "reactstrap"
 import { connect } from "react-redux"
 
 import BasicTable from "../../../components/Common/BasicTable"
@@ -103,7 +103,7 @@ const CollaboratorsList = ({ setBreadcrumbItems }) => {
         ),
       },
     ],
-    [navigate, profilePath, placeholderAvatar]
+    [navigate, profilePath]
   )
 
   useEffect(() => {
@@ -127,7 +127,7 @@ const CollaboratorsList = ({ setBreadcrumbItems }) => {
       }
     }
     load()
-  }, [toast])
+  }, [toast, withLoading])
 
   useEffect(() => {
     const loadRoles = async () => {
@@ -142,7 +142,7 @@ const CollaboratorsList = ({ setBreadcrumbItems }) => {
       }
     }
     loadRoles()
-  }, [toast])
+  }, [toast, withLoading])
 
   const handleModalSubmit = async data => {
     try {

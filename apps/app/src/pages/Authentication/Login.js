@@ -5,7 +5,6 @@ import logoSwim from "../../assets/images/logoSwim.png";
 import poolImg from "../../assets/images/pool.jpg";
 import { useSelector, useDispatch } from "react-redux";
 import { createSelector } from "reselect";
-import PropTypes from "prop-types";
 
 // Formik validation
 import * as Yup from "yup";
@@ -181,7 +180,3 @@ const Login = props => {
 }
 
 export default withRouter(Login);
-
-Login.propTypes = {
-  history: PropTypes.object,
-};

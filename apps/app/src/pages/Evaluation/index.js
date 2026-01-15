@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useRef } from "react"
+import React, { useMemo, useState, useEffect } from "react"
 import { Col, Container, Row, Nav, NavItem, NavLink } from "reactstrap"
 import classnames from "classnames"
 
@@ -11,24 +11,23 @@ import { mapSessionsToEvaluationSchedules } from "./Utils/mappers"
 import { formatISODate } from "../Grade/Utils/dateUtils"
 import { isWithinTurn, occursOnDate } from "../Grade/Utils/gridUtils"
 import PageLoader from "../../components/Common/PageLoader"
-import { useLoading } from "../../hooks/useLoading"
 
 import { getActiveTestEvent } from "../../services/Events/events.service"
 
 import { connect } from "react-redux"
 import { setBreadcrumbItems } from "../../store/actions"
 
-const Evaluation = (props) => {
+const Evaluation = ({ setBreadcrumbItems }) => {
   const [currentDate, setCurrentDate] = useState(() => new Date())
   const [selectedSchedule, setSelectedSchedule] = useState(null)
   const [activeTab, setActiveTab] = useState("avaliacao")
   const [activeTestEvent, setActiveTestEvent] = useState(null) // Renamed from selectedTestEvent to be clear it's global/active
-  const { sessions, activities, areas, staff, classes, isLoading } = useEvaluationData()
+  const { sessions, activities, areas, staff, isLoading } = useEvaluationData()
 
   useEffect(() => {
     const breadcrumbItems = [{ title: "Avaliação", link: "/evaluation" }]
-    props.setBreadcrumbItems("Avaliação", breadcrumbItems)
-  }, [props.setBreadcrumbItems])
+    setBreadcrumbItems("Avaliação", breadcrumbItems)
+  }, [setBreadcrumbItems])
 
   useEffect(() => {
     const loadTestEvent = async () => {

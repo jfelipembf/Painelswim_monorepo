@@ -1,18 +1,9 @@
 // src/services/classes/classes.sessions.service.js
 
 import { requireFunctions } from "../_core/functions"
-import { formatDateString, parseDate } from "../../helpers/date"
 import { requireBranchContext } from "../_core/context"
 import { httpsCallable } from "firebase/functions"
 
-/**
- * Helpers de data
- */
-const addDays = (date, days) => {
-  const d = new Date(date)
-  d.setDate(d.getDate() + days)
-  return d
-}
 
 /**
  * IMPORTANTE:

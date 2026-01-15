@@ -5,7 +5,6 @@ import { clientContractsCollection } from "../ClientContracts/clientContracts.re
 import { createContract as createContractService, updateContract as updateContractService } from "./contract.service"
 
 import {
-  contractsCol,
   contractDoc,
   getContext,
   getDb,

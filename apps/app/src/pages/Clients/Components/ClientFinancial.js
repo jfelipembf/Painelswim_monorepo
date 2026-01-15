@@ -49,28 +49,16 @@ const ClientFinancial = ({ financial = [], idClient, clientName, onRefresh }) =>
     return BRAND_OPTIONS.filter(brand => selectedAcquirer.brands.includes(brand.id))
   }, [paymentForm.acquirer, acquirers])
 
-  useEffect(() => {
-    loadAcquirers()
-  }, [])
-
-  useEffect(() => {
-    if (paymentModal && idClient) {
-      loadReceivables()
-      // Inicializar valor com o total pendente para habilitar o botão
-      setPaymentForm(prev => ({ ...prev, amount: totalPending }))
-    }
-  }, [paymentModal, idClient, totalPending])
-
-  const loadAcquirers = async () => {
+  const loadAcquirers = React.useCallback(async () => {
     try {
       const data = await listAcquirers()
       setAcquirers(data.filter(acq => !acq.inactive))
     } catch (error) {
       console.error("Erro ao carregar adquirentes:", error)
     }
-  }
+  }, [])
 
-  const loadReceivables = async () => {
+  const loadReceivables = React.useCallback(async () => {
     try {
       const data = await listReceivablesByClient(idClient, { status: 'open' })
       setReceivables(data)
@@ -78,7 +66,19 @@ const ClientFinancial = ({ financial = [], idClient, clientName, onRefresh }) =>
       console.error("Erro ao carregar receivables:", error)
       toast.show({ title: "Erro ao carregar débitos", color: "danger" })
     }
-  }
+  }, [idClient, toast])
+
+  useEffect(() => {
+    loadAcquirers()
+  }, [loadAcquirers])
+
+  useEffect(() => {
+    if (paymentModal && idClient) {
+      loadReceivables()
+      // Inicializar valor com o total pendente para habilitar o botão
+      setPaymentForm(prev => ({ ...prev, amount: totalPending }))
+    }
+  }, [paymentModal, idClient, totalPending, loadReceivables])
 
   const handlePayment = async () => {
     if (!idClient) return

@@ -5,10 +5,8 @@ import {
     Col,
     Label,
     Input,
-    FormFeedback,
     Card,
     CardBody,
-    Button,
 } from "reactstrap"
 import ButtonLoader from "./ButtonLoader"
 import { GENDER } from "../../constants/gender"

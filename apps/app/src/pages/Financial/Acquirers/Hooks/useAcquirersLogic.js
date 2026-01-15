@@ -32,7 +32,7 @@ export const useAcquirersLogic = () => {
             })
         }
         init()
-    }, [withLoading])
+    }, [withLoading, toast])
 
     const selectedAcquirer = useMemo(
         () => acquirers.find(item => item.id === selectedId),

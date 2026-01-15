@@ -13,7 +13,6 @@ registerLocale("pt-BR", ptBR)
 
 const ClientPresence = ({ presences = [] }) => {
   const {
-    range,
     setRange,
     startDate,
     endDate,

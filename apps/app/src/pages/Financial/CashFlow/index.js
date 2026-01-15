@@ -25,7 +25,6 @@ import { useCashFlowLogic } from "./Hooks/useCashFlowLogic"
 const CashFlowPage = ({ setBreadcrumbItems }) => {
   const {
     isLoading,
-    dateRange,
     setDateRange,
     startDate,
     endDate,

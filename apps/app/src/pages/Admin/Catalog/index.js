@@ -44,7 +44,7 @@ const CatalogPage = ({ setBreadcrumbItems }) => {
     return () => {
       mounted = false
     }
-  }, [catalog.load, selection.ensureSelection])
+  }, [catalog, selection])
 
   const isProductsTab = selection.isProductsTab
   const dataset = isProductsTab ? catalog.products : catalog.services

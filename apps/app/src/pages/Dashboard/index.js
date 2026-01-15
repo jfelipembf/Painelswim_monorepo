@@ -11,7 +11,7 @@ import { setBreadcrumbItems } from "../../store/actions"
 import PageLoader from "../../components/Common/PageLoader"
 import { useDashboardLogic } from "./Hooks/useDashboardLogic"
 
-const Dashboard = (props) => {
+const Dashboard = ({ setBreadcrumbItems }) => {
   document.title = "Dashboard | Painel Swim"
 
   const breadcrumbItems = [
@@ -19,8 +19,8 @@ const Dashboard = (props) => {
   ]
 
   useEffect(() => {
-    props.setBreadcrumbItems('Dashboard', breadcrumbItems)
-  }, [props])
+    setBreadcrumbItems('Dashboard', breadcrumbItems)
+  }, [setBreadcrumbItems, breadcrumbItems])
 
   const {
     isLoading,

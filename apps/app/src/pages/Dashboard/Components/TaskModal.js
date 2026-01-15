@@ -39,9 +39,9 @@ const TaskModal = ({ isOpen, toggle, onTaskCreated }) => {
         if (isOpen) {
             loadStaff()
         }
-    }, [isOpen])
+    }, [isOpen, loadStaff])
 
-    const loadStaff = async () => {
+    const loadStaff = React.useCallback(async () => {
         try {
             const staffs = await listStaff()
             const options = staffs.map(s => ({
@@ -62,7 +62,7 @@ const TaskModal = ({ isOpen, toggle, onTaskCreated }) => {
         } catch (error) {
             console.error("Erro ao carregar staffs", error)
         }
-    }
+    }, [selectedStaffs.length])
 
     // Custom renderer for Select options
     const formatStaffOption = ({ label, photo }) => (

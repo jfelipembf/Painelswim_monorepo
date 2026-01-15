@@ -3,7 +3,7 @@ import { Card, CardBody } from "reactstrap"
 
 import GradeGrid from "../../../Grade/Components/GradeGrid"
 import GradeHeader from "../../../Grade/Components/GradeHeader"
-import { getWeekDays, getStartOfWeekSunday } from "../../../Grade/Utils/dateUtils"
+import { getStartOfWeekSunday } from "../../../Grade/Utils/dateUtils"
 
 export default function ClassesGradeCard({
   turn,

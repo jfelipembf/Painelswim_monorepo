@@ -1,15 +1,11 @@
 import React from "react"
 import { Row, Col } from "reactstrap"
 import { connect } from 'react-redux';
-import {Link} from "react-router-dom"
-import {
-  Sparklines,
-  SparklinesBars,
-} from "react-sparklines"
+import { Link } from "react-router-dom"
 
 const Breadcrumb = props => {
 
-const itemLength = (props.breadcrumbItems || []).length || 1;
+  const itemLength = (props.breadcrumbItems || []).length || 1;
 
   return (
     <Row>

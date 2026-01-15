@@ -1,5 +1,4 @@
 import { useMemo } from "react"
-import { MONTHS_SHORT } from "../../../constants/months"
 import { calculateClientPresenceCardStats } from "../../../helpers/presence"
 import { isPresent } from "../Utils/presenceUtils"
 

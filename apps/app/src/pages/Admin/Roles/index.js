@@ -53,7 +53,7 @@ const RolesPage = ({ setBreadcrumbItems }) => {
       }
     }
     load()
-  }, [toast])
+  }, [toast, withLoading])
 
   const toggleEditMode = () => {
     setEditMode(prev => !prev)

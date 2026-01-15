@@ -119,7 +119,7 @@ const ConversionFunnel = ({ data, historicalData = [] }) => {
 
     if (validHistory.length > 0) {
       categories = validHistory.map(item => {
-        const [y, m] = item.id.split("-").map(Number)
+        const [, m] = item.id.split("-").map(Number)
         return MONTHS_SHORT[(m || 1) - 1]
       })
       seriesData = validHistory.map(item => {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useCallback } from "react"
 import { useLoading } from "../../../../hooks/useLoading"
 import { getAuthBranchContext } from "../../../../services/Summary/index"
 import { listFinancialTransactions } from "../../../../services/Financial/index"

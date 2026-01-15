@@ -38,8 +38,6 @@ const ClientTests = ({ tests = [] }) => {
                         dateStr = new Date(test.updatedAt.seconds * 1000).toLocaleDateString('pt-BR')
                       }
 
-                      const isTimeFixed = test.testType !== 'tempo' // 'tempo' uses distance input (fixed time?) - Logic check
-                      // Logic reminder from TestCard: 
                       // isDistanceFixed (Measure Time) = testType === 'tempo'
                       // So 'tempo' means "Fixed Distance, Measure Time"
 

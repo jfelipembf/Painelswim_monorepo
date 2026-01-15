@@ -10,7 +10,6 @@ export const useCashierLogic = () => {
     // Status Logic
     const {
         cashierStatus,
-        setCashierStatus,
         loadStatus,
         isOpen,
         session
@@ -19,7 +18,6 @@ export const useCashierLogic = () => {
     // Transactions Logic
     const {
         transactions,
-        dateRange,
         setDateRange,
         startDate,
         endDate,

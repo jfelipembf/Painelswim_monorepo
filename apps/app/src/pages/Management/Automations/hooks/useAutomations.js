@@ -4,6 +4,8 @@ import { httpsCallable } from "firebase/functions"
 import { useToast } from "../../../../components/Common/ToastProvider"
 import { useSelector } from "react-redux"
 
+const { TRIGGER_LABELS } = require("../constants/triggers")
+
 export const useAutomations = () => {
     const { tenant } = useSelector(state => state.Tenant)
     const { idBranch } = useSelector(state => state.Branch)
@@ -13,8 +15,6 @@ export const useAutomations = () => {
     const [loading, setLoading] = useState(false)
     const toast = useToast()
 
-    // We need the constant to merge
-    const { TRIGGER_LABELS } = require("../constants/triggers")
 
     const fetchAutomations = useCallback(async () => {
         if (!idTenant || !idBranch) return

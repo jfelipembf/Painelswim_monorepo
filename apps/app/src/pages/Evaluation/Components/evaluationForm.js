@@ -1,6 +1,6 @@
 import React from "react"
 import PropTypes from "prop-types"
-import { Badge, Button, Input, Col, Row, Alert } from "reactstrap"
+import { Button, Input, Col, Row, Alert } from "reactstrap"
 
 import { useActivityObjectivesTopics } from "../../../hooks/evaluation/useActivityObjectivesTopics"
 import { useEvaluationDraft } from "../../../hooks/evaluation/useEvaluationDraft"

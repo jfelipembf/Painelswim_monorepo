@@ -1,11 +1,10 @@
 import PropTypes from "prop-types"
-import React, { useCallback, useEffect, useRef } from "react"
+import React, { useRef } from "react"
 
 // //Import Scrollbar
 import SimpleBar from "simplebar-react"
 
 // MetisMenu
-import MetisMenu from "metismenujs"
 import withRouter from "components/Common/withRouter"
 import { Link } from "react-router-dom"
 import usePermissions from "../../hooks/usePermissions"
@@ -29,355 +28,228 @@ const SidebarContent = props => {
     return `${basePath}${path}`
   }
 
-  // --- Menu Data Structure ---
-  const menuConfig = [
-    {
-      id: "dashboard",
-      label: "Dashboard",
-      icon: "mdi mdi-view-dashboard-outline",
-      link: "/#",
-      subMenu: [
-        {
-          id: "dashboard_op",
-          label: "Operacional",
-          icon: "mdi mdi-view-dashboard-outline",
-          link: "/dashboard/operational",
-        },
-        {
-          id: "dashboard_ger",
-          label: "Gerencial",
-          icon: "mdi mdi-chart-areaspline",
-          link: "/dashboard",
-          permission: "dashboards_management_view",
-        },
-      ],
-    },
-    {
-      id: "grade",
-      label: "Grade",
-      icon: "mdi mdi-table-large",
-      link: "/grade",
-      permission: "grade_manage",
-    },
-    {
-      id: "clients",
-      label: "Clientes",
-      icon: "mdi mdi-account-multiple-outline",
-      link: "/clients/list",
-      permission: "members_manage",
-    },
-    {
-      id: "training_planning",
-      label: "Treinos",
-      icon: "mdi mdi-swim",
-      link: "/training-planning",
-      permission: "members_manage",
-    },
-    {
-      id: "admin",
-      label: "Administrativos",
-      icon: "mdi mdi-office-building-outline",
-      link: "/#",
-      anyPermission: [
-        "collaborators_manage",
-        "admin_activities",
-        "admin_contracts",
-        "admin_areas",
-        "admin_roles",
-        "admin_catalog",
-        "admin_classes",
-        "admin_settings",
-      ],
-      subMenu: [
-        {
-          id: "staff",
-          label: "Colaboradores",
-          icon: "mdi mdi-account-multiple-check",
-          link: "/collaborators/list",
-          permission: "collaborators_manage",
-        },
-        {
-          id: "activities",
-          label: "Atividades",
-          icon: "mdi mdi-clipboard-text-outline",
-          link: "/admin/activity",
-          permission: "admin_activities",
-        },
-        {
-          id: "contracts",
-          label: "Contratos",
-          icon: "mdi mdi-file-document-outline",
-          link: "/admin/contracts",
-          permission: "admin_contracts",
-        },
-        {
-          id: "classes",
-          label: "Turmas",
-          icon: "mdi mdi-account-clock-outline",
-          link: "/admin/classes",
-          permission: "admin_classes",
-        },
-        {
-          id: "areas",
-          label: "Áreas",
-          icon: "mdi mdi-map-marker-radius-outline",
-          link: "/admin/areas",
-          permission: "admin_areas",
-        },
-        {
-          id: "roles",
-          label: "Cargos e Permissões",
-          icon: "mdi mdi-shield-account-outline",
-          link: "/admin/roles",
-          permission: "admin_roles",
-        },
-        {
-          id: "catalog",
-          label: "Produtos e Serviços",
-          icon: "mdi mdi-tag-text-outline",
-          link: "/admin/catalog",
-          permission: "admin_catalog",
-        },
-      ],
-    },
-    {
-      id: "financial",
-      label: "Financeiro",
-      icon: "mdi mdi-cash-multiple",
-      link: "/#",
-      anyPermission: ["financial_cashier", "financial_cashflow", "financial_acquirers"],
-      subMenu: [
-        {
-          id: "cashier",
-          label: "Caixa",
-          icon: "mdi mdi-cash-register",
-          link: "/financial/cashier",
-          permission: "financial_cashier",
-        },
-        {
-          id: "cashflow",
-          label: "Fluxo de Caixa",
-          icon: "mdi mdi-chart-line",
-          link: "/financial/cashflow",
-          permission: "financial_cashflow",
-        },
-        {
-          id: "acquirers",
-          label: "Adquirentes",
-          icon: "mdi mdi-credit-card-multiple-outline",
-          link: "/financial/acquirers",
-          permission: "financial_acquirers",
-        },
-      ],
-    },
-    {
-      id: "crm",
-      label: "CRM",
-      icon: "mdi mdi-headset",
-      link: "/crm",
-      permission: "crm_view",
-    },
-    {
-      id: "management",
-      label: "Gerencial",
-      icon: "mdi mdi-chart-bar",
-      link: "/#",
-      anyPermission: [
-        "management_event_plan",
-        "management_evaluation_levels",
-        "management_integrations",
-        "management_automations",
-      ],
-      subMenu: [
-        {
-          id: "events",
-          label: "Planejamento de Eventos",
-          icon: "mdi mdi-calendar-star",
-          link: "/events/planning",
-          permission: "management_event_plan",
-        },
-        {
-          id: "eval_levels",
-          label: "Níveis de Avaliação",
-          icon: "mdi mdi-chart-timeline-variant",
-          link: "/management/evaluation-levels",
-          permission: "management_evaluation_levels",
-        },
-        {
-          id: "integrations",
-          label: "Integrações",
-          icon: "mdi mdi-api",
-          link: "/management/integrations",
-          permission: "management_integrations",
-        },
-        {
-          id: "automations",
-          label: "Automações",
-          icon: "mdi mdi-robot-excited-outline",
-          link: "/management/automations",
-          permission: "management_automations",
-        },
-        {
-          id: "audit",
-          label: "Logs de Auditoria",
-          icon: "mdi mdi-clipboard-list-outline",
-          link: "/management/audit-log",
-          permission: "management_audit_log",
-        },
-      ],
-    },
-    {
-      id: "settings",
-      label: "Configurações",
-      icon: "mdi mdi-cog-outline",
-      link: "/admin/settings",
-      permission: "admin_settings",
-    },
-    {
-      id: "evaluation",
-      label: "Avaliação",
-      icon: "mdi mdi-gesture-tap",
-      link: "/evaluation",
-      permission: "management_evaluation_run",
-    },
-    {
-      id: "help",
-      label: "Central de Ajuda",
-      icon: "mdi mdi-help-circle-outline",
-      link: "/help",
-    },
-  ]
-
-  const activateParentDropdown = useCallback(item => {
-    item.classList.add("active")
-    const parent = item.parentElement
-    const parent2El = parent.childNodes[1]
-
-    if (parent2El && parent2El.id !== "side-menu") {
-      parent2El.classList.add("mm-show")
-    }
-
-    if (parent) {
-      parent.classList.add("mm-active")
-      const parent2 = parent.parentElement
-
-      if (parent2) {
-        parent2.classList.add("mm-show") // ul tag
-
-        const parent3 = parent2.parentElement // li tag
-
-        if (parent3) {
-          parent3.classList.add("mm-active") // li
-          parent3.childNodes[0].classList.add("mm-active") //a
-          const parent4 = parent3.parentElement // ul
-          if (parent4) {
-            parent4.classList.add("mm-show") // ul
-            const parent5 = parent4.parentElement
-            if (parent5) {
-              parent5.classList.add("mm-show") // li
-              parent5.childNodes[0].classList.add("mm-active") // a tag
-            }
-          }
-        }
-      }
-      scrollElement(item)
-      return false
-    }
-    scrollElement(item)
-    return false
-  }, [])
-
-  const removeActivation = items => {
-    for (var i = 0; i < items.length; ++i) {
-      var item = items[i]
-      const parent = items[i].parentElement
-
-      if (item && item.classList.contains("active")) {
-        item.classList.remove("active")
-      }
-      if (parent) {
-        const parent2El = parent.childNodes && parent.childNodes.lenght && parent.childNodes[1] ? parent.childNodes[1] : null
-        if (parent2El && parent2El.id !== "side-menu") {
-          parent2El.classList.remove("mm-show")
-        }
-
-        parent.classList.remove("mm-active")
-        const parent2 = parent.parentElement
-
-        if (parent2) {
-          parent2.classList.remove("mm-show")
-
-          const parent3 = parent2.parentElement
-          if (parent3) {
-            parent3.classList.remove("mm-active") // li
-            parent3.childNodes[0].classList.remove("mm-active")
-
-            const parent4 = parent3.parentElement // ul
-            if (parent4) {
-              parent4.classList.remove("mm-show") // ul
-              const parent5 = parent4.parentElement
-              if (parent5) {
-                parent5.classList.remove("mm-show") // li
-                parent5.childNodes[0].classList.remove("mm-active") // a tag
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  const activeMenu = useCallback(() => {
-    const pathName = process.env.PUBLIC_URL + props.router.location.pathname
-    let matchingMenuItem = null
-    const ul = document.getElementById("side-menu")
-    if (!ul) return
-    const items = ul.getElementsByTagName("a")
-    removeActivation(items)
-
-    for (let i = 0; i < items.length; ++i) {
-      if (pathName === items[i].pathname) {
-        matchingMenuItem = items[i]
-        break
-      }
-    }
-    if (matchingMenuItem) {
-      activateParentDropdown(matchingMenuItem)
-    }
-  }, [props.router.location.pathname, activateParentDropdown])
-
-  useEffect(() => {
-    ref.current.recalculate()
-  }, [])
-
-  useEffect(() => {
-    new MetisMenu("#side-menu")
-    return () => {
-      // MetisMenu doesn't have a direct destroy but clearing classes helps
-      const el = document.getElementById("side-menu")
-      if (el) {
-        el.classList.remove("metismenu")
-      }
-    }
-  }, [searchText]) // Re-init on search
-
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" })
-    activeMenu()
-  }, [activeMenu])
-
-  function scrollElement(item) {
-    if (item) {
-      const currentPosition = item.offsetTop
-      if (currentPosition > window.innerHeight) {
-        ref.current.getScrollElement().scrollTop = currentPosition - 300
-      }
-    }
-  }
-
   // --- Filtering Logic ---
   const filteredItems = React.useMemo(() => {
     const q = searchText.toLowerCase().trim()
+
+    // --- Menu Data Structure ---
+    const menuConfig = [
+      {
+        id: "dashboard",
+        label: "Dashboard",
+        icon: "mdi mdi-view-dashboard-outline",
+        link: "/#",
+        subMenu: [
+          {
+            id: "dashboard_op",
+            label: "Operacional",
+            icon: "mdi mdi-view-dashboard-outline",
+            link: "/dashboard/operational",
+          },
+          {
+            id: "dashboard_ger",
+            label: "Gerencial",
+            icon: "mdi mdi-chart-areaspline",
+            link: "/dashboard",
+            permission: "dashboards_management_view",
+          },
+        ],
+      },
+      {
+        id: "grade",
+        label: "Grade",
+        icon: "mdi mdi-table-large",
+        link: "/grade",
+        permission: "grade_manage",
+      },
+      {
+        id: "clients",
+        label: "Clientes",
+        icon: "mdi mdi-account-multiple-outline",
+        link: "/clients/list",
+        permission: "members_manage",
+      },
+      {
+        id: "training_planning",
+        label: "Treinos",
+        icon: "mdi mdi-swim",
+        link: "/training-planning",
+        permission: "members_manage",
+      },
+      {
+        id: "admin",
+        label: "Administrativos",
+        icon: "mdi mdi-office-building-outline",
+        link: "/#",
+        anyPermission: [
+          "collaborators_manage",
+          "admin_activities",
+          "admin_contracts",
+          "admin_areas",
+          "admin_roles",
+          "admin_catalog",
+          "admin_classes",
+          "admin_settings",
+        ],
+        subMenu: [
+          {
+            id: "staff",
+            label: "Colaboradores",
+            icon: "mdi mdi-account-multiple-check",
+            link: "/collaborators/list",
+            permission: "collaborators_manage",
+          },
+          {
+            id: "activities",
+            label: "Atividades",
+            icon: "mdi mdi-clipboard-text-outline",
+            link: "/admin/activity",
+            permission: "admin_activities",
+          },
+          {
+            id: "contracts",
+            label: "Contratos",
+            icon: "mdi mdi-file-document-outline",
+            link: "/admin/contracts",
+            permission: "admin_contracts",
+          },
+          {
+            id: "classes",
+            label: "Turmas",
+            icon: "mdi mdi-account-clock-outline",
+            link: "/admin/classes",
+            permission: "admin_classes",
+          },
+          {
+            id: "areas",
+            label: "Áreas",
+            icon: "mdi mdi-map-marker-radius-outline",
+            link: "/admin/areas",
+            permission: "admin_areas",
+          },
+          {
+            id: "roles",
+            label: "Cargos e Permissões",
+            icon: "mdi mdi-shield-account-outline",
+            link: "/admin/roles",
+            permission: "admin_roles",
+          },
+          {
+            id: "catalog",
+            label: "Produtos e Serviços",
+            icon: "mdi mdi-tag-text-outline",
+            link: "/admin/catalog",
+            permission: "admin_catalog",
+          },
+        ],
+      },
+      {
+        id: "financial",
+        label: "Financeiro",
+        icon: "mdi mdi-cash-multiple",
+        link: "/#",
+        anyPermission: ["financial_cashier", "financial_cashflow", "financial_acquirers"],
+        subMenu: [
+          {
+            id: "cashier",
+            label: "Caixa",
+            icon: "mdi mdi-cash-register",
+            link: "/financial/cashier",
+            permission: "financial_cashier",
+          },
+          {
+            id: "cashflow",
+            label: "Fluxo de Caixa",
+            icon: "mdi mdi-chart-line",
+            link: "/financial/cashflow",
+            permission: "financial_cashflow",
+          },
+          {
+            id: "acquirers",
+            label: "Adquirentes",
+            icon: "mdi mdi-credit-card-multiple-outline",
+            link: "/financial/acquirers",
+            permission: "financial_acquirers",
+          },
+        ],
+      },
+      {
+        id: "crm",
+        label: "CRM",
+        icon: "mdi mdi-headset",
+        link: "/crm",
+        permission: "crm_view",
+      },
+      {
+        id: "management",
+        label: "Gerencial",
+        icon: "mdi mdi-chart-bar",
+        link: "/#",
+        anyPermission: [
+          "management_event_plan",
+          "management_evaluation_levels",
+          "management_integrations",
+          "management_automations",
+        ],
+        subMenu: [
+          {
+            id: "events",
+            label: "Planejamento de Eventos",
+            icon: "mdi mdi-calendar-star",
+            link: "/events/planning",
+            permission: "management_event_plan",
+          },
+          {
+            id: "eval_levels",
+            label: "Níveis de Avaliação",
+            icon: "mdi mdi-chart-timeline-variant",
+            link: "/management/evaluation-levels",
+            permission: "management_evaluation_levels",
+          },
+          {
+            id: "integrations",
+            label: "Integrações",
+            icon: "mdi mdi-api",
+            link: "/management/integrations",
+            permission: "management_integrations",
+          },
+          {
+            id: "automations",
+            label: "Automações",
+            icon: "mdi mdi-robot-excited-outline",
+            link: "/management/automations",
+            permission: "management_automations",
+          },
+          {
+            id: "audit",
+            label: "Logs de Auditoria",
+            icon: "mdi mdi-clipboard-list-outline",
+            link: "/management/audit-log",
+            permission: "management_audit_log",
+          },
+        ],
+      },
+      {
+        id: "settings",
+        label: "Configurações",
+        icon: "mdi mdi-cog-outline",
+        link: "/admin/settings",
+        permission: "admin_settings",
+      },
+      {
+        id: "evaluation",
+        label: "Avaliação",
+        icon: "mdi mdi-gesture-tap",
+        link: "/evaluation",
+        permission: "management_evaluation_run",
+      },
+      {
+        id: "help",
+        label: "Central de Ajuda",
+        icon: "mdi mdi-help-circle-outline",
+        link: "/help",
+      },
+    ]
 
     return menuConfig
       .filter(item => {
@@ -411,7 +283,7 @@ const SidebarContent = props => {
         return null
       })
       .filter(Boolean)
-  }, [searchText, hasPermission, hasAnyPermission, menuConfig])
+  }, [searchText, hasPermission, hasAnyPermission])
 
   return (
     <React.Fragment>
@@ -478,7 +350,7 @@ const SidebarContent = props => {
                       <span>{item.label}</span>
                     </Link>
                     {item.subMenu && (
-                      <ul className={`sub-menu ${item.forceOpen ? "mm-show" : ""}`} aria-expanded={false}>
+                      <ul className={`sub-menu ${item.forceOpen ? "mm-show" : ""}`}>
                         {item.subMenu.map(sub => (
                           <li key={sub.id}>
                             <Link to={buildPath(sub.link)}>

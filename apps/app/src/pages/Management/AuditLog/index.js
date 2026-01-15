@@ -30,11 +30,7 @@ const AuditLogPage = ({ setBreadcrumbItems }) => {
         setBreadcrumbItems("Logs de Auditoria", breadcrumbs)
     }, [setBreadcrumbItems])
 
-    useEffect(() => {
-        loadData()
-    }, [selectedDate])
-
-    const loadData = async () => {
+    const loadData = React.useCallback(async () => {
         try {
             setLoading(true)
             const [logsData, staffData] = await Promise.all([
@@ -59,7 +55,11 @@ const AuditLogPage = ({ setBreadcrumbItems }) => {
         } finally {
             setLoading(false)
         }
-    }
+    }, [selectedDate, staffMap.byId.length])
+
+    useEffect(() => {
+        loadData()
+    }, [loadData])
 
     // Helpers to extract info from metadata
     // Helpers to extract info from metadata

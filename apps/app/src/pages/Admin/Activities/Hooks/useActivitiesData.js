@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { listActivitiesWithObjectives } from "../../../../services/Activity"
 import { normalizeStatusPt } from "../Utils"
 

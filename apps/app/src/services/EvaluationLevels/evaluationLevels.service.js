@@ -1,4 +1,4 @@
-import { getDocs, query, orderBy, getDoc, addDoc, setDoc, deleteDoc, updateDoc, serverTimestamp } from "firebase/firestore"
+import { getDocs, query, orderBy, getDoc, addDoc, setDoc, deleteDoc, updateDoc } from "firebase/firestore"
 import { makeCreatePayload, makeUpdatePayload } from "../_core/payload"
 import { evaluationLevelsCol, evaluationLevelDoc, getContext, getDb } from "./evaluationLevels.repository"
 
@@ -68,7 +68,7 @@ export const saveEvaluationLevel = async (id, data) => {
   return createEvaluationLevel(data)
 }
 
-export default {
+const evaluationLevelsService = {
   listEvaluationLevels,
   getEvaluationLevel,
   createEvaluationLevel,
@@ -76,3 +76,5 @@ export default {
   deleteEvaluationLevel,
   saveEvaluationLevel,
 }
+
+export default evaluationLevelsService

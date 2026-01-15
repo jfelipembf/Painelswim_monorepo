@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { Badge, Button, Card, CardBody, CardHeader, Col, FormGroup, Input, Label, Row } from "reactstrap"
+import { Badge, Button, Card, CardBody, CardHeader, Col, Input, Row } from "reactstrap"
 
 const ActivityObjectives = ({ objectives: externalObjectives = [], onChange }) => {
   const [objectives, setObjectives] = useState(externalObjectives)

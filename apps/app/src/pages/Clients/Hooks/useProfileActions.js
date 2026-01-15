@@ -67,7 +67,7 @@ export const useProfileActions = ({
         try {
             await withLoading('remove', async () => {
                 // Pass full enrollment object so service can log cancellation if experimental
-                const res = await deleteEnrollment(idToDelete, { enrollmentData: enrollment })
+                await deleteEnrollment(idToDelete, { enrollmentData: enrollment })
 
 
                 // Atualiza lista local

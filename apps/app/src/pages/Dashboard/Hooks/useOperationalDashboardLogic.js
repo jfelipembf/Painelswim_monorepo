@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { useLoading } from "../../../hooks/useLoading"
 import { getStaffDailyStats, getStaffMonthlyStats, getStaffMonthlyExperimentals, getBirthdaySummary, getExpirationSummary } from "../../../services/Summary/operational.service"
 import { getStaffTasks, completeTask } from "../../../services/Tasks/tasks.service"
@@ -18,7 +18,7 @@ export const useOperationalDashboardLogic = () => {
     const [birthdays, setBirthdays] = useState([]) // [NEW] Birthday State
     const [expirations, setExpirations] = useState([]) // [NEW] Expiration State
 
-    const load = async () => {
+    const load = React.useCallback(async () => {
         const user = getAuthUser()
         if (!user?.uid) return
 
@@ -54,11 +54,11 @@ export const useOperationalDashboardLogic = () => {
         } catch (e) {
             console.error("Failed to load operational stats", e)
         }
-    }
+    }, [withLoading])
 
     useEffect(() => {
         load()
-    }, [withLoading])
+    }, [load])
 
     const refreshTasks = () => load()
 

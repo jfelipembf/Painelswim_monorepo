@@ -32,7 +32,7 @@ export const useEvaluationLevelsLogic = () => {
             }
         }
         loadLevels()
-    }, [withLoading, toast])
+    }, [withLoading, toast, selectedId])
 
     useEffect(() => {
         if (selected) {

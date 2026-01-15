@@ -1,9 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import { createSale } from "../../../services/Sales"
-import { createClientContract } from "../../../services/ClientContracts"
-import { validateAndAdjustContractDates } from "../../../validators/contracts/dates"
 import { listReceivablesByClient } from "../../../services/Receivables"
-import { formatDateString, getToday } from "../../../helpers/date"
 import { useToast } from "../../../components/Common/ToastProvider"
 import { useLoading } from "../../../hooks/useLoading"
 import { useSystemSettings } from "../../../hooks/useSystemSettings"
@@ -68,7 +65,7 @@ export const useSalesActions = ({
                 const totalPaid = payments.reduce((acc, p) => acc + Number(p.amount || 0), 0)
                 const user = getAuthUser()
 
-                const sale = await createSale({
+                await createSale({
                     idClient: idClient || null,
                     clientName: clientName || "", // Added
                     idStaff: user?.uid || null,

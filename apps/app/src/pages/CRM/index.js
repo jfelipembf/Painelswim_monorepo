@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { connect } from "react-redux"
 import { Col, Container, Row } from "reactstrap"
 
@@ -6,8 +6,7 @@ import SideMenu from "components/Common/SideMenu"
 import CrmList from "./Components/CrmList"
 import CrmDetail from "./Components/CrmDetail"
 import { setBreadcrumbItems } from "../../store/actions"
-import PageLoader from "../../components/Common/PageLoader"
-import { useLoading } from "../../hooks/useLoading"
+
 
 import { CRM_SEGMENTS } from "./Constants/crmSegments"
 import { useCrmData } from "./Hooks/useCrmData"
@@ -16,7 +15,6 @@ const CRMPage = ({ setBreadcrumbItems }) => {
   const [activeSegment, setActiveSegment] = useState(CRM_SEGMENTS[0].id)
   const [selectedClientId, setSelectedClientId] = useState(null)
   const [dateRange, setDateRange] = useState([null, null])
-  const [startDate, endDate] = dateRange
 
   // Use real data hook
   const { clients: filteredClients, loading } = useCrmData(activeSegment, dateRange)

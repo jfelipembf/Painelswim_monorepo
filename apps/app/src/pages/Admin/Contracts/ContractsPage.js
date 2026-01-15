@@ -28,7 +28,7 @@ const ContractsPage = ({ setBreadcrumbItems }) => {
     setBreadcrumbItems("Contratos", breadcrumbItems)
   }, [setBreadcrumbItems])
 
-  const loadContracts = async () => {
+  const loadContracts = React.useCallback(async () => {
     try {
       await withLoading("page", async () => {
         const data = await listContracts()
@@ -41,11 +41,11 @@ const ContractsPage = ({ setBreadcrumbItems }) => {
       console.error(e)
       toast.show({ title: "Erro ao carregar contratos", description: e?.message || String(e), color: "danger" })
     }
-  }
+  }, [withLoading, toast, selectedId])
 
   useEffect(() => {
     loadContracts()
-  }, [])
+  }, [loadContracts])
 
   const sideMenuItems = useMemo(() => {
     return contracts.map(item => ({

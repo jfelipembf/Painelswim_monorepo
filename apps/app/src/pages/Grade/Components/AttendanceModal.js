@@ -105,7 +105,7 @@ const AttendanceModal = ({ isOpen, onClose, schedule, onAttendanceSaved, onEnrol
       }
     }
     loadData()
-  }, [isOpen, schedule?.id, schedule?.idClass, withLoading])
+  }, [isOpen, schedule, withLoading])
 
   useEffect(() => {
     const q = String(searchText || "").trim().toLowerCase()

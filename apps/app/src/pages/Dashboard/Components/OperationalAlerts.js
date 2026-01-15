@@ -10,7 +10,6 @@ const OperationalAlerts = ({ tasks = [], birthdays = [], expirations = [], refre
     const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA'));
     const toast = useToast();
 
-    const authUser = getAuthUser();
 
     const handleTaskCheck = async (taskId) => {
         try {

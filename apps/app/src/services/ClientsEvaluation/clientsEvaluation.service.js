@@ -6,7 +6,7 @@ import {
   where,
 } from "firebase/firestore"
 
-import { clientsEvaluationCol, clientEvaluationDoc, getContext, getDb } from "./clientsEvaluation.repository"
+import { clientsEvaluationCol, getContext, getDb } from "./clientsEvaluation.repository"
 
 export const createClientEvaluation = async ({
   idClient,
@@ -24,10 +24,7 @@ export const createClientEvaluation = async ({
   if (!idClient) throw new Error("idClient é obrigatório")
   if (!idActivity) throw new Error("idActivity é obrigatório")
 
-  const db = getDb()
   const ctx = getContext(ctxOverride)
-
-  const col = clientsEvaluationCol(db, ctx, idClient)
 
   // Use makeCreatePayload but custom fields need mapping first or pass raw
   // The service logic here is complex with mapping, so we keep the mapping but use standard payload helper for metadata
@@ -158,10 +155,8 @@ export const getClientEvaluationByEvent = async ({ idClient, eventPlanId, ctxOve
 export const updateClientEvaluation = async (id, idClient, data, { ctxOverride = null } = {}) => {
   if (!id || !idClient) throw new Error("ID da avaliação e ID do cliente são obrigatórios")
 
-  const db = getDb()
   const ctx = getContext(ctxOverride)
 
-  const ref = clientEvaluationDoc(db, ctx, idClient, id)
 
   // REFACTOR: Use Cloud Function for Update
   // const payload = makeUpdatePayload(data)
@@ -186,7 +181,7 @@ export const updateClientEvaluation = async (id, idClient, data, { ctxOverride =
   return result.data;
 }
 
-export default {
+const clientsEvaluationService = {
   createClientEvaluation,
   updateClientEvaluation,
   getLastClientEvaluation,
@@ -194,3 +189,5 @@ export default {
   getClientEvaluations,
   getClientEvaluationByEvent,
 }
+
+export default clientsEvaluationService
