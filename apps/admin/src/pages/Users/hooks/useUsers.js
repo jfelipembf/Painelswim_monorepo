@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getFirestore, collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
+import { getFirestore, collection, onSnapshot, query, where } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { useToast } from "../../../components/Common/ToastProvider";
 

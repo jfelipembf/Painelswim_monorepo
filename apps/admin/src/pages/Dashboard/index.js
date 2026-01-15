@@ -20,7 +20,7 @@ const Dashboard = (props) => {
 
   useEffect(() => {
     props.setBreadcrumbItems('Dashboard', breadcrumbItems)
-  }, [props])
+  }, [props, breadcrumbItems])
 
   const {
     isLoading,

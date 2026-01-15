@@ -1,5 +1,5 @@
-import { STATUS, getStatusLabel, getStatusColor } from "../../../constants/status";
-import { GENDER, getGenderLabel } from "../../../constants/gender";
+import { getStatusLabel, getStatusColor } from "../../../constants/status";
+import { getGenderLabel } from "../../../constants/gender";
 
 export const formatUserForTable = (user) => {
     return {
