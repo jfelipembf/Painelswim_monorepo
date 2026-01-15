@@ -297,7 +297,7 @@ const StaffSelfRegister = () => {
                                                         onChange={validation.handleChange}
                                                         onBlur={validation.handleBlur}
                                                         value={validation.values.firstName}
-                                                        invalid={validation.touched.firstName && validation.errors.firstName}
+                                                        invalid={!!(validation.touched.firstName && validation.errors.firstName)}
                                                     />
                                                     {validation.touched.firstName && validation.errors.firstName && <FormFeedback>{validation.errors.firstName}</FormFeedback>}
                                                 </div>
@@ -311,7 +311,7 @@ const StaffSelfRegister = () => {
                                                         onChange={validation.handleChange}
                                                         onBlur={validation.handleBlur}
                                                         value={validation.values.lastName}
-                                                        invalid={validation.touched.lastName && validation.errors.lastName}
+                                                        invalid={!!(validation.touched.lastName && validation.errors.lastName)}
                                                     />
                                                     {validation.touched.lastName && validation.errors.lastName && <FormFeedback>{validation.errors.lastName}</FormFeedback>}
                                                 </div>
@@ -328,7 +328,7 @@ const StaffSelfRegister = () => {
                                                         onChange={validation.handleChange}
                                                         onBlur={validation.handleBlur}
                                                         value={validation.values.birthDate}
-                                                        invalid={validation.touched.birthDate && validation.errors.birthDate}
+                                                        invalid={!!(validation.touched.birthDate && validation.errors.birthDate)}
                                                     />
                                                     {validation.touched.birthDate && validation.errors.birthDate && <FormFeedback>{validation.errors.birthDate}</FormFeedback>}
                                                 </div>
@@ -364,7 +364,7 @@ const StaffSelfRegister = () => {
                                                         {...inputProps}
                                                         name="phone"
                                                         placeholder="(00) 00000-0000"
-                                                        invalid={validation.touched.phone && validation.errors.phone}
+                                                        invalid={!!(validation.touched.phone && validation.errors.phone)}
                                                     />
                                                 )}
                                             </InputMask>
@@ -380,7 +380,7 @@ const StaffSelfRegister = () => {
                                                 onChange={validation.handleChange}
                                                 onBlur={validation.handleBlur}
                                                 value={validation.values.email}
-                                                invalid={validation.touched.email && validation.errors.email}
+                                                invalid={!!(validation.touched.email && validation.errors.email)}
                                             />
                                             {validation.touched.email && validation.errors.email && <FormFeedback>{validation.errors.email}</FormFeedback>}
                                         </div>
@@ -402,7 +402,7 @@ const StaffSelfRegister = () => {
                                                                 {...inputProps}
                                                                 name="cep"
                                                                 placeholder="00000-000"
-                                                                invalid={validation.touched.cep && validation.errors.cep}
+                                                                invalid={!!(validation.touched.cep && validation.errors.cep)}
                                                             />
                                                         )}
                                                     </InputMask>
@@ -418,7 +418,7 @@ const StaffSelfRegister = () => {
                                                         onChange={validation.handleChange}
                                                         onBlur={validation.handleBlur}
                                                         value={validation.values.city}
-                                                        invalid={validation.touched.city && validation.errors.city}
+                                                        invalid={!!(validation.touched.city && validation.errors.city)}
                                                     />
                                                     {validation.touched.city && validation.errors.city && <FormFeedback>{validation.errors.city}</FormFeedback>}
                                                 </div>
@@ -435,7 +435,7 @@ const StaffSelfRegister = () => {
                                                         onChange={validation.handleChange}
                                                         onBlur={validation.handleBlur}
                                                         value={validation.values.state}
-                                                        invalid={validation.touched.state && validation.errors.state}
+                                                        invalid={!!(validation.touched.state && validation.errors.state)}
                                                     />
                                                     {validation.touched.state && validation.errors.state && <FormFeedback>{validation.errors.state}</FormFeedback>}
                                                 </div>
@@ -449,7 +449,7 @@ const StaffSelfRegister = () => {
                                                         onChange={validation.handleChange}
                                                         onBlur={validation.handleBlur}
                                                         value={validation.values.neighborhood}
-                                                        invalid={validation.touched.neighborhood && validation.errors.neighborhood}
+                                                        invalid={!!(validation.touched.neighborhood && validation.errors.neighborhood)}
                                                     />
                                                     {validation.touched.neighborhood && validation.errors.neighborhood && <FormFeedback>{validation.errors.neighborhood}</FormFeedback>}
                                                 </div>
@@ -466,7 +466,7 @@ const StaffSelfRegister = () => {
                                                         onChange={validation.handleChange}
                                                         onBlur={validation.handleBlur}
                                                         value={validation.values.address}
-                                                        invalid={validation.touched.address && validation.errors.address}
+                                                        invalid={!!(validation.touched.address && validation.errors.address)}
                                                     />
                                                     {validation.touched.address && validation.errors.address && <FormFeedback>{validation.errors.address}</FormFeedback>}
                                                 </div>
@@ -480,7 +480,7 @@ const StaffSelfRegister = () => {
                                                         onChange={validation.handleChange}
                                                         onBlur={validation.handleBlur}
                                                         value={validation.values.number}
-                                                        invalid={validation.touched.number && validation.errors.number}
+                                                        invalid={!!(validation.touched.number && validation.errors.number)}
                                                     />
                                                     {validation.touched.number && validation.errors.number && <FormFeedback>{validation.errors.number}</FormFeedback>}
                                                 </div>
@@ -498,7 +498,7 @@ const StaffSelfRegister = () => {
                                                 onChange={validation.handleChange}
                                                 onBlur={validation.handleBlur}
                                                 value={validation.values.password}
-                                                invalid={validation.touched.password && validation.errors.password}
+                                                invalid={!!(validation.touched.password && validation.errors.password)}
                                             />
                                             {validation.touched.password && validation.errors.password && <FormFeedback>{validation.errors.password}</FormFeedback>}
                                         </div>
@@ -512,7 +512,7 @@ const StaffSelfRegister = () => {
                                                 onChange={validation.handleChange}
                                                 onBlur={validation.handleBlur}
                                                 value={validation.values.confirmPassword}
-                                                invalid={validation.touched.confirmPassword && validation.errors.confirmPassword}
+                                                invalid={!!(validation.touched.confirmPassword && validation.errors.confirmPassword)}
                                             />
                                             {validation.touched.confirmPassword && validation.errors.confirmPassword && <FormFeedback>{validation.errors.confirmPassword}</FormFeedback>}
                                         </div>

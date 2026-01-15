@@ -304,8 +304,10 @@ async function updateStaffUserLogic(data, context) {
         if (finalPhoto && finalPhoto !== currentData.photo) authUpdates.photoURL = finalPhoto;
 
         if (Object.keys(authUpdates).length > 0) {
+            console.log("[updateStaffUserLogic] Atualizando Auth:", authUpdates);
             try {
                 await admin.auth().updateUser(id, authUpdates);
+                console.log("[updateStaffUserLogic] Auth atualizado com sucesso.");
             } catch (authError) {
                 console.error("Erro ao atualizar Auth:", authError);
                 if (authError.code === 'auth/user-not-found') {
@@ -351,7 +353,9 @@ async function updateStaffUserLogic(data, context) {
             complement: FieldValue.delete()
         };
 
+        console.log("[updateStaffUserLogic] Salvando no Firestore:", firestorePayload);
         await staffRef.set({ ...firestorePayload, ...fieldsToRemove }, { merge: true });
+        console.log("[updateStaffUserLogic] Sucesso ao salvar Firestore.");
 
         // Registrar Log de Auditoria
         await saveAuditLog({
@@ -372,7 +376,7 @@ async function updateStaffUserLogic(data, context) {
             message: "Colaborador atualizado com sucesso.",
         };
     } catch (error) {
-        console.error("Erro ao atualizar colaborador:", error);
+        console.error("[updateStaffUserLogic] ERRO FATAL:", error);
         if (error instanceof functions.https.HttpsError) throw error;
         throw new functions.https.HttpsError("internal", "Erro interno ao atualizar colaborador.", error);
     }
