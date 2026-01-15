@@ -12,7 +12,7 @@ import { useFormik } from "formik";
 import withRouter from 'components/Common/withRouter';
 
 // actions
-import { loginUser, socialLogin } from "../../store/actions";
+import { loginUser } from "../../store/actions";
 
 const Login = props => {
   document.title = "Login | Swim"
@@ -49,9 +49,7 @@ const Login = props => {
     error
   } = useSelector(LoginProperties);
 
-  const signIn = type => {
-    dispatch(socialLogin(type, props.router.navigate));
-  };
+
 
 
 
