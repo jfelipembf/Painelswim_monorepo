@@ -7,11 +7,11 @@ export const usePhotoUpload = ({ entity, entityId = null } = {}) => {
   const [error, setError] = useState(null)
 
   const uploadPhoto = useCallback(
-    async (file, { filenamePrefix = "photo" } = {}) => {
+    async (file, { filenamePrefix = "photo", ctxOverride = null } = {}) => {
       setUploading(true)
       setError(null)
       try {
-        const res = await uploadEntityPhoto({ entity, entityId, file, filenamePrefix })
+        const res = await uploadEntityPhoto({ entity, entityId, file, filenamePrefix, ctxOverride })
         return res
       } catch (e) {
         setError(e)

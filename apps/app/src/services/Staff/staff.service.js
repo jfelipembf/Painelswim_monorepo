@@ -101,8 +101,9 @@ export const useStaffPhotoUpload = () => {
   const { uploadPhoto, uploading, error } = usePhotoUpload({ entity: "staff" })
 
   const uploadStaffPhoto = useMemo(() => {
-    return async file => {
-      const res = await uploadPhoto(file, { filenamePrefix: "photo" })
+    return async (file, options = {}) => {
+      const { filenamePrefix = "photo", ctxOverride } = options
+      const res = await uploadPhoto(file, { filenamePrefix, ctxOverride })
       return res?.url || ""
     }
   }, [uploadPhoto])

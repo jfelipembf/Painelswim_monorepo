@@ -82,7 +82,9 @@ const StaffSelfRegister = () => {
                 if (photoFile) {
                     // We need to wait a bit or ensure the user is auth'd for storage rules, 
                     // but creating the user usually signs them in automatically.
-                    photoUrl = await uploadPhoto(photoFile)
+                    photoUrl = await uploadPhoto(photoFile, {
+                        ctxOverride: { idTenant: tenantId, idBranch: branchId }
+                    })
                 }
 
                 // 3. Create Staff Document
@@ -170,7 +172,8 @@ const StaffSelfRegister = () => {
                 backgroundImage: `url(${bg})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
-                minHeight: '100vh'
+                minHeight: '100vh',
+                overflowX: 'hidden'
             }}
         >
             <Container>
@@ -228,7 +231,6 @@ const StaffSelfRegister = () => {
                                                 ref={fileInputRef}
                                                 onChange={handlePhotoChange}
                                                 style={{ display: 'none' }}
-                                                capture="user" // Tries to open front camera on mobile
                                             />
                                         </div>
 
