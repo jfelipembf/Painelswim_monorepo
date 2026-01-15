@@ -6,36 +6,30 @@ import { useActivityObjectivesTopics } from "../../../hooks/evaluation/useActivi
 import { useEvaluationDraft } from "../../../hooks/evaluation/useEvaluationDraft"
 import { useSaveEvaluations } from "../../../hooks/evaluation/useSaveEvaluations"
 import LevelDropdown from "../../Grade/Components/LevelDropdown"
-import ClientAddSearch from "../../../components/Common/ClientAddSearch"
 import ButtonLoader from "../../../components/Common/ButtonLoader"
 import CenterLoader from "../../../components/Common/CenterLoader"
 import { useToast } from "../../../components/Common/ToastProvider"
 
-import { useEvaluationFormLogic } from "../Hooks/useEvaluationFormLogic"
 import { PLACEHOLDER_AVATAR as placeholderAvatar } from "../Constants/evaluationDefaults"
 
 const EvaluationForm = ({
   classId,
   idActivity,
+  evaluationLogic,
 }) => {
   const toast = useToast()
 
   const {
     isLoading,
     withLoading,
-    searchText,
-    setSearchText,
     levels,
     activeEvent,
     allClients,
     evaluationClients,
-    addCandidates,
-    showNoAutocompleteResults,
     defaultLevelId,
     toggleExcludeClient,
-    handleAddClient,
     excludedClientIds
-  } = useEvaluationFormLogic({ classId })
+  } = evaluationLogic
 
   const {
     objectives,
@@ -110,7 +104,7 @@ const EvaluationForm = ({
     <div className="class-clients">
 
       {isEvaluationDisabled && (
-        <Alert color="warning" className="mb-4">
+        <Alert color="warning" className="mb-4" fade={false}>
           <h5 className="alert-heading font-size-14"><i className="mdi mdi-alert-outline me-2"></i> Período de avaliação fechado</h5>
           <p className="mb-0">
             Não há período de avaliação configurado para a data de hoje. Consulte a gerência para iniciar um novo ciclo de avaliações.
@@ -195,22 +189,7 @@ const EvaluationForm = ({
         </div>
       </div>
 
-      {/* Campo de busca */}
-      <div className="mb-4">
-        <div className="d-flex align-items-center gap-2 mb-2">
-          <h6 className="mb-0 fw-bold">Buscar aluno</h6>
-          <Badge color="dark">{evaluationClients.length}</Badge>
-        </div>
-        <ClientAddSearch
-          value={searchText}
-          onChange={setSearchText}
-          disabled={isLoading("clients") || isEvaluationDisabled}
-          candidates={addCandidates}
-          onSelect={handleAddClient}
-          showNoResults={showNoAutocompleteResults}
-          noResultsLabel="Nenhum cliente encontrado com contrato ativo para adicionar."
-        />
-      </div>
+
 
       {/* Lista de alunos */}
       <div className="clients-list">
@@ -228,7 +207,7 @@ const EvaluationForm = ({
               <i className="mdi mdi-account-search text-muted fs-4" />
             </div>
             <p className="text-muted mb-0">
-              {searchText ? "Nenhum aluno encontrado para esta busca." : "Nenhum aluno matriculado nesta turma."}
+              Nenhum aluno matriculado nesta turma.
             </p>
           </div>
         ) : (

@@ -2,8 +2,26 @@ import React from "react"
 import PropTypes from "prop-types"
 import { Card, CardBody, CardHeader, Badge } from "reactstrap"
 import EvaluationForm from "./evaluationForm"
+import { useEvaluationFormLogic } from "../Hooks/useEvaluationFormLogic"
+import ClientAddSearch from "../../../components/Common/ClientAddSearch"
 
 const EvaluationCard = ({ schedule }) => {
+  const {
+    isLoading,
+    searchText,
+    setSearchText,
+    levels,
+    activeEvent,
+    allClients,
+    evaluationClients,
+    addCandidates,
+    showNoAutocompleteResults,
+    defaultLevelId,
+    toggleExcludeClient,
+    handleAddClient,
+    excludedClientIds,
+  } = useEvaluationFormLogic({ classId: schedule?.idClass })
+
   if (!schedule) {
     return (
       <Card className="h-100 shadow-sm">
@@ -33,30 +51,45 @@ const EvaluationCard = ({ schedule }) => {
     color
   } = schedule
 
+  const isEvaluationDisabled = !activeEvent
+
   return (
     <Card className="h-100 shadow-sm">
       <CardHeader
         className="bg-white border-bottom py-3"
         style={color ? { borderTop: `3px solid ${color}` } : undefined}
       >
-        <div className="d-flex flex-column gap-2">
-          {/* Título principal e instrutor mais compactos */}
-          <div className="d-flex flex-column flex-sm-row align-items-start justify-content-between gap-2 gap-sm-3">
+        <div className="d-flex flex-column gap-3">
+          {/* Info Area: Activity (Top) and Instructor (Below) */}
+          <div className="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
             <div className="flex-grow-1">
               <h4 className="mb-1 fw-bold">{activityName || "Evento"}</h4>
               {employeeName && (
-                <div className="text-muted small">
-                  <i className="mdi mdi-account me-1" />
-                  {employeeName}
+                <div className="text-muted small d-flex align-items-center gap-1">
+                  <i className="mdi mdi-account" />
+                  <span>{employeeName}</span>
                 </div>
               )}
             </div>
-            <div className="d-flex flex-column align-items-start align-items-sm-end gap-1 w-100 w-sm-auto">
+            <div className="d-flex align-items-center gap-2 mt-1">
               <Badge color="secondary" className="text-white px-2 py-1" style={{ fontSize: '0.75rem' }}>
                 <i className="mdi mdi-clock me-1" />
                 {startTime} — {endTime}
               </Badge>
             </div>
+          </div>
+
+          {/* Search Area integrated into header */}
+          <div className="w-100">
+            <ClientAddSearch
+              value={searchText}
+              onChange={setSearchText}
+              disabled={isLoading("clients") || isEvaluationDisabled}
+              candidates={addCandidates}
+              onSelect={handleAddClient}
+              showNoResults={showNoAutocompleteResults}
+              noResultsLabel="Nenhum cliente encontrado com contrato ativo para adicionar."
+            />
           </div>
         </div>
       </CardHeader>
@@ -65,6 +98,16 @@ const EvaluationCard = ({ schedule }) => {
           <EvaluationForm
             classId={schedule.idClass}
             idActivity={schedule.idActivity}
+            evaluationLogic={{
+              isLoading,
+              levels,
+              activeEvent,
+              allClients,
+              evaluationClients,
+              toggleExcludeClient,
+              defaultLevelId,
+              excludedClientIds
+            }}
           />
         ) : (
           <div className="text-center py-5">

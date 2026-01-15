@@ -5,11 +5,11 @@ import { Input, InputGroup, InputGroupText } from "reactstrap"
 const ClientAddSearch = ({
   value,
   onChange,
-  disabled,
-  candidates,
+  disabled = false,
+  candidates = [],
   onSelect,
-  showNoResults,
-  noResultsLabel,
+  showNoResults = false,
+  noResultsLabel = "Nenhum cliente encontrado.",
 }) => {
   return (
     <div className="position-relative">
@@ -67,11 +67,6 @@ ClientAddSearch.propTypes = {
   noResultsLabel: PropTypes.string,
 }
 
-ClientAddSearch.defaultProps = {
-  disabled: false,
-  candidates: [],
-  showNoResults: false,
-  noResultsLabel: "Nenhum cliente encontrado.",
-}
+
 
 export default ClientAddSearch

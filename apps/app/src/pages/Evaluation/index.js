@@ -95,7 +95,7 @@ const Evaluation = () => {
       </Row>
 
       <Row className="g-4">
-        <Col xs="12" md="4" lg="3">
+        <Col xs="12" md="3" lg="3">
           <ClassBar
             date={currentDate}
             onPrevDay={handlePrevDay}
@@ -106,7 +106,7 @@ const Evaluation = () => {
             selectedSchedule={selectedSchedule}
           />
         </Col>
-        <Col xs="12" md="8" lg="9">
+        <Col xs="12" md="9" lg="9">
           {activeTab === 'testes' ? (
             <TestCard
               schedule={selectedSchedule}
