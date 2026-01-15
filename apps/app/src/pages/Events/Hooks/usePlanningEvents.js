@@ -67,7 +67,6 @@ export const usePlanningEvents = () => {
             endDate: activeEvent.endDate || "",
             distance: activeEvent.distanceMeters || "",
             time: activeEvent.targetTime || "",
-            time: activeEvent.targetTime || "",
             styles: activeEvent.styles || "",
             attachment: null,
             photo: activeEvent.photo || "",

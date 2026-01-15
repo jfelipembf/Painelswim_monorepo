@@ -1,12 +1,8 @@
 import React from "react"
-import { ButtonGroup, Button } from "reactstrap"
+import { Button } from "reactstrap"
 
 import {
-  formatWeekShortLabel,
   addDays,
-  getStartOfWeekSunday,
-  formatISODate,
-  isSameDay,
   getStepForView,
   formatRangeLabel,
 } from "../Utils/dateUtils"

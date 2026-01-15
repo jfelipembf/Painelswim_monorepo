@@ -5,8 +5,6 @@ import {
   Card,
   CardBody,
   CardHeader,
-  ListGroup,
-  ListGroupItem,
 } from "reactstrap"
 import GradeEventCard from "./GradeEventCard"
 
@@ -36,43 +34,6 @@ const ClassBar = ({
   onDragEnd,
   className,
 }) => {
-  const renderItemActions = item => {
-    if (!onEdit && !onDelete) return null
-    return (
-      <div className="d-flex gap-1">
-        {onEdit && (
-          <Button
-            size="sm"
-            color="link"
-            className="px-2 text-primary"
-            title="Editar"
-            aria-label="Editar"
-            onClick={e => {
-              e.stopPropagation()
-              onEdit?.(item.id)
-            }}
-          >
-            <i className="mdi mdi-pencil-outline fs-5" />
-          </Button>
-        )}
-        {onDelete && (
-          <Button
-            size="sm"
-            color="link"
-            className="px-2 text-danger"
-            title="Excluir"
-            aria-label="Excluir"
-            onClick={e => {
-              e.stopPropagation()
-              onDelete?.(item.id)
-            }}
-          >
-            <i className="mdi mdi-trash-can-outline fs-5" />
-          </Button>
-        )}
-      </div>
-    )
-  }
 
   return (
     <Card className={`h-100 shadow-sm bg-white ${className || ""}`.trim()}>

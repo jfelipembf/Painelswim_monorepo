@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 import { useParams, Link } from "react-router-dom"
-import { Container, Row, Col, Card, CardBody, CardTitle, Input, InputGroup } from "reactstrap"
+import { Container, Row, Col, Card, CardBody, Input, InputGroup } from "reactstrap"
 import logoSwim from "../../assets/images/logoSwim.png"
 
 import helpContractsGeneral from "../../assets/images/generalContractInfo.png"

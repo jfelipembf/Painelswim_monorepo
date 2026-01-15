@@ -124,7 +124,7 @@ export const useKiosk = () => {
         }
 
         fetchEvaluations()
-    }, [selectedClient])
+    }, [selectedClient, ids.idBranch, ids.idTenant])
 
     // State for Levels Config
     const [levelsConfig, setLevelsConfig] = useState([])

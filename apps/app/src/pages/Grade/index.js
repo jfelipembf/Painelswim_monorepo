@@ -13,7 +13,7 @@ import { useGradeData } from "./Hooks/useGradeData"
 import PageLoader from "../../components/Common/PageLoader"
 
 
-const Grade = props => {
+const Grade = ({ setBreadcrumbItems }) => {
   const [turn, setTurn] = useState("all")
   const [view, setView] = useState("week")
   const [referenceDate, setReferenceDate] = useState(new Date())
@@ -27,8 +27,8 @@ const Grade = props => {
 
   useEffect(() => {
     const breadcrumbItems = [{ title: "Grade de Aulas", link: "/grade" }]
-    props.setBreadcrumbItems("Grade de Aulas", breadcrumbItems)
-  }, [props.setBreadcrumbItems])
+    setBreadcrumbItems("Grade de Aulas", breadcrumbItems)
+  }, [setBreadcrumbItems])
 
   const weekStart = useMemo(() => getStartOfWeekSunday(referenceDate), [referenceDate])
 

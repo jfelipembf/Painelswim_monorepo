@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useMemo } from "react"
 import { connect } from "react-redux"
 import { Row, Col } from "reactstrap"
 
@@ -14,10 +14,10 @@ const OperationalDashboard = ({ setBreadcrumbItems }) => {
     document.title = "Dashboard Operacional | Painel Swim"
     const { reports, experimentals, tasks, birthdays, expirations, refreshTasks, markTaskAsCompleted, isLoading } = useOperationalDashboardLogic()
 
-    const breadcrumbItems = [
+    const breadcrumbItems = useMemo(() => [
         { title: "Dashboard", link: "#" },
         { title: "Operacional", link: "#" }
-    ]
+    ], [])
 
     useEffect(() => {
         setBreadcrumbItems('Dashboard Operacional', breadcrumbItems)

@@ -35,12 +35,6 @@ const TaskModal = ({ isOpen, toggle, onTaskCreated }) => {
             .slice(0, 5) // Limit to 5 results
     }, [activeClientsPool, searchText])
 
-    useEffect(() => {
-        if (isOpen) {
-            loadStaff()
-        }
-    }, [isOpen, loadStaff])
-
     const loadStaff = React.useCallback(async () => {
         try {
             const staffs = await listStaff()
@@ -63,6 +57,12 @@ const TaskModal = ({ isOpen, toggle, onTaskCreated }) => {
             console.error("Erro ao carregar staffs", error)
         }
     }, [selectedStaffs.length])
+
+    useEffect(() => {
+        if (isOpen) {
+            loadStaff()
+        }
+    }, [isOpen, loadStaff])
 
     // Custom renderer for Select options
     const formatStaffOption = ({ label, photo }) => (

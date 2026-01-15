@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { Card, CardBody, Row, Col, Input, Button } from "reactstrap";
 import TaskModal from "./TaskModal";
-// completeTask import removed, now handled by the hook
-import { getAuthUser } from "../../../helpers/permission_helper";
 import { useToast } from "../../../components/Common/ToastProvider";
 
 const OperationalAlerts = ({ tasks = [], birthdays = [], expirations = [], refreshTasks, markTaskAsCompleted }) => {

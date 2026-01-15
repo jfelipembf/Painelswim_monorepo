@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from "react"
+import React, { useMemo } from "react"
 
 import OverlayLoader from "../../../components/Common/OverlayLoader"
 
@@ -26,11 +26,9 @@ const GradeGrid = ({
   selectedScheduleId,
   selectedScheduleIds,
   selectedScheduleKey,
-  selectable,
   onToggleSelection,
   selectedClassId,
 }) => {
-  const loggedCellsRef = useRef(new Set())
 
   const weekStart = useMemo(() => {
     if (weekStartProp) {
@@ -121,7 +119,7 @@ const GradeGrid = ({
                 return aid.localeCompare(bid)
               })
 
-              const dayIndex = d.getDay()
+
               const selected = isSameDay(d, referenceDate)
 
               return (

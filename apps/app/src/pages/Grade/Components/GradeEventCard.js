@@ -1,8 +1,8 @@
 import React from "react"
 import classNames from "classnames"
 
-import { getOccupancyColor, getOccupancyLabel, parseMaxCapacity, getOccupancyPct } from "../Utils/occupancy"
-import { isWithinTurn, getEventColor } from "../Utils/gridUtils"
+import { parseMaxCapacity, getOccupancyPct } from "../Utils/occupancy"
+import { getEventColor } from "../Utils/gridUtils"
 
 const GradeEventCard = ({ schedule, showOccupancyMask, onClick, isSelected }) => {
   const startTime = String(schedule?.startTime || "")

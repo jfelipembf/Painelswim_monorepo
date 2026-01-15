@@ -14,13 +14,12 @@ import { useDashboardLogic } from "./Hooks/useDashboardLogic"
 const Dashboard = ({ setBreadcrumbItems }) => {
   document.title = "Dashboard | Painel Swim"
 
-  const breadcrumbItems = [
-    { title: "Dashboard", link: "#" }
-  ]
-
   useEffect(() => {
+    const breadcrumbItems = [
+      { title: "Dashboard", link: "#" }
+    ]
     setBreadcrumbItems('Dashboard', breadcrumbItems)
-  }, [setBreadcrumbItems, breadcrumbItems])
+  }, [setBreadcrumbItems])
 
   const {
     isLoading,
