@@ -2,7 +2,7 @@ import PropTypes from "prop-types"
 import React from "react"
 
 import { connect } from "react-redux"
-import { Link } from "react-router-dom"
+import { Link, useParams } from "react-router-dom"
 
 // Import menuDropdown
 
@@ -20,8 +20,10 @@ import ClientExtraFields from "../../pages/Clients/Components/ClientExtraFields"
 import { useClientListActions } from "../../pages/Clients/Hooks/useClientListActions"
 
 const Header = ({ title, breadcrumbItems, toggleMenuCallback }) => {
+  const { tenant, branch } = useParams()
   const items = breadcrumbItems || []
   const breadcrumbPath = items.map(item => item.title).join(" / ")
+
 
   const {
     modalOpen: clientModalOpen,
@@ -67,6 +69,15 @@ const Header = ({ title, breadcrumbItems, toggleMenuCallback }) => {
           <div className="d-flex align-items-center">
             {/* Global Search */}
             <GlobalClientSearch />
+
+            <Link
+              to={`/${tenant}/${branch}/training-planning/tv`}
+              target="_blank"
+              className="btn header-item waves-effect d-flex align-items-center justify-content-center"
+              title="Modo TV"
+            >
+              <i className="mdi mdi-television font-size-22" />
+            </Link>
 
             <button
               type="button"

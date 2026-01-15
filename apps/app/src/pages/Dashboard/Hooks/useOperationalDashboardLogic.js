@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react"
 import { useLoading } from "../../../hooks/useLoading"
-import { getStaffDailyStats, getStaffMonthlyStats, getStaffMonthlyExperimentals, getBirthdaySummary } from "../../../services/Summary/operational.service"
+import { getStaffDailyStats, getStaffMonthlyStats, getStaffMonthlyExperimentals, getBirthdaySummary, getExpirationSummary } from "../../../services/Summary/operational.service"
 import { getStaffTasks, completeTask } from "../../../services/Tasks/tasks.service"
 import { getAuthUser } from "../../../helpers/permission_helper"
 import { formatCurrency } from "../Utils/dashboardUtils"
@@ -16,6 +16,7 @@ export const useOperationalDashboardLogic = () => {
     const [experimentals, setExperimentals] = useState([])
     const [tasks, setTasks] = useState([])
     const [birthdays, setBirthdays] = useState([]) // [NEW] Birthday State
+    const [expirations, setExpirations] = useState([]) // [NEW] Expiration State
 
     const load = async () => {
         const user = getAuthUser()
@@ -23,12 +24,13 @@ export const useOperationalDashboardLogic = () => {
 
         try {
             await withLoading('page', async () => {
-                const [dailyRes, monthlyRes, expListRes, tasksRes, bdayRes] = await Promise.allSettled([
+                const [dailyRes, monthlyRes, expListRes, tasksRes, bdayRes, expSummaryRes] = await Promise.allSettled([
                     getStaffDailyStats(user.uid),
                     getStaffMonthlyStats(user.uid),
                     getStaffMonthlyExperimentals(user.uid), // Changed to Monthly
                     getStaffTasks(user.uid),
-                    getBirthdaySummary() // [NEW] Fetch Birthdays
+                    getBirthdaySummary(), // [NEW] Fetch Birthdays
+                    getExpirationSummary() // [NEW] Fetch Expirations
                 ])
 
                 const daily = dailyRes.status === 'fulfilled' ? dailyRes.value : { totalCount: 0, totalAmount: 0 }
@@ -36,6 +38,7 @@ export const useOperationalDashboardLogic = () => {
                 const expList = expListRes.status === 'fulfilled' ? expListRes.value : []
                 const taskList = tasksRes.status === 'fulfilled' ? tasksRes.value : []
                 const bdayList = bdayRes.status === 'fulfilled' ? bdayRes.value : []
+                const expSummaryList = expSummaryRes.status === 'fulfilled' ? expSummaryRes.value : []
 
                 setStats({
                     todaySalesCount: daily.totalCount,
@@ -46,6 +49,7 @@ export const useOperationalDashboardLogic = () => {
                 setExperimentals(expList)
                 setTasks(taskList)
                 setBirthdays(bdayList)
+                setExpirations(expSummaryList)
             })
         } catch (e) {
             console.error("Failed to load operational stats", e)
@@ -102,15 +106,15 @@ export const useOperationalDashboardLogic = () => {
                 label: "No Mês" // Changed Label
             },
             {
-                title: "Pendências/Avisos",
-                iconClass: "alert-circle-outline",
-                total: "--", // Faremos depois como solicitado
+                title: "Vencimentos",
+                iconClass: "clock-alert-outline",
+                total: expirations.length,
                 badgecolor: "danger",
                 average: "",
-                label: "Críticas"
+                label: "Hoje"
             },
         ]
-    }, [stats, experimentals])
+    }, [stats, experimentals, expirations])
 
     return {
         isLoading: isLoading('page'),
@@ -118,6 +122,7 @@ export const useOperationalDashboardLogic = () => {
         experimentals,
         tasks,
         birthdays, // [NEW] Return birthdays
+        expirations, // [NEW] Return expirations
         refreshTasks,
         markTaskAsCompleted
     }

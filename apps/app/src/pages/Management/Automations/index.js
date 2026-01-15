@@ -8,7 +8,7 @@ import AutomationDetail from "./components/AutomationDetail"
 
 // Hooks & Constants
 import { useAutomations } from "./hooks/useAutomations"
-import { TRIGGER_LABELS } from "./constants/triggers"
+import { TRIGGER_LABELS, TRIGGER_CONFIG } from "./constants/triggers"
 
 // Actions
 import { setBreadcrumbItems } from "../../../store/actions"
@@ -38,12 +38,41 @@ const AutomationsPage = ({ setBreadcrumbItems }) => {
     const selectedAutomation = automations.find(a => a.id === selectedId)
 
     // Helper formatting for SideMenu
-    const menuItems = automations.map(auto => ({
-        id: auto.id,
-        title: auto.name, // The Label from constants
-        subtitle: auto.active ? "Ativo" : "Inativo",
-        color: auto.active ? "success" : "secondary"
-    }))
+    const menuItems = automations
+        .map(auto => {
+            const config = TRIGGER_CONFIG[auto.trigger] || {}
+            return {
+                id: auto.id,
+                title: config.label || auto.name,
+                subtitle: auto.active ? "Ativo" : "Inativo",
+                color: auto.active ? "success" : "secondary",
+                category: config.category || "Outros", // For grouping
+                original: auto
+            }
+        })
+        .sort((a, b) => {
+            // Sort by Category first, then by Title
+            if (a.category < b.category) return -1
+            if (a.category > b.category) return 1
+            return a.title.localeCompare(b.title)
+        })
+
+    // Inject headers for grouping
+    const formattedItems = []
+    let lastCategory = null
+
+    menuItems.forEach(item => {
+        if (item.category !== lastCategory) {
+            formattedItems.push({
+                id: `header-${item.category}`,
+                title: item.category,
+                isHeader: true
+            })
+            lastCategory = item.category
+        }
+        // Add the item itself
+        formattedItems.push(item)
+    })
 
     return (
         <Container fluid>
@@ -55,7 +84,7 @@ const AutomationsPage = ({ setBreadcrumbItems }) => {
                         <SideMenu
                             title="Gatilhos"
                             description="Selecione um evento para configurar a automação."
-                            items={menuItems}
+                            items={formattedItems}
                             selectedId={selectedId}
                             onSelect={setSelectedId}
                             emptyLabel="Nenhum gatilho disponível."

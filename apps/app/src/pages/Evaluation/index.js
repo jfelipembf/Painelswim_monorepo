@@ -15,12 +15,20 @@ import { useLoading } from "../../hooks/useLoading"
 
 import { getActiveTestEvent } from "../../services/Events/events.service"
 
-const Evaluation = () => {
+import { connect } from "react-redux"
+import { setBreadcrumbItems } from "../../store/actions"
+
+const Evaluation = (props) => {
   const [currentDate, setCurrentDate] = useState(() => new Date())
   const [selectedSchedule, setSelectedSchedule] = useState(null)
   const [activeTab, setActiveTab] = useState("avaliacao")
   const [activeTestEvent, setActiveTestEvent] = useState(null) // Renamed from selectedTestEvent to be clear it's global/active
   const { sessions, activities, areas, staff, classes, isLoading } = useEvaluationData()
+
+  useEffect(() => {
+    const breadcrumbItems = [{ title: "Avaliação", link: "/evaluation" }]
+    props.setBreadcrumbItems("Avaliação", breadcrumbItems)
+  }, [props.setBreadcrumbItems])
 
   useEffect(() => {
     const loadTestEvent = async () => {
@@ -122,4 +130,4 @@ const Evaluation = () => {
 }
 
 
-export default Evaluation
+export default connect(null, { setBreadcrumbItems })(Evaluation)

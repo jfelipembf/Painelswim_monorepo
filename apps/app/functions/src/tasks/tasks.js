@@ -62,6 +62,8 @@ exports.completeTask = functions.region("us-central1").https.onCall(async (data,
     return { success: true };
 });
 
+const { sendWhatsAppMessageInternal } = require("../notifications/whatsapp");
+
 /**
  * Cria uma nova tarefa com auditoria.
  */
@@ -113,6 +115,48 @@ exports.createTask = functions.region("us-central1").https.onCall(async (data, c
         });
     } catch (auditError) {
         console.error("Falha silenciosa na auditoria de criação de tarefa:", auditError);
+    }
+
+    // --- Notificação WhatsApp para Staffs Selecionados ---
+    if (Array.isArray(assignedStaffIds) && assignedStaffIds.length > 0) {
+        console.log(`Iniciando notificações para ${assignedStaffIds.length} staffs. IDs:`, assignedStaffIds);
+        try {
+            const dateFormatted = new Date(dueDate).toLocaleDateString('pt-BR');
+            const studentInfo = clientName ? ` (Vínculo: ${clientName})` : "";
+
+            for (const staffId of assignedStaffIds) {
+                const staffSnap = await db
+                    .collection("tenants")
+                    .doc(idTenant)
+                    .collection("branches")
+                    .doc(idBranch)
+                    .collection("staff")
+                    .doc(staffId)
+                    .get();
+
+                if (staffSnap.exists) {
+                    const staffData = staffSnap.data();
+                    const phone = staffData.phone || staffData.whatsapp || staffData.mobile;
+
+                    if (phone) {
+                        const message = `🔔 *Nova Tarefa Atribuída*\n\nOlá ${staffData.firstName || 'colaborador'},\n\nUma nova tarefa foi atribuída a você no Painel Swim:\n\n*Descrição:* ${description}${studentInfo}\n*Prazo:* ${dateFormatted}\n\nPor favor, verifique seu dashboard para mais detalhes.`;
+
+                        console.log(`Enviando WhatsApp para staff ${staffId} no número ${phone}`);
+                        await sendWhatsAppMessageInternal(idTenant, idBranch, phone, message, "evolution_financial")
+                            .then(() => console.log(`WhatsApp enviado com sucesso para staff ${staffId}`))
+                            .catch(err => console.error(`Erro ao enviar WhatsApp para staff ${staffId}:`, err.message));
+                    } else {
+                        console.log(`Staff ${staffId} não possui telefone cadastrado.`);
+                    }
+                } else {
+                    console.log(`Documento do staff ${staffId} não encontrado em Firestore.`);
+                }
+            }
+        } catch (notifErr) {
+            console.error("Erro geral no gatilho de notificação de tarefa:", notifErr);
+        }
+    } else {
+        console.log("Nenhum staff atribuído para notificação.");
     }
 
     return { id: docRef.id, ...payload };

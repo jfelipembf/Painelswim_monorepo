@@ -85,6 +85,14 @@ const SideMenu = ({
         {items?.length ? (
           <ListGroup flush className="side-menu__list">
             {items.map((item, index) => {
+              if (item.isHeader) {
+                return (
+                  <ListGroupItem key={item.id} className="border-0 px-2 py-2 bg-light">
+                    <small className="fw-bold text-uppercase text-muted">{item.title}</small>
+                  </ListGroupItem>
+                )
+              }
+
               const isActive = item.id === selectedId
               return (
                 <ListGroupItem

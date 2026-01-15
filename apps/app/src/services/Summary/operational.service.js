@@ -138,3 +138,24 @@ export const getBirthdaySummary = async () => {
         return []
     }
 }
+
+/**
+ * Busca o resumo diário de vencimentos (cache).
+ */
+export const getExpirationSummary = async () => {
+    const db = requireDb()
+    const ctx = requireBranchContext()
+
+    try {
+        const ref = doc(db, "tenants", ctx.idTenant, "branches", ctx.idBranch, "operationalSummary", "expirations")
+        const snap = await getDoc(ref)
+
+        if (snap.exists()) {
+            return snap.data().list || []
+        }
+        return []
+    } catch (error) {
+        console.error("Error fetching expiration summary:", error)
+        return []
+    }
+}

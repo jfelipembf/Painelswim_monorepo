@@ -35,8 +35,22 @@ const sendWhatsAppMessageInternal = async (idTenant, idBranch, phone, message, i
     // Format phone: remove non-numeric chars
     let formattedPhone = phone.replace(/\D/g, "");
 
-    // Brazilian Phone Check: If 10 or 11 digits (e.g., 11999999999 or 1133333333), prepend 55
+    // Brazilian Phone Check & WhatsApp ID Formatting
+    // Brazilian numbers have 10 (fixed) or 11 (mobile) digits.
+    // However, WhatsApp IDs (JID) for many Brazilian regions (DDD >= 31)
+    // often DO NOT include the 9th digit, even if the phone number does.
     if (formattedPhone.length === 10 || formattedPhone.length === 11) {
+        if (formattedPhone.length === 11) {
+            const ddd = parseInt(formattedPhone.substring(0, 2), 10);
+            const ninthDigit = formattedPhone.charAt(2);
+
+            // DDDs 11-28 follow the 9-digit rule on WhatsApp.
+            // DDDs >= 31 usually use 8 digits in the JID.
+            if (ddd >= 31 && ninthDigit === "9") {
+                console.log(`WhatsAppService: Removendo o nono dígito para DDD ${ddd} (JID optimization)`);
+                formattedPhone = formattedPhone.substring(0, 2) + formattedPhone.substring(3);
+            }
+        }
         formattedPhone = "55" + formattedPhone;
     }
 

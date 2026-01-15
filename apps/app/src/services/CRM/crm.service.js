@@ -26,7 +26,7 @@ export const loadCrmSegment = async (segmentId, filterDateStart, filterDateEnd) 
 
     switch (segmentId) {
         case "leads":
-            return listLeads(db, ctx)
+            return listLeads(db, ctx, filterDateStart, filterDateEnd)
         case "birthday":
             return listBirthdays(db, ctx, filterDateStart, filterDateEnd)
         case "active":
@@ -58,9 +58,22 @@ const mapDocs = snap => snap.docs.map(d => ({ id: d.id, ...d.data() }))
 /**
  * 01. Leads / Funil
  */
-export const listLeads = async (db, ctx) => {
+export const listLeads = async (db, ctx, start, end) => {
     const ref = clientsCol(db, ctx)
-    const q = query(ref, where("status", "==", "lead"), orderBy("createdAt", "desc"))
+    let q
+    if (start && end) {
+        // Firestore Timestamp comparison
+        q = query(
+            ref,
+            where("status", "==", "lead"),
+            where("createdAt", ">=", start),
+            where("createdAt", "<=", end),
+            orderBy("createdAt", "desc")
+        )
+    } else {
+        q = query(ref, where("status", "==", "lead"), orderBy("createdAt", "desc"))
+    }
+
     const snap = await getDocs(q)
     return snap.docs.map(d => {
         const data = d.data()
@@ -78,24 +91,49 @@ export const listLeads = async (db, ctx) => {
  * 02. Aniversariantes
  */
 export const listBirthdays = async (db, ctx, start, end) => {
-    // Busca todos os ativos (assumindo < 5000)
     const ref = clientsCol(db, ctx)
-    const q = query(ref, where("status", "==", "active"), orderBy("name", "asc"))
+    // Busca ativos e leads (aniversário pode ocorrer em ambos)
+    const q = query(ref, where("status", "in", ["active", "lead"]), orderBy("name", "asc"))
     const snap = await getDocs(q)
-    const allActive = mapDocs(snap)
+    const clients = mapDocs(snap)
 
-    let targetMonth = new Date().getMonth() + 1
-    if (start) {
-        targetMonth = start.getMonth() + 1
-    }
+    const isAfterOrEqual = (m1, d1, m2, d2) => m1 > m2 || (m1 === m2 && d1 >= d2)
+    const isBeforeOrEqual = (m1, d1, m2, d2) => m1 < m2 || (m1 === m2 && d1 <= d2)
 
-    return allActive.filter(c => {
+    return clients.filter(c => {
         if (!c.birthDate) return false
         const parts = c.birthDate.split("-")
         if (parts.length !== 3) return false
-        const m = Number(parts[1])
-        const d = Number(parts[2])
-        return m === targetMonth
+        const bM = Number(parts[1])
+        const bD = Number(parts[2])
+
+        if (start && end) {
+            const sM = start.getMonth() + 1
+            const sD = start.getDate()
+            const eM = end.getMonth() + 1
+            const eD = end.getDate()
+
+            // Se o período estiver dentro do mesmo "ciclo anual" (ex: Jan a Dez)
+            // ou se ele cruzar a virada do ano (ex: Dez a Jan)
+            const rangeWraps = sM > eM || (sM === eM && sD > eD)
+
+            if (!rangeWraps) {
+                // Período normal: início <= fim
+                return isAfterOrEqual(bM, bD, sM, sD) && isBeforeOrEqual(bM, bD, eM, eD)
+            } else {
+                // Período que cruza o ano: maior que início OU menor que fim
+                return isAfterOrEqual(bM, bD, sM, sD) || isBeforeOrEqual(bM, bD, eM, eD)
+            }
+        } else {
+            // Se sem filtro, mostra o mês atual
+            const targetMonth = new Date().getMonth() + 1
+            return bM === targetMonth
+        }
+    }).sort((a, b) => {
+        // Ordenação extra por dia/mês (já que o range pode quebrar a ordem alfabética de interesse)
+        const [, am, ad] = a.birthDate.split("-").map(Number)
+        const [, bm, bd] = b.birthDate.split("-").map(Number)
+        return (am * 100 + ad) - (bm * 100 + bd)
     }).map(c => {
         const [, m, d] = c.birthDate.split("-")
         return {

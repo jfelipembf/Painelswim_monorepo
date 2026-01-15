@@ -26,9 +26,9 @@ const Grade = props => {
   const { sessions, setSessions, activities, areas, staff, loading: loadingData } = useGradeData(referenceDate)
 
   useEffect(() => {
-    // A geração de sessões agora é centralizada no backend via Cloud Function agendada diariamente.
-    // Isso garante que o horizonte de 6 meses esteja sempre preenchido sem travar a navegação do usuário.
-  }, [])
+    const breadcrumbItems = [{ title: "Grade de Aulas", link: "/grade" }]
+    props.setBreadcrumbItems("Grade de Aulas", breadcrumbItems)
+  }, [props.setBreadcrumbItems])
 
   const weekStart = useMemo(() => getStartOfWeekSunday(referenceDate), [referenceDate])
 

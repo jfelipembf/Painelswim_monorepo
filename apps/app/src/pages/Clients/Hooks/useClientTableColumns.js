@@ -16,6 +16,7 @@ export const useClientTableColumns = ({ contractsByClient, profilePath }) => {
                             src={item.photo || placeholderAvatar}
                             alt={item.name}
                             className="rounded-circle"
+                            style={{ objectFit: 'cover', flexShrink: 0 }}
                             width="48"
                             height="48"
                         />

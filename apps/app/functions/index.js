@@ -10,13 +10,13 @@ if (!admin.apps.length) {
  * Cada função fica em um submódulo dentro de /src.
  */
 exports.processScheduledSuspensions =
-  require("./src/suspensions/processScheduledSuspensions");
+  require("./src/triggers/processScheduledSuspensions");
 exports.processScheduledCancellations =
-  require("./src/clientContracts/processScheduledCancellations");
+  require("./src/triggers/processScheduledCancellations");
 exports.processSuspensionEnds =
-  require("./src/suspensions/processSuspensionEnds");
+  require("./src/triggers/processSuspensionEnds");
 exports.processExpiredContracts =
-  require("./src/clientContracts/processExpiredContracts");
+  require("./src/triggers/processExpiredContracts");
 
 exports.generateSessionsOnClassCreate =
   require("./src/classes/generateSessionsOnClassCreate");
@@ -56,8 +56,8 @@ exports.funnelMonitorarPresencaExperimental = require("./src/leads/funnel").moni
 exports.funnelMonitorarRemocaoExperimental = require("./src/leads/funnel").monitorarRemocaoExperimental;
 
 // Financeiro
-exports.autoCloseCashier = require("./src/financial/autoClose").autoCloseCashier;
-exports.processContractDefaultCancellation = require("./src/financial/scheduledTasks").processContractDefaultCancellation;
+exports.autoCloseCashier = require("./src/triggers/autoCloseCashier");
+exports.processContractDefaultCancellation = require("./src/triggers/processContractDefaultCancellation");
 
 exports.onFinancialTransactionWrite = require("./src/financial/financialTriggers").onFinancialTransactionWrite;
 exports.onSaleWrite = require("./src/financial/financialTriggers").onSaleWrite;
@@ -95,7 +95,7 @@ exports.generateClassSessions = require("./src/classes/classes").generateClassSe
 exports.createClass = require("./src/classes/classes").createClass;
 exports.updateClass = require("./src/classes/manageClass").updateClass;
 exports.deleteClass = require("./src/classes/manageClass").deleteClass;
-exports.ensureSessionsHorizon = require("./src/classes/ensureSessionsHorizon");
+exports.ensureSessionsHorizon = require("./src/triggers/ensureSessionsHorizon");
 
 // Events
 exports.createEvent = require("./src/events/events").createEvent;
@@ -136,11 +136,13 @@ exports.sendWhatsAppMessage = require("./src/notifications/whatsapp").sendWhatsA
 exports.saveAutomation = require("./src/automations/automations").saveAutomation;
 exports.getAutomations = require("./src/automations/automations").getAutomations;
 exports.deleteAutomation = require("./src/automations/automations").deleteAutomation;
-exports.checkBirthdayAutomations = require("./src/automations/scheduled").checkBirthdayAutomations;
+exports.checkBirthdayAutomations = require("./src/triggers/checkBirthdayAutomations");
+exports.checkExperimentalClassAutomations = require("./src/triggers/checkExperimentalClassAutomations");
 
 // Tasks
 exports.completeTask = require("./src/tasks/tasks").completeTask;
 exports.createTask = require("./src/tasks/tasks").createTask;
+exports.checkExpiringContracts = require("./src/triggers/checkExpiringContracts");
 
 
 

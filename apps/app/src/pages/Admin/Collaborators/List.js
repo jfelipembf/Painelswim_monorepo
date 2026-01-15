@@ -51,6 +51,7 @@ const CollaboratorsList = ({ setBreadcrumbItems }) => {
               src={item.photo || placeholderAvatar}
               alt={item.name || `${item.firstName || ""} ${item.lastName || ""}`}
               className="rounded-circle"
+              style={{ objectFit: "cover", flexShrink: 0 }}
               width="48"
               height="48"
             />

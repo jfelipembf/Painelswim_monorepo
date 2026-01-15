@@ -19,33 +19,48 @@ const TenantRouter = ({ Layout }) => {
 
   const defaultPath = hasPermission("dashboards_management_view") ? "dashboard" : "dashboard/operational"
 
+  const fullScreenRoutes = userRoutes.filter(r => r.isFullScreen)
+  const standardRoutes = userRoutes.filter(r => !r.isFullScreen)
+
+  const getPath = (route) => route.path.startsWith("/") ? route.path.substring(1) : route.path
+
   return (
     <Authmiddleware>
-      <Layout>
-        <Routes>
-          {userRoutes
-            .filter(route => route.path !== "/")
-            .map((route, idx) => {
-              const normalizedPath = route.path.startsWith("/")
-                ? route.path.substring(1)
-                : route.path
+      <Routes>
+        {/* Full Screen Routes (No Layout) */}
+        {fullScreenRoutes.map((route, idx) => (
+          <Route
+            key={`fs-${idx}`}
+            path={getPath(route)}
+            element={
+              <ProtectedRoute permissions={route.permissions}>
+                {route.component}
+              </ProtectedRoute>
+            }
+          />
+        ))}
 
-              return (
+        {/* Standard Routes (Wrapped in Layout) */}
+        <Route path="*" element={
+          <Layout>
+            <Routes>
+              {standardRoutes.map((route, idx) => (
                 <Route
-                  key={idx}
-                  path={normalizedPath}
+                  key={`std-${idx}`}
+                  path={getPath(route)}
                   element={
                     <ProtectedRoute permissions={route.permissions}>
                       {route.component}
                     </ProtectedRoute>
                   }
                 />
-              )
-            })}
-          <Route index element={<Navigate to={defaultPath} replace />} />
-          <Route path="*" element={<Navigate to="/pages-404" replace />} />
-        </Routes>
-      </Layout>
+              ))}
+              <Route index element={<Navigate to={defaultPath} replace />} />
+              <Route path="*" element={<Navigate to="/pages-404" replace />} />
+            </Routes>
+          </Layout>
+        } />
+      </Routes>
     </Authmiddleware>
   )
 }

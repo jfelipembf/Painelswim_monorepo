@@ -5,7 +5,7 @@ import TaskModal from "./TaskModal";
 import { getAuthUser } from "../../../helpers/permission_helper";
 import { useToast } from "../../../components/Common/ToastProvider";
 
-const OperationalAlerts = ({ tasks = [], birthdays = [], refreshTasks, markTaskAsCompleted }) => {
+const OperationalAlerts = ({ tasks = [], birthdays = [], expirations = [], refreshTasks, markTaskAsCompleted }) => {
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA'));
     const toast = useToast();
@@ -30,16 +30,7 @@ const OperationalAlerts = ({ tasks = [], birthdays = [], refreshTasks, markTaskA
         return task.dueDate === selectedDate;
     });
 
-    const data = {
-        avisos: [
-            { id: "a1", title: "Manutenção Piscina B", info: "Das 08:00 às 12:00", date: "Amanhã" },
-            { id: "a2", title: "Novo Uniforme", info: "Retirada na recepção", date: "Jan" },
-            { id: "a3", title: "Dedetização", info: "Área externa", date: "Sáb" },
-        ],
-        // birthdays prop replaces static aniversariantes
-    };
-
-    const Column = ({ title, items, showDivider = true, isTasks = false, isBirthday = false }) => {
+    const Column = ({ title, items, showDivider = true, isTasks = false, isBirthday = false, isExpiration = false }) => {
         return (
             <Col md={4} className={showDivider ? "border-end" : ""}>
                 <div className="p-3">
@@ -87,9 +78,18 @@ const OperationalAlerts = ({ tasks = [], birthdays = [], refreshTasks, markTaskA
                                                 />
                                             )}
 
+                                            {(isBirthday || isExpiration) && item.photo && (
+                                                <img
+                                                    src={item.photo}
+                                                    alt=""
+                                                    className="avatar-xs rounded-circle"
+                                                    style={{ objectFit: "cover" }}
+                                                />
+                                            )}
+
                                             <div style={{ opacity: item.status === 'completed' ? 0.6 : 1, width: '100%' }}>
                                                 <div className="d-flex justify-content-between">
-                                                    <span className="date mb-1">{item.dueDate || item.date}</span>
+                                                    <span className="date mb-1">{item.dueDate || item.date || item.endDate}</span>
                                                     {isBirthday && (
                                                         <span>
                                                             {item.messageSent === true && <i className="mdi mdi-check-circle text-success" title="Mensagem Enviada"></i>}
@@ -101,7 +101,7 @@ const OperationalAlerts = ({ tasks = [], birthdays = [], refreshTasks, markTaskA
                                                 <span className={`activity-text fw-bold d-block ${item.status === 'completed' ? 'text-decoration-line-through' : ''}`}>
                                                     {item.description || item.title || item.name}
                                                 </span>
-                                                <p className="text-muted small mb-0">{item.info || item.role || ""}</p>
+                                                <p className="text-muted small mb-0">{item.info || item.role || item.contractTitle || ""}</p>
                                             </div>
                                         </div>
                                     </li>
@@ -120,7 +120,7 @@ const OperationalAlerts = ({ tasks = [], birthdays = [], refreshTasks, markTaskA
                 <CardBody className="p-0">
                     <Row className="g-0">
                         <Column title="Tarefas" items={filteredTasks} isTasks={true} />
-                        <Column title="Avisos" items={data.avisos} />
+                        <Column title="Vencimentos" items={expirations} isExpiration={true} />
                         <Column title="Aniversários" items={birthdays} showDivider={false} isBirthday={true} />
                     </Row>
                 </CardBody>

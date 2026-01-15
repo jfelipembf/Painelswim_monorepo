@@ -148,6 +148,7 @@
   height: 36px;
   width: 36px;
   background-color: var(--#{$prefix}tertiary-bg);
+  object-fit: cover;
 }
 
 .noti-icon {
