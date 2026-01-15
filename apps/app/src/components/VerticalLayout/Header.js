@@ -12,22 +12,37 @@ import ProfileMenu from "../CommonForBoth/TopbarDropdown/ProfileMenu"
 import logoSwim from "../../assets/images/logoSwim.png"
 import logoIcon from "../../assets/images/logoIcon.png"
 
+// Import Global Search
+import GlobalClientSearch from "../CommonForBoth/GlobalClientSearch"
+
+import ClientAddModal from "../../pages/Clients/Components/ClientAddModal"
+import ClientExtraFields from "../../pages/Clients/Components/ClientExtraFields"
+import { useClientListActions } from "../../pages/Clients/Hooks/useClientListActions"
+
 const Header = ({ title, breadcrumbItems, toggleMenuCallback }) => {
   const items = breadcrumbItems || []
   const breadcrumbPath = items.map(item => item.title).join(" / ")
+
+  const {
+    modalOpen: clientModalOpen,
+    setModalOpen: setClientModalOpen,
+    handleModalSubmit: handleClientSubmit,
+    isLoading: isClientSubmitting,
+    uploading: clientUploading
+  } = useClientListActions({})
 
   return (
     <React.Fragment>
       <header id="page-topbar">
         <div className="navbar-header">
           <div className="d-flex align-items-center flex-wrap">
-            <div className="navbar-brand-box">
+            <div className="navbar-brand-box" style={{ backgroundColor: '#ffffff' }}>
               <div className="logo">
                 <span className="logo-lg">
-                  <img src={logoSwim} alt="Swim" className="brand-logo" />
+                  <img src={logoSwim} alt="Swim" className="brand-logo" style={{ filter: 'none' }} />
                 </span>
                 <span className="logo-sm">
-                  <img src={logoIcon} alt="Swim" className="brand-logo" style={{ filter: "brightness(0) invert(1)", height: "24px" }} />
+                  <img src={logoIcon} alt="Swim" className="brand-logo" style={{ height: "24px", filter: 'none' }} />
                 </span>
               </div>
             </div>
@@ -49,12 +64,30 @@ const Header = ({ title, breadcrumbItems, toggleMenuCallback }) => {
             )}
 
           </div>
-          <div className="d-flex">
-            <ProfileMenu />
+          <div className="d-flex align-items-center">
+            {/* Global Search */}
+            <GlobalClientSearch />
 
+            <button
+              type="button"
+              onClick={() => setClientModalOpen(true)}
+              className="btn header-item waves-effect"
+              id="page-header-user-dropdown"
+            >
+              <i className="mdi mdi-account-plus-outline font-size-22" />
+            </button>
+
+            <ProfileMenu />
           </div>
         </div>
       </header>
+      <ClientAddModal
+        isOpen={clientModalOpen}
+        toggle={() => setClientModalOpen(!clientModalOpen)}
+        onSubmit={handleClientSubmit}
+        renderExtra={props => <ClientExtraFields {...props} />}
+        submitting={isClientSubmitting || clientUploading}
+      />
     </React.Fragment>
   )
 }

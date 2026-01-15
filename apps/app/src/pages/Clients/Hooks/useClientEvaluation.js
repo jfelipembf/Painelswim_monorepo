@@ -34,11 +34,29 @@ export const useClientEvaluation = (clientId) => {
     // Como o service retorna DESC, exibimos invertendo para que a mais recente fique à direita.
     const visibleEvaluations = useMemo(() => {
         const latest = (normalized || []).slice(0, 5)
-        return latest.slice().reverse()
+        return latest // Newest first (Left)
     }, [normalized])
 
     // construir árvore de objetivos -> tópicos
     const objectives = useMemo(() => buildEvaluationObjectives(visibleEvaluations), [visibleEvaluations])
+
+    // Carregar configurações de níveis
+    const [levelsConfig, setLevelsConfig] = useState([])
+
+    useEffect(() => {
+        let mounted = true
+        const loadLevels = async () => {
+            try {
+                const { listEvaluationLevels } = require("../../../services/EvaluationLevels/evaluationLevels.service")
+                const data = await listEvaluationLevels()
+                if (mounted) setLevelsConfig(Array.isArray(data) ? data : [])
+            } catch (e) {
+                console.error("Erro ao carregar níveis", e)
+            }
+        }
+        loadLevels()
+        return () => { mounted = false }
+    }, [])
 
     return {
         showHistory,
@@ -46,6 +64,7 @@ export const useClientEvaluation = (clientId) => {
         loading,
         visibleEvaluations,
         objectives,
-        evaluations // exposing if needed
+        evaluations,
+        levelsConfig // Exposed
     }
 }

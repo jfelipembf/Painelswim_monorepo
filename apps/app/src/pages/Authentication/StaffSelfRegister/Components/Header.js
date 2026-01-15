@@ -4,23 +4,25 @@ import logoSwim from "../../../../assets/images/logoSwim.png"
 
 const Header = () => {
     return (
-        <div className="bg-primary">
-            <Row className="align-items-center">
-                <Col xs={4} className="text-center ps-4">
+        <div className="bg-primary py-3">
+            <Row className="align-items-center justify-content-center m-0">
+                <Col xs={5} className="d-flex justify-content-end pe-4">
                     <img
                         src={logoSwim}
                         alt="Logo"
                         className="img-fluid"
                         style={{
                             filter: 'brightness(0) invert(1)',
-                            maxHeight: '100px'
+                            height: '80px', // Same as Kiosk
+                            width: 'auto',
+                            objectFit: 'contain'
                         }}
                     />
                 </Col>
-                <Col xs={8}>
-                    <div className="text-white p-3">
-                        <h4 className="text-white font-size-12">Bem-vindo(a)!</h4>
-                        <p className="text-white-50 mb-0">Cadastre-se para acessar o Painel.</p>
+                <Col xs={7} className="border-start border-white border-opacity-25 ps-4 d-flex align-items-center">
+                    <div className="text-white">
+                        <h4 className="text-white fw-bold mb-1" style={{ fontSize: '1.5rem' }}>Bem-vindo(a)!</h4>
+                        <p className="text-white-50 mb-0 font-size-14">Cadastre-se para acessar o Painel.</p>
                     </div>
                 </Col>
             </Row>

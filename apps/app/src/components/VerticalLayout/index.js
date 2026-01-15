@@ -21,7 +21,6 @@ import { createSelector } from 'reselect';
 // Layout Related Components
 import Header from "./Header"
 import Sidebar from "./Sidebar"
-import Footer from "./Footer"
 import Rightbar from "../CommonForBoth/Rightbar"
 
 import ForcePasswordChangeModal from "../Common/ForcePasswordChangeModal"
@@ -172,7 +171,6 @@ const Layout = (props) => {
               {props.children}
             </Container>
           </div>
-          <Footer />
         </div>
       </div>
       {props.showRightSidebar ? <Rightbar /> : null}

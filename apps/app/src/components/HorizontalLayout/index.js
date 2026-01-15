@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import React, { useEffect,useState } from "react"
+import React, { useEffect, useState } from "react"
 import { connect } from "react-redux"
 import withRouter from 'components/Common/withRouter';
 import { Container } from "reactstrap";
@@ -16,7 +16,6 @@ import {
 import Header from "./Header"
 import Breadcrumb from "../../components/Common/Breadcrumb";
 import Navbar from "./Navbar";
-import Footer from "./Footer";
 import Rightbar from "../CommonForBoth/Rightbar"
 
 import { useSelector, useDispatch } from "react-redux";
@@ -33,7 +32,7 @@ const Layout = (props) => {
       topbarTheme: layout.topbarTheme,
       layoutWidth: layout.layoutWidth,
       layoutColor: layout.layoutColor,
-      layoutMode:layout.layoutMode
+      layoutMode: layout.layoutMode
     })
   );
   const {
@@ -70,15 +69,15 @@ const Layout = (props) => {
         dispatch(showRightSidebarAction(false));
       }
     };
-  
+
     //init body click event fot toggle rightbar
     document.body.addEventListener("click", hideRightbar, true);
-  
+
     // Cleanup the event listener on component unmount
     return () => {
       document.body.removeEventListener("click", hideRightbar, true);
     };
-  }, [dispatch]); 
+  }, [dispatch]);
 
   /*
   layout settings
@@ -117,9 +116,9 @@ const Layout = (props) => {
   };
 
 
-    return (
-      <React.Fragment>
-        {/* <div id="preloader">
+  return (
+    <React.Fragment>
+      {/* <div id="preloader">
           <div id="status">
             <div className="spinner-chase">
               <div className="chase-dot"></div>
@@ -132,41 +131,40 @@ const Layout = (props) => {
           </div>
         </div> */}
 
-        <div id="layout-wrapper">
-          <header id="page-topbar">
-            <Header theme={topbarTheme}
-                    isMenuOpened={isMenuOpened}
-                    openLeftMenuCallBack={openMenu} 
-                    />
-            <div className="top-navigation">
-              <div className="page-title-content">
-                <Container fluid>
-                  <Breadcrumb />
-                </Container>
-              </div>
-              <Navbar menuOpen={isMenuOpened}/>
-            </div>
-          </header>
-          <div className="main-content">
-            <div className="page-content">
+      <div id="layout-wrapper">
+        <header id="page-topbar">
+          <Header theme={topbarTheme}
+            isMenuOpened={isMenuOpened}
+            openLeftMenuCallBack={openMenu}
+          />
+          <div className="top-navigation">
+            <div className="page-title-content">
               <Container fluid>
-                {props.children}
-                <Footer />
+                <Breadcrumb />
               </Container>
             </div>
+            <Navbar menuOpen={isMenuOpened} />
+          </div>
+        </header>
+        <div className="main-content">
+          <div className="page-content">
+            <Container fluid>
+              {props.children}
+            </Container>
           </div>
         </div>
-        {props.showRightSidebar ? <Rightbar /> : null}
-      </React.Fragment>
-    )
-  }
+      </div>
+      {props.showRightSidebar ? <Rightbar /> : null}
+    </React.Fragment>
+  )
+}
 
 
 Layout.propTypes = {
   changeLayout: PropTypes.func,
   changeLayoutWidth: PropTypes.func,
   changeTopbarTheme: PropTypes.func,
-  changeMode:PropTypes.func,
+  changeMode: PropTypes.func,
   children: PropTypes.object,
   isPreloader: PropTypes.any,
   layoutWidth: PropTypes.any,

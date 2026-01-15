@@ -4,7 +4,6 @@ import { connect } from "react-redux"
 
 import BasicTable from "../../../components/Common/BasicTable"
 import { setBreadcrumbItems } from "../../../store/actions"
-import BasicModalForm from "../../../components/Common/BasicModalForm"
 import { useNavigate, useParams } from "react-router-dom"
 import { createStaff, listStaff, useStaffPhotoUpload } from "../../../services/Staff/index"
 import { listRoles } from "../../../services/Roles/index"
@@ -13,6 +12,7 @@ import { useToast } from "components/Common/ToastProvider"
 import { PLACEHOLDER_AVATAR as placeholderAvatar } from "../../Clients/Constants/defaults"
 import PageLoader from "../../../components/Common/PageLoader"
 import { useLoading } from "../../../hooks/useLoading"
+import CollaboratorAddModal from "./Components/CollaboratorAddModal"
 
 const CollaboratorsList = ({ setBreadcrumbItems }) => {
   const [modalOpen, setModalOpen] = useState(false)
@@ -30,8 +30,6 @@ const CollaboratorsList = ({ setBreadcrumbItems }) => {
     }
     return "/collaborators/profile"
   }, [tenant, branch])
-
-
 
   const computeAge = birthDate => {
     if (!birthDate) return ""
@@ -88,6 +86,7 @@ const CollaboratorsList = ({ setBreadcrumbItems }) => {
       {
         key: "phone",
         label: "Telefone",
+        render: item => item.phone || "-" // Safe access
       },
       {
         key: "email",
@@ -144,68 +143,6 @@ const CollaboratorsList = ({ setBreadcrumbItems }) => {
     loadRoles()
   }, [toast])
 
-  const renderExtraFields = ({ updateField, formData }) => (
-    <>
-      <h6 className="fw-semibold mb-3">Informações profissionais</h6>
-      <Row className="g-3">
-        <Col md="6">
-          <FormGroup>
-            <Label>Cargo</Label>
-            <Input
-              type="select"
-              value={formData.roleId || ""}
-              onChange={e => {
-                updateField("roleId", e.target.value)
-                const selected = roles.find(r => r.id === e.target.value)
-                updateField("roleTitle", selected?.label || "")
-              }}
-            >
-              <option value="">{isLoading('roles') ? "Carregando..." : "Selecione um cargo"}</option>
-              {roles.map(r => (
-                <option key={r.id} value={r.id}>
-                  {r.label}
-                </option>
-              ))}
-            </Input>
-          </FormGroup>
-        </Col>
-        <Col md="6">
-          <FormGroup>
-            <Label>Data de contratação</Label>
-            <Input type="date" onChange={e => updateField("hireDate", e.target.value)} />
-          </FormGroup>
-        </Col>
-        <Col md="6">
-          <FormGroup>
-            <Label>Conselho de classe</Label>
-            <Input onChange={e => updateField("council", e.target.value)} />
-          </FormGroup>
-        </Col>
-        <Col md="6">
-          <FormGroup>
-            <Label>Regime</Label>
-            <Input type="select" onChange={e => updateField("employmentType", e.target.value)}>
-              <option value="">Selecione</option>
-              <option value="clt">CLT</option>
-              <option value="pj">PJ</option>
-            </Input>
-          </FormGroup>
-        </Col>
-        <Col md="6">
-          <FormGroup>
-            <Label>Salário base</Label>
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              onChange={e => updateField("salary", e.target.value)}
-            />
-          </FormGroup>
-        </Col>
-      </Row>
-    </>
-  )
-
   const handleModalSubmit = async data => {
     try {
       await withLoading('submit', async () => {
@@ -257,13 +194,13 @@ const CollaboratorsList = ({ setBreadcrumbItems }) => {
               onNewClick={() => setModalOpen(true)}
               loading={isLoading('page')}
             />
-            <BasicModalForm
+            <CollaboratorAddModal
               isOpen={modalOpen}
               toggle={() => setModalOpen(false)}
-              title="Novo colaborador"
               onSubmit={handleModalSubmit}
               submitting={isLoading('submit') || uploading}
-              renderExtra={renderExtraFields}
+              roles={roles}
+              isLoadingRoles={isLoading('roles')}
             />
           </>
         )}

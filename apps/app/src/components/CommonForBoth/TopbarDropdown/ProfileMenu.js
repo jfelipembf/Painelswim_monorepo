@@ -53,6 +53,7 @@ const ProfileMenu = props => {
     userData?.staff?.photo ||
     userData?.photoURL ||
     userData?.photoUrl
+  const email = userData?.staff?.email || userData?.email || ""
 
   return (
     <React.Fragment>
@@ -70,7 +71,6 @@ const ProfileMenu = props => {
           id="page-header-user-dropdown"
           tag="button"
         >
-          <span className="d-none d-sm-inline fw-semibold text-dark">{displayName}</span>
           {avatar ? (
             <img
               className="rounded-circle header-profile-user"
@@ -82,6 +82,10 @@ const ProfileMenu = props => {
               <i className="mdi mdi-account font-size-20 text-secondary" />
             </div>
           )}
+          <div className="text-start d-none d-sm-block" style={{ lineHeight: '1.2' }}>
+            <span className="d-block fw-bold text-dark font-size-14">{displayName}</span>
+            <small className="d-block text-muted" style={{ fontSize: '11px' }}>{email}</small>
+          </div>
         </DropdownToggle>
         <DropdownMenu className="dropdown-menu-end">
           <div className="px-3 pb-2 d-sm-none">

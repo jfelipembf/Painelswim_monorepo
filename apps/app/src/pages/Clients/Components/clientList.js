@@ -1,9 +1,11 @@
+// Import ClientAddModal
+import ClientAddModal from "./ClientAddModal"
 import React, { useEffect } from "react"
 import { Row, Col } from "reactstrap"
 import { connect } from "react-redux"
 
 import BasicTable from "../../../components/Common/BasicTable"
-import BasicModalForm from "../../../components/Common/BasicModalForm"
+// BasicModalForm removed or kept if needed by other things not shown here
 import PageLoader from "../../../components/Common/PageLoader"
 import { setBreadcrumbItems } from "../../../store/actions"
 
@@ -48,14 +50,12 @@ const ClientsList = ({ setBreadcrumbItems }) => {
               onRowClick={handleRowClick}
               loading={loadingPage}
             />
-            <BasicModalForm
+            <ClientAddModal
               isOpen={modalOpen}
               toggle={() => setModalOpen(false)}
-              title="Novo cliente"
               onSubmit={handleModalSubmit}
               renderExtra={(props) => <ClientExtraFields {...props} />}
               submitting={isSubmitting || uploading}
-              extraSubmitDisabled={uploading}
             />
           </>
         )}

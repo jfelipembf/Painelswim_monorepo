@@ -10,7 +10,8 @@ const ClientEvaluation = ({ clientId }) => {
   const {
     loading,
     visibleEvaluations,
-    objectives
+    objectives,
+    levelsConfig
   } = useClientEvaluation(clientId)
 
   if (loading) {
@@ -31,6 +32,10 @@ const ClientEvaluation = ({ clientId }) => {
     )
   }
 
+  // Calculate max possible value from levels config (e.g. 4 for 0-4 scale)
+  const maxLevel = levelsConfig.find(l => l.value === Math.max(...levelsConfig.map(x => x.value)))
+  const maxValue = maxLevel ? Number(maxLevel.value) : 0
+
   return (
     <Card className="shadow-sm client-evaluation">
       <CardHeader className="d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -48,31 +53,74 @@ const ClientEvaluation = ({ clientId }) => {
               <tr>
                 <th style={{ minWidth: 260 }}># / Objetivos e tópicos</th>
                 {visibleEvaluations.map(ass => (
-                  <th key={ass.id} className="text-center">
+                  <th key={ass.id} className="text-center" style={{ minWidth: 150 }}>
                     {ass.label}
                   </th>
                 ))}
+              </tr>
+              {/* Progress Bar Row */}
+              <tr>
+                <th className="text-end text-muted small fw-normal">Progresso Geral</th>
+                {visibleEvaluations.map(ass => {
+                  let totalPoints = 0
+                  let totalTopics = 0
+
+                  // Iterate over all objectives/topics to calculate score for THIS evaluation (ass)
+                  objectives.forEach(obj => {
+                    obj.topics.forEach(topic => {
+                      totalTopics++
+                      const result = ass.topics.find(t => t.idTopic === topic.id)
+                      const val = Number(result?.levelValue || 0)
+                      totalPoints += val
+                    })
+                  })
+
+                  const maxPossible = totalTopics * maxValue
+                  const ratio = maxPossible > 0 ? totalPoints / maxPossible : 0
+                  const percentage = Math.round(ratio * 100)
+
+                  return (
+                    <th key={`progress-${ass.id}`} className="text-center p-2">
+                      <div className="d-flex align-items-center justify-content-center gap-2">
+                        <div className="progress flex-grow-1" style={{ height: '6px', maxWidth: '100px', backgroundColor: '#e9ecef' }}>
+                          <div
+                            className="progress-bar rounded-pill"
+                            role="progressbar"
+                            style={{
+                              width: `${percentage}%`,
+                              backgroundColor: percentage >= 85 ? '#10b981' : '#3b82f6' // Green if >= 85, else Blue
+                            }}
+                            aria-valuenow={percentage}
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                          ></div>
+                        </div>
+                        <span className="small fw-bold text-muted">{percentage}%</span>
+                      </div>
+                    </th>
+                  )
+                })}
               </tr>
             </thead>
             <tbody>
               {objectives.map(obj => (
                 <React.Fragment key={obj.id}>
                   <tr className="table-active">
-                    <td colSpan={visibleEvaluations.length + 1} className="fw-semibold">
+                    <td colSpan={visibleEvaluations.length + 1} className="fw-semibold text-uppercase font-size-12 text-muted">
                       {obj.index}. {obj.title}
                     </td>
                   </tr>
                   {obj.topics.map((topic, idx) => (
                     <tr key={topic.key || topic.id}>
                       <td>
-                        <div className="fw-semibold">{`${obj.index}.${idx + 1} ${topic.description} `}</div>
+                        <div className="fw-semibold text-dark">{topic.description}</div>
                       </td>
                       {visibleEvaluations.map(ass => {
                         const result = ass.topics.find(t => t.idTopic === topic.id)
                         const color = getLevelColor(result?.levelValue || 0)
                         return (
-                          <td key={`${ass.id} -${topic.id} `} className="text-center">
-                            <Badge color={color} pill className="text-wrap">
+                          <td key={`${ass.id}-${topic.id}`} className="text-center">
+                            <Badge color={color} pill className="text-wrap px-2">
                               {result?.levelLabel || "Não avaliado"}
                             </Badge>
                           </td>
@@ -84,7 +132,7 @@ const ClientEvaluation = ({ clientId }) => {
               ))}
               {!objectives.length && (
                 <tr>
-                  <td colSpan={visibleEvaluations.length + 1} className="text-muted">
+                  <td colSpan={visibleEvaluations.length + 1} className="text-muted text-center py-4">
                     Nenhuma avaliação registrada.
                   </td>
                 </tr>
