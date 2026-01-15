@@ -53,10 +53,7 @@ const Login = props => {
     dispatch(socialLogin(type, props.router.navigate));
   };
 
-  //for facebook and google authentication
-  const socialResponse = type => {
-    signIn(type);
-  };
+
 
 
   return (
