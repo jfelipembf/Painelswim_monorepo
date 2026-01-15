@@ -142,7 +142,7 @@ class MonthlyEarnings extends Component {
       : monthlyComparison[monthlyComparison.length - 1] // fallback
     return (
       <React.Fragment>
-        <Card className="h-100 shadow-sm" style={{ minHeight: "460px" }}>
+        <Card className="h-100 shadow-sm monthly-earnings-card">
           <CardBody>
             <h4 className="card-title mb-4">Faturamento Mensal</h4>
 
@@ -161,6 +161,16 @@ class MonthlyEarnings extends Component {
               <ReactApexChart options={this.state.options} series={this.state.series} type="bar" height="300" />
             </div>
           </CardBody>
+          <style>{`
+            .monthly-earnings-card {
+                min-height: auto;
+            }
+            @media (min-width: 1200px) {
+                .monthly-earnings-card {
+                    min-height: 460px;
+                }
+            }
+          `}</style>
         </Card>
       </React.Fragment>
     )

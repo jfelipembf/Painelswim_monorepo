@@ -134,12 +134,12 @@ async function createStaffUserLogic(data, context) {
         });
 
         // Tentar enviar mensagem de boas-vindas
-        await sendWelcomeMessage(idTenant, idBranch, {
-            id: uid,
-            firstName,
-            email,
-            phone
-        });
+        // await sendWelcomeMessage(idTenant, idBranch, {
+        //     id: uid,
+        //     firstName,
+        //     email,
+        //     phone
+        // });
 
         // Registrar Log de Auditoria
         await saveAuditLog({

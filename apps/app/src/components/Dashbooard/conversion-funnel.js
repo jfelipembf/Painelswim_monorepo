@@ -235,8 +235,8 @@ const ConversionFunnel = ({ data, historicalData = [] }) => {
                   />
                 )}
               </Col>
-              <Col md="4" className="d-flex flex-column justify-content-center border-start">
-                <div className="ps-2">
+              <Col md="4" className="d-flex flex-column justify-content-center stats-column">
+                <div className="ps-2 stats-content">
                   {rates.map((r, idx) => (
                     <div key={idx} className="mb-4">
                       <div className="d-flex justify-content-between mb-1">
@@ -254,6 +254,22 @@ const ConversionFunnel = ({ data, historicalData = [] }) => {
           )}
         </div>
       </CardBody>
+      <style>{`
+        .stats-column {
+          border-left: 1px solid #eff2f7;
+        }
+        @media (max-width: 767px) {
+          .stats-column {
+            border-left: none;
+            border-top: 1px solid #eff2f7;
+            padding-top: 20px;
+            margin-top: 10px;
+          }
+           .stats-content {
+             padding-left: 0 !important;
+           }
+        }
+      `}</style>
     </Card>
   )
 }
