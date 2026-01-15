@@ -23,17 +23,9 @@ import Header from "./Header"
 import Sidebar from "./Sidebar"
 import Footer from "./Footer"
 import Rightbar from "../CommonForBoth/Rightbar"
-//Import Breadcrumb
-import Breadcrumb from "../Common/Breadcrumb"
-import useAcademies from "../../pages/Academies/hooks/useAcademies"
-import useTenant from "../../hooks/useTenant"
-import { Button } from "reactstrap"
-import { useNavigate } from "react-router-dom"
-
 const Layout = (props) => {
 
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   const selectLayoutState = (state) => state.Layout;
 
