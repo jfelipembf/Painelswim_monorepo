@@ -215,8 +215,11 @@ altera a sua senha por seguranca apos o primeiro acesso e tenha um otimo dia de 
  * Lógica para atualizar um usuário da equipe (Staff)
  */
 async function updateStaffUserLogic(data, context) {
+    console.log("[updateStaffUserLogic] Iniciando atualização. Data:", JSON.stringify(data));
+
     // Validação de contexto (Auth, Tenant, Branch)
     const { idTenant, idBranch } = requireAuthContext(data, context);
+    console.log("[updateStaffUserLogic] Contexto validado:", { idTenant, idBranch });
 
     const {
         id, // UID do usuário a ser atualizado
@@ -235,6 +238,7 @@ async function updateStaffUserLogic(data, context) {
     } = data;
 
     if (!id) {
+        console.error("[updateStaffUserLogic] ID ausente.");
         throw new functions.https.HttpsError(
             "invalid-argument",
             "O ID do colaborador é obrigatório para atualização."
@@ -253,8 +257,10 @@ async function updateStaffUserLogic(data, context) {
             .collection("staff")
             .doc(id);
 
+        console.log("[updateStaffUserLogic] Buscando doc Firestore:", staffRef.path);
         const staffSnap = await staffRef.get();
         if (!staffSnap.exists) {
+            console.error("[updateStaffUserLogic] Doc não encontrado.");
             throw new functions.https.HttpsError('not-found', 'Colaborador não encontrado para atualização.');
         }
         const currentData = staffSnap.data();
