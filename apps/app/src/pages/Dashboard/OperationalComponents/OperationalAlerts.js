@@ -69,7 +69,7 @@ const OperationalAlerts = ({ tasks = [], birthdays = [], refreshTasks, markTaskA
                             </Button>
                         )}
                     </div>
-                    <div style={{ height: "400px", overflowY: "auto" }} className="custom-scroll">
+                    <div style={{ maxHeight: "400px", minHeight: "200px", overflowY: "auto" }} className="custom-scroll">
                         <ol className="activity-feed mb-0 ps-3">
                             {items.length === 0 ? (
                                 <li className="text-muted small mt-2">Nada para exibir.</li>
@@ -116,7 +116,7 @@ const OperationalAlerts = ({ tasks = [], birthdays = [], refreshTasks, markTaskA
 
     return (
         <React.Fragment>
-            <Card style={{ height: "500px" }} className="shadow-sm border-0">
+            <Card style={{ minHeight: "500px" }} className="shadow-sm border-0 h-100">
                 <CardBody className="p-0">
                     <Row className="g-0">
                         <Column title="Tarefas" items={filteredTasks} isTasks={true} />

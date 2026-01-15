@@ -27,7 +27,7 @@ const OperationalDashboard = (props) => {
         <React.Fragment>
             <OperationalMiniWidgets reports={reports} isLoading={isLoading} />
 
-            <Row>
+            <Row className="mb-5 pb-5">
                 <Col xl="3" md="6">
                     <ExperimentalTracker experimentals={experimentals} isLoading={isLoading} />
                 </Col>
