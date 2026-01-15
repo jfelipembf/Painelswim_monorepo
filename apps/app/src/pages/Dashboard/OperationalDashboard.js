@@ -3,9 +3,9 @@ import { connect } from "react-redux"
 import { Row, Col } from "reactstrap"
 
 // Components
-import OperationalMiniWidgets from "./OperationalComponents/OperationalMiniWidgets"
-import ExperimentalTracker from "./OperationalComponents/ExperimentalTracker"
-import OperationalAlerts from "./OperationalComponents/OperationalAlerts"
+import OperationalMiniWidgets from "./Components/OperationalMiniWidgets"
+import ExperimentalTracker from "./Components/ExperimentalTracker"
+import OperationalAlerts from "./Components/OperationalAlerts"
 
 import { setBreadcrumbItems } from "../../store/actions"
 import { useOperationalDashboardLogic } from "./Hooks/useOperationalDashboardLogic"
