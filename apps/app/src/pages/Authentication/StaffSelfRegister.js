@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { Container, Row, Col, Card, CardBody, Form, Label, Input, FormFeedback, Button } from "reactstrap"
+import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "firebase/firestore"
+import { Container, Row, Col, Card, CardBody, Form, Label, Input, FormFeedback, Button, Spinner } from "reactstrap"
 import { useFormik } from "formik"
 import * as Yup from "yup"
 import InputMask from "react-input-mask"
@@ -17,10 +18,12 @@ import logoSwim from "../../assets/images/logoSwim.png"
 import bg from "../../assets/images/bg-1.png"
 
 const StaffSelfRegister = () => {
-    const { tenantId, branchId } = useParams()
+    const { tenant: tenantSlug, branch: branchSlug } = useParams()
     const navigate = useNavigate()
     const fileInputRef = useRef(null)
 
+    const [ids, setIds] = useState({ idTenant: null, idBranch: null })
+    const [loadingIds, setLoadingIds] = useState(true)
     const [loading, setLoading] = useState(false)
     const toast = useToast()
 
@@ -28,6 +31,41 @@ const StaffSelfRegister = () => {
     const [preview, setPreview] = useState(null)
     const [photoFile, setPhotoFile] = useState(null)
     const { uploadPhoto, uploading: uploadingPhoto } = useStaffPhotoUpload()
+    const db = getFirestore()
+
+    // Resolve Slugs to IDs
+    React.useEffect(() => {
+        const resolveContext = async () => {
+            try {
+                if (!tenantSlug || !branchSlug) return;
+                setLoadingIds(true)
+
+                // 1. Resolve Tenant Slug
+                const tenantSlugDoc = await getDoc(doc(db, "tenantsBySlug", tenantSlug))
+                if (!tenantSlugDoc.exists()) throw new Error("Academia não encontrada")
+                const idTenant = tenantSlugDoc.data().idTenant
+
+                // 2. Resolve Branch Slug
+                // Branch slugs are not globally unique, so we query within the tenant's branches
+                // Assuming branches have a 'slug' field. 
+                const branchesRef = collection(db, "tenants", idTenant, "branches")
+                const q = query(branchesRef, where("slug", "==", branchSlug))
+                const querySnapshot = await getDocs(q)
+
+                if (querySnapshot.empty) throw new Error("Unidade não encontrada")
+                const idBranch = querySnapshot.docs[0].id
+
+                setIds({ idTenant, idBranch })
+            } catch (err) {
+                console.error("Error resolving context:", err)
+                toast.show({ title: "Erro", description: "Link inválido ou expirado.", color: "danger" })
+                // navigate("/login") // Optional: redirect immediate or let them see the error
+            } finally {
+                setLoadingIds(false)
+            }
+        }
+        resolveContext()
+    }, [tenantSlug, branchSlug, db, toast]) // removed navigate to avoid loops if needed
 
     const auth = getAuth()
 
@@ -71,6 +109,11 @@ const StaffSelfRegister = () => {
                 .required("Confirmação de senha é obrigatória")
         }),
         onSubmit: async (values) => {
+            if (!ids.idTenant || !ids.idBranch) {
+                toast.show({ title: "Erro", description: "Contexto da academia não carregado.", color: "danger" })
+                return
+            }
+
             setLoading(true)
             try {
                 // 1. Create Auth User
@@ -83,7 +126,7 @@ const StaffSelfRegister = () => {
                     // We need to wait a bit or ensure the user is auth'd for storage rules, 
                     // but creating the user usually signs them in automatically.
                     photoUrl = await uploadPhoto(photoFile, {
-                        ctxOverride: { idTenant: tenantId, idBranch: branchId }
+                        ctxOverride: { idTenant: ids.idTenant, idBranch: ids.idBranch }
                     })
                 }
 
@@ -112,12 +155,12 @@ const StaffSelfRegister = () => {
                 }
 
                 await createStaff(staffData, {
-                    ctxOverride: { idTenant: tenantId, idBranch: branchId }
+                    ctxOverride: { idTenant: ids.idTenant, idBranch: ids.idBranch }
                 })
 
                 toast.show({ title: "Cadastro realizado com sucesso!", description: "Redirecionando para o login...", color: "success" })
                 setTimeout(() => {
-                    navigate("/login")
+                    navigate(`/${tenantSlug}/${branchSlug}/login`)
                 }, 3000)
 
             } catch (err) {
@@ -163,6 +206,14 @@ const StaffSelfRegister = () => {
             }
             reader.readAsDataURL(file)
         }
+    }
+
+    if (loadingIds) {
+        return (
+            <div className="d-flex justify-content-center align-items-center vh-100">
+                <Spinner color="primary" />
+            </div>
+        )
     }
 
     return (

@@ -111,7 +111,7 @@ const authRoutes = [
   { path: "/auth-lock-screen", component: <LockScreen /> },
 
   // Public Staff Registration
-  { path: "/simple-register/:tenantId/:branchId", component: <StaffSelfRegister /> },
+  { path: "/:tenant/:branch/simple-register", component: <StaffSelfRegister /> },
 ]
 
 export { userRoutes, authRoutes }
