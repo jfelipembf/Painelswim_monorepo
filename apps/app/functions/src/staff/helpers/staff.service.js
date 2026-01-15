@@ -229,8 +229,9 @@ async function updateStaffUserLogic(data, context) {
         status,
         phone,
         photo,
-        avatar,
+        avatar, // Legacy support handling
         isInstructor,
+        address
     } = data;
 
     if (!id) {
@@ -240,15 +241,42 @@ async function updateStaffUserLogic(data, context) {
         );
     }
 
-    const displayName = `${firstName} ${lastName || ""}`.trim();
     const now = FieldValue.serverTimestamp();
 
     try {
-        // 1. Sincronizar dados do Cargo (se roleId existir)
-        let finalRole = role;
-        let finalIsInstructor = isInstructor;
+        const staffRef = admin
+            .firestore()
+            .collection("tenants")
+            .doc(idTenant)
+            .collection("branches")
+            .doc(idBranch)
+            .collection("staff")
+            .doc(id);
 
-        if (roleId) {
+        const staffSnap = await staffRef.get();
+        if (!staffSnap.exists) {
+            throw new functions.https.HttpsError('not-found', 'Colaborador não encontrado para atualização.');
+        }
+        const currentData = staffSnap.data();
+
+        // 1. Garantir Integridade do Nome (DisplayName)
+        // Se um dos nomes não for enviado, usar o atual do banco para evitar "undefined"
+        const finalFirstName = firstName !== undefined ? firstName : (currentData.firstName || "");
+        const finalLastName = lastName !== undefined ? lastName : (currentData.lastName || "");
+        const displayName = `${finalFirstName} ${finalLastName}`.trim();
+
+        // 2. Normalizar Foto (Prioridade: photo > avatar > banco)
+        // Evita "fallback" confuso e duplicação desnecessária mantendo coerência
+        let finalPhoto = null;
+        if (photo !== undefined) finalPhoto = photo;
+        else if (avatar !== undefined) finalPhoto = avatar;
+        else finalPhoto = currentData.photo || currentData.avatar || null;
+
+        // 3. Sincronizar dados do Cargo
+        let finalRole = role !== undefined ? role : currentData.role || null;
+        let finalIsInstructor = isInstructor !== undefined ? !!isInstructor : (currentData.isInstructor || false);
+
+        if (roleId && roleId !== currentData.roleId) {
             const roleRef = admin.firestore()
                 .collection("tenants").doc(idTenant)
                 .collection("branches").doc(idBranch)
@@ -261,12 +289,13 @@ async function updateStaffUserLogic(data, context) {
             }
         }
 
-        // 2. Atualizar dados no Authentication (se necessário)
+        // 4. Atualizar Authentication (apenas se houver mudanças relevantes)
         const authUpdates = {};
-        if (email) authUpdates.email = email;
+        if (email && email !== currentData.email) authUpdates.email = email;
         if (password && password.length >= 6) authUpdates.password = password;
-        if (displayName) authUpdates.displayName = displayName;
-        if (status) authUpdates.disabled = status === "inactive";
+        if (displayName && displayName !== currentData.displayName) authUpdates.displayName = displayName;
+        if (status && (status === "inactive") !== currentData.disabled) authUpdates.disabled = status === "inactive";
+        if (finalPhoto && finalPhoto !== currentData.photo) authUpdates.photoURL = finalPhoto;
 
         if (Object.keys(authUpdates).length > 0) {
             try {
@@ -286,34 +315,27 @@ async function updateStaffUserLogic(data, context) {
             }
         }
 
-        // 3. Atualizar documento no Firestore
-        const staffRef = admin
-            .firestore()
-            .collection("tenants")
-            .doc(idTenant)
-            .collection("branches")
-            .doc(idBranch)
-            .collection("staff")
-            .doc(id);
-
-        // Preparar payload para Firestore (remove undefined)
+        // 5. Preparar Payload do Firestore (Sem undefined)
         const firestorePayload = {
-            firstName,
-            lastName,
-            displayName,
-            email,
-            phone: phone || null,
-            role: finalRole !== undefined ? finalRole : undefined,
-            roleId: roleId || undefined,
-            status: status || "active",
-            photo: photo !== undefined ? photo : (avatar !== undefined ? avatar : undefined),
-            avatar: photo !== undefined ? photo : (avatar !== undefined ? avatar : undefined),
-            isInstructor: finalIsInstructor !== undefined ? !!finalIsInstructor : undefined,
-            address: data.address || undefined,
+            firstName: finalFirstName,
+            lastName: finalLastName,
+            displayName, // Agora sempre correto
+            email: email !== undefined ? email : currentData.email,
+            phone: phone !== undefined ? phone : (currentData.phone || null),
+            role: finalRole,
+            roleId: roleId !== undefined ? roleId : (currentData.roleId || null),
+            status: status !== undefined ? status : (currentData.status || "active"),
+            photo: finalPhoto,
+            avatar: finalPhoto, // Mantém sincronizado para legado, mas com valor idêntico
+            isInstructor: finalIsInstructor,
+            address: address !== undefined ? address : (currentData.address || null),
             updatedAt: now,
         };
 
-        // Campos para remover (legacy address)
+        // Remove campos undefined para não gravar lixo (safety check)
+        Object.keys(firestorePayload).forEach(key => firestorePayload[key] === undefined && delete firestorePayload[key]);
+
+        // Campos legados para remover
         const fieldsToRemove = {
             zip: FieldValue.delete(),
             state: FieldValue.delete(),
@@ -323,10 +345,6 @@ async function updateStaffUserLogic(data, context) {
             complement: FieldValue.delete()
         };
 
-        // Remove chaves undefined do payload
-        Object.keys(firestorePayload).forEach(key => firestorePayload[key] === undefined && delete firestorePayload[key]);
-
-        // Merge payload e remoção de campos antigos
         await staffRef.set({ ...firestorePayload, ...fieldsToRemove }, { merge: true });
 
         // Registrar Log de Auditoria
@@ -339,7 +357,7 @@ async function updateStaffUserLogic(data, context) {
             description: `Atualizou os dados do colaborador ${displayName}`,
             metadata: {
                 updates: Object.keys(firestorePayload),
-                email
+                email: firestorePayload.email
             }
         });
 
