@@ -264,12 +264,26 @@ async function updateStaffUserLogic(data, context) {
         // 2. Atualizar dados no Authentication (se necessário)
         const authUpdates = {};
         if (email) authUpdates.email = email;
-        if (password) authUpdates.password = password;
+        if (password && password.length >= 6) authUpdates.password = password;
         if (displayName) authUpdates.displayName = displayName;
         if (status) authUpdates.disabled = status === "inactive";
 
         if (Object.keys(authUpdates).length > 0) {
-            await admin.auth().updateUser(id, authUpdates);
+            try {
+                await admin.auth().updateUser(id, authUpdates);
+            } catch (authError) {
+                console.error("Erro ao atualizar Auth:", authError);
+                if (authError.code === 'auth/user-not-found') {
+                    throw new functions.https.HttpsError('not-found', 'Usuário não encontrado no sistema de autenticação (Auth).');
+                }
+                if (authError.code === 'auth/email-already-exists') {
+                    throw new functions.https.HttpsError('already-exists', 'O email fornecido já está em uso por outro usuário.');
+                }
+                if (authError.code === 'auth/invalid-password') {
+                    throw new functions.https.HttpsError('invalid-argument', 'A senha deve ter pelo menos 6 caracteres.');
+                }
+                throw authError;
+            }
         }
 
         // 3. Atualizar documento no Firestore
