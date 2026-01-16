@@ -1,408 +1,304 @@
 import PropTypes from "prop-types"
-import React, { useCallback, useEffect, useRef } from "react"
-
-// //Import Scrollbar
+import React, { useCallback, useEffect, useRef, useMemo, useState } from "react"
 import SimpleBar from "simplebar-react"
-
-// MetisMenu
-import MetisMenu from "metismenujs"
 import withRouter from "components/Common/withRouter"
 import { Link } from "react-router-dom"
 import usePermissions from "../../hooks/usePermissions"
-
-//i18n
 import { withTranslation } from "react-i18next"
 
 const SidebarContent = props => {
-  const ref = useRef();
-  const { hasPermission, hasAnyPermission } = usePermissions();
+  const ref = useRef()
+  const { hasPermission, hasAnyPermission } = usePermissions()
 
+  // Estado para busca
+  const [searchText, setSearchText] = useState("")
 
-  // Funções helper recriadas para corrigir erro "not defined"
+  // Estado para controlar QUAIS menus estão abertos (Array de IDs)
+  const [expandedMenuItems, setExpandedMenuItems] = useState([])
+
   const tenant = props.router?.params?.tenant
   const branch = props.router?.params?.branch
   const basePath = tenant && branch ? `/${tenant}/${branch}` : ""
+  const currentPath = props.router.location.pathname
 
-  const buildPath = path => {
-    if (!basePath) return path
-    return `${basePath}${path}`
+  // --- 1. Utilitário de URL ---
+  const buildPath = useCallback((path) => {
+    if (!path || path === "#") return "#"
+    return `${basePath}${path}`.replace(/\/+/g, '/')
+  }, [basePath])
+
+  // --- 2. Configuração do Menu ---
+  const menuConfig = useMemo(() => [
+    {
+      id: "dashboard",
+      label: props.t("Dashboard"),
+      icon: "mdi mdi-view-dashboard-outline",
+      // Removemos link direto, é apenas um container agora
+      subMenu: [
+        { id: "operational", label: props.t("Operacional"), icon: "mdi mdi-view-dashboard-outline", link: "/dashboard/operational" },
+        { id: "management", label: props.t("Gerencial"), icon: "mdi mdi-chart-areaspline", link: "/dashboard", permission: "dashboards_management_view" },
+      ],
+    },
+    { id: "grade", label: "Grade", icon: "mdi mdi-table-large", link: "/grade", permission: "grade_manage" },
+    { id: "clients", label: "Clientes", icon: "mdi mdi-account-multiple-outline", link: "/clients/list", permission: "members_manage" },
+    { id: "trainings", label: "Treinos", icon: "mdi mdi-swim", link: "/training-planning", permission: "members_manage" },
+    {
+      id: "admin",
+      label: "Administrativos",
+      icon: "mdi mdi-office-building-outline",
+      anyPermission: ["collaborators_manage", "admin_activities", "admin_contracts", "admin_areas", "admin_roles", "admin_catalog", "admin_classes", "admin_settings"],
+      subMenu: [
+        { id: "collabs", label: "Colaboradores", link: "/collaborators/list", icon: "mdi mdi-account-multiple-check", permission: "collaborators_manage" },
+        { id: "activities", label: "Atividades", link: "/admin/activity", icon: "mdi mdi-clipboard-text-outline", permission: "admin_activities" },
+        { id: "contracts", label: "Contratos", link: "/admin/contracts", icon: "mdi mdi-file-document-outline", permission: "admin_contracts" },
+        { id: "classes", label: "Turmas", link: "/admin/classes", icon: "mdi mdi-account-clock-outline", permission: "admin_classes" },
+        { id: "areas", label: "Áreas", link: "/admin/areas", icon: "mdi mdi-map-marker-radius-outline", permission: "admin_areas" },
+        { id: "roles", label: "Cargos e Permissões", link: "/admin/roles", icon: "mdi mdi-shield-account-outline", permission: "admin_roles" },
+        { id: "catalog", label: "Produtos e Serviços", link: "/admin/catalog", icon: "mdi mdi-tag-text-outline", permission: "admin_catalog" },
+      ],
+    },
+    {
+      id: "financial",
+      label: "Financeiro",
+      icon: "mdi mdi-cash-multiple",
+      anyPermission: ["financial_cashier", "financial_cashflow", "financial_acquirers"],
+      subMenu: [
+        { id: "cashier", label: "Caixa", link: "/financial/cashier", icon: "mdi mdi-cash-register", permission: "financial_cashier" },
+        { id: "cashflow", label: "Fluxo de Caixa", link: "/financial/cashflow", icon: "mdi mdi-chart-line", permission: "financial_cashflow" },
+        { id: "acquirers", label: "Adquirentes", link: "/financial/acquirers", icon: "mdi mdi-credit-card-multiple-outline", permission: "financial_acquirers" },
+      ],
+    },
+    { id: "crm", label: "CRM", icon: "mdi mdi-headset", link: "/crm", permission: "crm_view" },
+    {
+      id: "gerencial",
+      label: "Gerencial",
+      icon: "mdi mdi-chart-bar",
+      anyPermission: ["management_event_plan", "management_evaluation_levels", "management_integrations", "management_automations"],
+      subMenu: [
+        { id: "events", label: "Planejamento de Eventos", link: "/events/planning", icon: "mdi mdi-calendar-star", permission: "management_event_plan" },
+        { id: "eval_levels", label: "Níveis de Avaliação", link: "/management/evaluation-levels", icon: "mdi mdi-chart-timeline-variant", permission: "management_evaluation_levels" },
+        { id: "integrations", label: "Integrações", link: "/management/integrations", icon: "mdi mdi-api", permission: "management_integrations" },
+        { id: "automations", label: "Automações", link: "/management/automations", icon: "mdi mdi-robot-excited-outline", permission: "management_automations" },
+        { id: "audit", label: "Logs de Auditoria", link: "/management/audit-log", icon: "mdi mdi-clipboard-list-outline", permission: "management_audit_log" },
+      ],
+    },
+    { id: "settings", label: "Configurações", icon: "mdi mdi-cog-outline", link: "/admin/settings", permission: "admin_settings" },
+    { id: "evaluation", label: "Avaliação", icon: "mdi mdi-gesture-tap", link: "/evaluation", permission: "management_evaluation_run" },
+    { id: "help", label: "Central de Ajuda", icon: "mdi mdi-help-circle-outline", link: "/help" },
+  ], [props.t])
+
+  // --- 3. Filtragem (Busca) ---
+  const filteredMenu = useMemo(() => {
+    const q = searchText.toLowerCase().trim()
+
+    // Função recursiva para filtrar e marcar itens
+    const filterItems = (items) => {
+      return items
+        .filter(item => {
+          // Checagem de permissão
+          if (item.permission && !hasPermission(item.permission)) return false
+          if (item.anyPermission && !hasAnyPermission(item.anyPermission)) return false
+          return true
+        })
+        .map(item => {
+          const matchSelf = item.label.toLowerCase().includes(q)
+          let children = []
+
+          if (item.subMenu) {
+            children = filterItems(item.subMenu)
+          }
+
+          // Se item combina ou tem filhos que combinam, retorna ele
+          if (matchSelf || children.length > 0) {
+            return { ...item, subMenu: children.length > 0 ? children : item.subMenu }
+          }
+          return null
+        })
+        .filter(Boolean)
+    }
+
+    return filterItems(menuConfig)
+  }, [searchText, menuConfig, hasPermission, hasAnyPermission])
+
+
+  // --- 4. Gerenciamento de Estado (Abertura/Fechamento) ---
+
+  // Ação de Clique no Pai
+  const toggleMenu = (itemId) => {
+    setExpandedMenuItems(prev => {
+      // Se já está aberto, fecha ele
+      if (prev.includes(itemId)) {
+        return prev.filter(id => id !== itemId)
+      }
+      // Se está fechado, abre ele e FECHA os outros (Comportamento Accordion)
+      // Se quiser permitir múltiplos abertos, use: return [...prev, itemId]
+      return [itemId]
+    })
   }
-  const activateParentDropdown = useCallback((item) => {
-    item.classList.add("active");
-    const parent = item.parentElement;
-    const parent2El = parent.childNodes[1];
 
-    if (parent2El && parent2El.id !== "side-menu") {
-      parent2El.classList.add("mm-show");
+  // Efeito: Monitorar URL para abrir menu correspondente automaticamente
+  useEffect(() => {
+    // Só roda se NÃO tiver busca ativa (busca controla a abertura sozinha)
+    if (!searchText) {
+      const parentToOpen = menuConfig.find(item =>
+        item.subMenu && item.subMenu.some(sub => buildPath(sub.link) === currentPath)
+      )
+
+      if (parentToOpen) {
+        setExpandedMenuItems([parentToOpen.id])
+      }
     }
+  }, [currentPath, searchText, menuConfig, buildPath])
 
-    if (parent) {
-      parent.classList.add("mm-active");
-      const parent2 = parent.parentElement;
+  // Efeito: Monitorar Busca para abrir TODOS os resultados
+  useEffect(() => {
+    if (searchText) {
+      const allParentIds = filteredMenu
+        .filter(item => item.subMenu && item.subMenu.length > 0)
+        .map(item => item.id)
+      setExpandedMenuItems(allParentIds)
+    }
+  }, [searchText, filteredMenu])
 
-      if (parent2) {
-        parent2.classList.add("mm-show"); // ul tag
 
-        const parent3 = parent2.parentElement; // li tag
+  // --- 5. Renderização Recursiva ---
+  const renderItem = (item) => {
+    const hasChildren = item.subMenu && item.subMenu.length > 0
+    const isExpanded = expandedMenuItems.includes(item.id)
 
-        if (parent3) {
-          parent3.classList.add("mm-active"); // li
-          parent3.childNodes[0].classList.add("mm-active"); //a
-          const parent4 = parent3.parentElement; // ul
-          if (parent4) {
-            parent4.classList.add("mm-show"); // ul
-            const parent5 = parent4.parentElement;
-            if (parent5) {
-              parent5.classList.add("mm-show"); // li
-              parent5.childNodes[0].classList.add("mm-active"); // a tag
+    // Lógica "Active":
+    // 1. É a rota atual exata?
+    // 2. Ou é um pai cujo filho é a rota atual?
+    const isExactRoute = buildPath(item.link) === currentPath
+    const isParentOfActive = hasChildren && item.subMenu.some(sub => buildPath(sub.link) === currentPath)
+
+    // Classes CSS manuais para simular o MetisMenu
+    const liClass = [
+      isExpanded ? "mm-active" : "", // Mantém a seta virada
+      (isExactRoute || isParentOfActive) ? "mm-active" : "" // Mantém destacado se for o pai ativo
+    ].join(" ")
+
+    const linkClass = [
+      hasChildren ? "has-arrow" : "",
+      "waves-effect",
+      isExactRoute ? "active" : "" // Texto azul/branco brilhante
+    ].join(" ")
+
+    return (
+      <li key={item.id} className={liClass}>
+        <Link
+          to={hasChildren ? "#" : buildPath(item.link)}
+          className={linkClass}
+          onClick={(e) => {
+            if (hasChildren) {
+              e.preventDefault() // Impede navegação e # na URL
+              toggleMenu(item.id)
             }
-          }
-        }
-      }
-      scrollElement(item);
-      return false;
-    }
-    scrollElement(item);
-    return false;
-  }, []);
+          }}
+        >
+          {item.icon && <i className={item.icon}></i>}
+          <span>{item.label}</span>
+        </Link>
 
-  const removeActivation = (items) => {
-    for (var i = 0; i < items.length; ++i) {
-      var item = items[i];
-      const parent = items[i].parentElement;
-
-      if (item && item.classList.contains("active")) {
-        item.classList.remove("active");
-      }
-      if (parent) {
-        const parent2El =
-          parent.childNodes && parent.childNodes.lenght && parent.childNodes[1]
-            ? parent.childNodes[1]
-            : null;
-        if (parent2El && parent2El.id !== "side-menu") {
-          parent2El.classList.remove("mm-show");
-        }
-
-        parent.classList.remove("mm-active");
-        const parent2 = parent.parentElement;
-
-        if (parent2) {
-          parent2.classList.remove("mm-show");
-
-          const parent3 = parent2.parentElement;
-          if (parent3) {
-            parent3.classList.remove("mm-active"); // li
-            parent3.childNodes[0].classList.remove("mm-active");
-
-            const parent4 = parent3.parentElement; // ul
-            if (parent4) {
-              parent4.classList.remove("mm-show"); // ul
-              const parent5 = parent4.parentElement;
-              if (parent5) {
-                parent5.classList.remove("mm-show"); // li
-                parent5.childNodes[0].classList.remove("mm-active"); // a tag
-              }
-            }
-          }
-        }
-      }
-    }
-  };
-
-  const activeMenu = useCallback(() => {
-    const pathName = process.env.PUBLIC_URL + props.router.location.pathname;
-    let matchingMenuItem = null;
-    const ul = document.getElementById("side-menu");
-    const items = ul.getElementsByTagName("a");
-    removeActivation(items);
-
-    for (let i = 0; i < items.length; ++i) {
-      if (pathName === items[i].pathname) {
-        matchingMenuItem = items[i];
-        break;
-      }
-    }
-    if (matchingMenuItem) {
-      activateParentDropdown(matchingMenuItem);
-    }
-  }, [props.router.location.pathname, activateParentDropdown]);
-
-  useEffect(() => {
-    ref.current.recalculate();
-  }, []);
-
-  useEffect(() => {
-    new MetisMenu("#side-menu");
-    activeMenu();
-  }, [activeMenu]);
-
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    activeMenu();
-  }, [activeMenu]);
-
-  function scrollElement(item) {
-    if (item) {
-      const currentPosition = item.offsetTop;
-      if (currentPosition > window.innerHeight) {
-        ref.current.getScrollElement().scrollTop = currentPosition - 300;
-      }
-    }
+        {hasChildren && (
+          <ul
+            className="sub-menu"
+            // Controlamos a visibilidade com CSS inline baseado no estado React
+            style={{
+              display: isExpanded ? "block" : "none",
+              height: isExpanded ? "auto" : "0",
+              overflow: "hidden"
+            }}
+          >
+            {item.subMenu.map(sub => renderItem(sub))}
+          </ul>
+        )}
+      </li>
+    )
   }
 
   return (
     <React.Fragment>
+      {/* CSS Crítico para substituir o MetisMenu CSS JS */}
+      <style>{`
+        /* Remove animações conflitantes e garante comportamento sólido */
+        .sub-menu { 
+          list-style: none; 
+          padding: 0; 
+        }
+        
+        /* Destaque do Item Ativo */
+        #sidebar-menu ul li a.active {
+          color: #fff !important;
+          background-color: rgba(255, 255, 255, 0.15);
+        }
+        #sidebar-menu ul li a.active i {
+          color: #fff !important;
+        }
+
+        /* Input de Busca */
+        .sidebar-search-input::placeholder { color: rgba(255, 255, 255, 0.5) !important; }
+        .cursor-pointer { cursor: pointer; }
+        
+        /* Divisor do Ajuda */
+        .menu-divider { border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0; }
+      `}</style>
+
       <SimpleBar style={{ maxHeight: "100%" }} ref={ref}>
         <div id="sidebar-menu">
+          {/* Campo de Busca */}
+          <div className="px-3 py-2 mb-2">
+            <div className="position-relative">
+              <input
+                type="text"
+                className="form-control form-control-sm ps-4 sidebar-search-input"
+                placeholder="Buscar menu..."
+                value={searchText}
+                onChange={e => setSearchText(e.target.value)}
+                style={{
+                  backgroundColor: "rgba(255, 255, 255, 0.07)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  color: "white",
+                  boxShadow: "none"
+                }}
+              />
+              <i className="mdi mdi-magnify position-absolute top-50 start-0 translate-middle-y ms-2 text-white-50"></i>
+              {searchText && (
+                <i
+                  className="mdi mdi-close position-absolute top-50 end-0 translate-middle-y me-2 text-white-50 cursor-pointer"
+                  onClick={() => setSearchText("")}
+                ></i>
+              )}
+            </div>
+          </div>
+
           <ul className="metismenu list-unstyled" id="side-menu">
             <li className="menu-title">{props.t("Menu")}</li>
-            <li>
-              <Link to="/#" className="has-arrow waves-effect">
-                <i className="mdi mdi-view-dashboard-outline"></i>
-                <span>Dashboard</span>
-              </Link>
-              <ul className="sub-menu">
-                <li>
-                  <Link to={buildPath("/dashboard/operational")}>
-                    <i className="mdi mdi-view-dashboard-outline"></i>
-                    <span>{props.t("Operacional")}</span>
-                  </Link>
-                </li>
-                {hasPermission("dashboards_management_view") && (
-                  <li>
-                    <Link to={buildPath("/dashboard")}>
-                      <i className="mdi mdi-chart-areaspline"></i>
-                      <span>{props.t("Gerencial")}</span>
-                    </Link>
-                  </li>
-                )}
-              </ul>
-            </li>
 
-            {hasPermission("grade_manage") && (
-              <li>
-                <Link to={buildPath("/grade")} className="waves-effect">
-                  <i className="mdi mdi-table-large"></i>
-                  <span>Grade</span>
-                </Link>
-              </li>
-            )}
-            {hasPermission("members_manage") && (
-              <li>
-                <Link to={buildPath("/clients/list")} className="waves-effect">
-                  <i className="mdi mdi-account-multiple-outline"></i>
-                  <span>Clientes</span>
-                </Link>
-              </li>
-            )}
-            {hasPermission("members_manage") && (
-              <li>
-                <Link to={buildPath("/training-planning")} className="waves-effect">
-                  <i className="mdi mdi-swim"></i>
-                  <span>Treinos</span>
-                </Link>
-              </li>
-            )}
+            {filteredMenu.map(item => {
+              if (item.id === 'help') {
+                return (
+                  <React.Fragment key={item.id}>
+                    <li className="menu-divider"></li>
+                    <li className="menu-title">Suporte</li>
+                    {renderItem(item)}
+                  </React.Fragment>
+                )
+              }
+              return renderItem(item)
+            })}
 
-            {hasAnyPermission(["collaborators_manage", "admin_activities", "admin_contracts", "admin_areas", "admin_roles", "admin_catalog", "admin_classes", "admin_settings"]) && (
-              <li>
-                <Link to="/#" className="has-arrow waves-effect">
-                  <i className="mdi mdi-office-building-outline"></i>
-                  <span>Administrativos</span>
-                </Link>
-                <ul className="sub-menu">
-                  {hasPermission("collaborators_manage") && (
-                    <li>
-                      <Link to={buildPath("/collaborators/list")}>
-                        <i className="mdi mdi-account-multiple-check"></i>
-                        <span>Colaboradores</span>
-                      </Link>
-                    </li>
-                  )}
-                  {hasPermission("admin_activities") && (
-                    <>
-                      <li>
-                        <Link to={buildPath("/admin/activity")}>
-                          <i className="mdi mdi-clipboard-text-outline"></i>
-                          <span>Atividades</span>
-                        </Link>
-                      </li>
-                    </>
-                  )}
-                  {hasPermission("admin_contracts") && (
-                    <li>
-                      <Link to={buildPath("/admin/contracts")}>
-                        <i className="mdi mdi-file-document-outline"></i>
-                        <span>Contratos</span>
-                      </Link>
-                    </li>
-                  )}
-                  {hasPermission("admin_classes") && (
-                    <li>
-                      <Link to={buildPath("/admin/classes")}>
-                        <i className="mdi mdi-account-clock-outline"></i>
-                        <span>Turmas</span>
-                      </Link>
-                    </li>
-                  )}
-                  {hasPermission("admin_areas") && (
-                    <li>
-                      <Link to={buildPath("/admin/areas")}>
-                        <i className="mdi mdi-map-marker-radius-outline"></i>
-                        <span>Áreas</span>
-                      </Link>
-                    </li>
-                  )}
-                  {hasPermission("admin_roles") && (
-                    <li>
-                      <Link to={buildPath("/admin/roles")}>
-                        <i className="mdi mdi-shield-account-outline"></i>
-                        <span>Cargos e Permissões</span>
-                      </Link>
-                    </li>
-                  )}
-                  {hasPermission("admin_catalog") && (
-                    <li>
-                      <Link to={buildPath("/admin/catalog")}>
-                        <i className="mdi mdi-tag-text-outline"></i>
-                        <span>Produtos e Serviços</span>
-                      </Link>
-                    </li>
-                  )}
-                </ul>
+            {/* Feedback Visual se a busca não encontrar nada */}
+            {filteredMenu.length === 0 && searchText && (
+              <li className="text-center text-white-50 mt-4">
+                <small>Nenhum menu encontrado.</small>
               </li>
             )}
-            {hasAnyPermission(["financial_cashier", "financial_cashflow", "financial_acquirers"]) && (
-              <li>
-                <Link to="/#" className="has-arrow waves-effect">
-                  <i className="mdi mdi-cash-multiple"></i>
-                  <span>Financeiro</span>
-                </Link>
-                <ul className="sub-menu">
-                  {hasPermission("financial_cashier") && (
-                    <li>
-                      <Link to={buildPath("/financial/cashier")}>
-                        <i className="mdi mdi-cash-register"></i>
-                        <span>Caixa</span>
-                      </Link>
-                    </li>
-                  )}
-                  {hasPermission("financial_cashflow") && (
-                    <li>
-                      <Link to={buildPath("/financial/cashflow")}>
-                        <i className="mdi mdi-chart-line"></i>
-                        <span>Fluxo de Caixa</span>
-                      </Link>
-                    </li>
-                  )}
-                  {hasPermission("financial_acquirers") && (
-                    <li>
-                      <Link to={buildPath("/financial/acquirers")}>
-                        <i className="mdi mdi-credit-card-multiple-outline"></i>
-                        <span>Adquirentes</span>
-                      </Link>
-                    </li>
-                  )}
-                </ul>
-              </li>
-            )}
-            {hasPermission("crm_view") && (
-              <li>
-                <Link to={buildPath("/crm")} className="waves-effect">
-                  <i className="mdi mdi-headset"></i>
-                  <span>CRM</span>
-                </Link>
-              </li>
-            )}
-            {hasAnyPermission(["management_event_plan", "management_evaluation_levels", "management_integrations", "management_automations"]) && (
-              <li>
-                <Link to="/#" className="has-arrow waves-effect">
-                  <i className="mdi mdi-chart-bar"></i>
-                  <span>Gerencial</span>
-                </Link>
-                <ul className="sub-menu">
-                  {hasPermission("management_event_plan") && (
-                    <li>
-                      <Link to={buildPath("/events/planning")}>
-                        <i className="mdi mdi-calendar-star"></i>
-                        <span>Planejamento de Eventos</span>
-                      </Link>
-                    </li>
-                  )}
-                  {hasPermission("management_evaluation_levels") && (
-                    <li>
-                      <Link to={buildPath("/management/evaluation-levels")}>
-                        <i className="mdi mdi-chart-timeline-variant"></i>
-                        <span>Níveis de Avaliação</span>
-                      </Link>
-                    </li>
-                  )}
-
-                  {hasPermission("management_integrations") && (
-                    <>
-                      <li>
-                        <Link to={buildPath("/management/integrations")}>
-                          <i className="mdi mdi-api"></i>
-                          <span>Integrações</span>
-                        </Link>
-                      </li>
-                    </>
-                  )}
-                  {hasPermission("management_automations") && (
-                    <li>
-                      <Link to={buildPath("/management/automations")}>
-                        <i className="mdi mdi-robot-excited-outline"></i>
-                        <span>Automações</span>
-                      </Link>
-                    </li>
-                  )}
-                  {hasPermission("management_audit_log") && (
-                    <li>
-                      <Link to={buildPath("/management/audit-log")}>
-                        <i className="mdi mdi-clipboard-list-outline"></i>
-                        <span>Logs de Auditoria</span>
-                      </Link>
-                    </li>
-                  )}
-                </ul>
-              </li>
-            )}
-            {hasPermission("admin_settings") && (
-              <li>
-                <Link to={buildPath("/admin/settings")} className="waves-effect">
-                  <i className="mdi mdi-cog-outline"></i>
-                  <span>Configurações</span>
-                </Link>
-              </li>
-            )}
-            {hasPermission("management_evaluation_run") && (
-              <li>
-                <Link to={buildPath("/evaluation")} className="waves-effect">
-                  <i className="mdi mdi-gesture-tap"></i>
-                  <span>Avaliação</span>
-                </Link>
-              </li>
-            )}
-          </ul>
-
-          <ul className="metismenu list-unstyled" id="side-menu-help">
-            <li className="menu-title">Suporte</li>
-            <li>
-              <Link to={buildPath("/help")} className="waves-effect">
-                <i className="mdi mdi-help-circle-outline"></i>
-                <span>Central de Ajuda</span>
-              </Link>
-            </li>
           </ul>
         </div>
       </SimpleBar>
     </React.Fragment>
   )
-}
-
-SidebarContent.propTypes = {
-  location: PropTypes.object,
-  t: PropTypes.any,
 }
 
 export default withRouter(withTranslation()(SidebarContent))
