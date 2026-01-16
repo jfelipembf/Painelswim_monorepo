@@ -7,13 +7,11 @@ import usePermissions from "../../hooks/usePermissions"
 import { withTranslation } from "react-i18next"
 
 const SidebarContent = props => {
-  // Desestruturamos 't' e 'router' aqui para usar nas dependências do hooks
   const { t, router } = props
   const ref = useRef()
   const { hasPermission, hasAnyPermission } = usePermissions()
 
   const [searchText, setSearchText] = useState("")
-  // Array de IDs dos menus que estão abertos
   const [expandedMenuItems, setExpandedMenuItems] = useState([])
 
   const tenant = router?.params?.tenant
@@ -21,10 +19,9 @@ const SidebarContent = props => {
   const basePath = tenant && branch ? `/${tenant}/${branch}` : ""
   const currentPath = router.location.pathname
 
-  // --- 1. Utilitário de URL ---
+  // --- 1. Utilitários ---
   const buildPath = useCallback((path) => {
     if (!path || path === "#") return "#"
-    // Garante que não duplique barras e adiciona o tenant/branch se existir
     return `${basePath}${path}`.replace(/\/+/g, '/')
   }, [basePath])
 
@@ -34,7 +31,6 @@ const SidebarContent = props => {
       id: "dashboard",
       label: t("Dashboard"),
       icon: "mdi mdi-view-dashboard-outline",
-      // Submenu: link deve ser '#' para não navegar, apenas abrir
       link: "#",
       subMenu: [
         { id: "operational", label: t("Operacional"), icon: "mdi mdi-view-dashboard-outline", link: "/dashboard/operational" },
@@ -92,50 +88,39 @@ const SidebarContent = props => {
     { id: "help", label: "Central de Ajuda", icon: "mdi mdi-help-circle-outline", link: "/help" },
   ], [t])
 
-  // --- 3. Filtragem (Busca) ---
+  // --- 3. Filtragem ---
   const filteredMenu = useMemo(() => {
     const q = searchText.toLowerCase().trim()
-
-    // Função recursiva para filtrar
-    const filterItems = (items) => {
-      return items
-        .filter(item => {
-          if (item.permission && !hasPermission(item.permission)) return false
-          if (item.anyPermission && !hasAnyPermission(item.anyPermission)) return false
-          return true
-        })
-        .map(item => {
-          const matchSelf = item.label.toLowerCase().includes(q)
-          let children = []
-
-          if (item.subMenu) {
-            children = filterItems(item.subMenu)
-          }
-
-          if (matchSelf || children.length > 0) {
-            return { ...item, subMenu: children.length > 0 ? children : item.subMenu }
-          }
-          return null
-        })
-        .filter(Boolean)
+    const filterRecursive = (items) => {
+      return items.filter(item => {
+        if (item.permission && !hasPermission(item.permission)) return false
+        if (item.anyPermission && !hasAnyPermission(item.anyPermission)) return false
+        return true
+      }).map(item => {
+        const matchSelf = item.label.toLowerCase().includes(q)
+        const children = item.subMenu ? filterRecursive(item.subMenu) : []
+        if (matchSelf || children.length > 0) {
+          return { ...item, subMenu: children.length > 0 ? children : item.subMenu }
+        }
+        return null
+      }).filter(Boolean)
     }
-
-    return filterItems(menuConfig)
+    return filterRecursive(menuConfig)
   }, [searchText, menuConfig, hasPermission, hasAnyPermission])
 
 
-  // --- 4. Gerenciamento de Estado (Abertura/Fechamento) ---
+  // --- 4. Gerenciamento de Estado ---
 
   const toggleMenu = (itemId) => {
     setExpandedMenuItems(prev => {
       if (prev.includes(itemId)) {
-        return prev.filter(id => id !== itemId) // Fecha
+        return prev.filter(id => id !== itemId)
       }
-      return [itemId] // Abre este e fecha os outros (Efeito Sanfona)
+      return [itemId]
     })
   }
 
-  // Efeito: Abrir menu baseado na URL atual
+  // Effect: Rota Inicial
   useEffect(() => {
     if (!searchText) {
       const parentToOpen = menuConfig.find(item =>
@@ -143,68 +128,58 @@ const SidebarContent = props => {
       )
 
       if (parentToOpen) {
-        setExpandedMenuItems([parentToOpen.id])
+        setExpandedMenuItems(prev => {
+          if (prev.includes(parentToOpen.id)) return prev
+          return [parentToOpen.id]
+        })
+      } else {
+        setExpandedMenuItems([])
       }
     }
   }, [currentPath, searchText, menuConfig, buildPath])
 
-  // Efeito: Abrir tudo na busca
+  // Effect: Busca
   useEffect(() => {
     if (searchText) {
-      const allParentIds = filteredMenu
-        .filter(item => item.subMenu && item.subMenu.length > 0)
-        .map(item => item.id)
+      const allParentIds = filteredMenu.filter(item => item.subMenu?.length > 0).map(item => item.id)
       setExpandedMenuItems(allParentIds)
     }
   }, [searchText, filteredMenu])
 
 
-  // --- 5. Renderização Recursiva ---
-  const renderItem = (item) => {
+  // --- 5. Renderização ---
+  const renderItem = (item, isSubItem = false) => {
     const hasChildren = item.subMenu && item.subMenu.length > 0
     const isExpanded = expandedMenuItems.includes(item.id)
 
-    // Verifica se é rota ativa ou pai de rota ativa
     const isExactRoute = buildPath(item.link) === currentPath
     const isParentOfActive = hasChildren && item.subMenu.some(sub => buildPath(sub.link) === currentPath)
 
-    const liClass = [
-      isExpanded ? "mm-active" : "",
-      (isExactRoute || isParentOfActive) ? "mm-active" : ""
-    ].join(" ")
-
-    const linkClass = [
-      hasChildren ? "has-arrow" : "",
-      "waves-effect",
-      isExactRoute ? "active" : ""
-    ].join(" ")
+    // Cor ativa se: Rota exata OU Filho ativo OU Menu expandido
+    const isActiveColor = isExactRoute || isParentOfActive || isExpanded
 
     return (
-      <li key={item.id} className={liClass}>
+      <li key={item.id} className={`${isActiveColor ? "mm-active" : ""}`}>
         <Link
           to={hasChildren ? "#" : buildPath(item.link)}
-          className={linkClass}
+          className={`waves-effect ${hasChildren ? "has-arrow" : ""} ${isActiveColor ? "active" : ""}`}
           onClick={(e) => {
             if (hasChildren) {
               e.preventDefault()
               toggleMenu(item.id)
+            } else {
+              if (!isSubItem) setExpandedMenuItems([])
             }
           }}
+          aria-expanded={isExpanded}
         >
           {item.icon && <i className={item.icon}></i>}
           <span>{item.label}</span>
         </Link>
 
         {hasChildren && (
-          <ul
-            className="sub-menu"
-            style={{
-              display: isExpanded ? "block" : "none",
-              height: isExpanded ? "auto" : "0",
-              overflow: "hidden"
-            }}
-          >
-            {item.subMenu.map(sub => renderItem(sub))}
+          <ul className={`sub-menu mm-collapse ${isExpanded ? "mm-show" : ""}`}>
+            {item.subMenu.map(sub => renderItem(sub, true))}
           </ul>
         )}
       </li>
@@ -214,24 +189,15 @@ const SidebarContent = props => {
   return (
     <React.Fragment>
       <style>{`
-        /* CSS Essencial para substituir o JS do MetisMenu */
-        .sub-menu { list-style: none; padding: 0; }
-        
-        #sidebar-menu ul li a.active { 
-          color: #fff !important; 
-          background-color: rgba(255, 255, 255, 0.15); 
-        }
-        #sidebar-menu ul li a.active i { color: #fff !important; }
-        
-        .sidebar-search-input::placeholder { color: rgba(255, 255, 255, 0.5) !important; }
-        .cursor-pointer { cursor: pointer; }
-        .menu-divider { border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0; }
+        /* Styles Search & Divider (Custom) */
+        .sidebar-search-input::placeholder { color: rgba(255, 255, 255, 0.4) !important; }
+        .menu-divider { border-top: 1px solid rgba(255,255,255,0.08); margin: 20px 0; }
+        .menu-title { padding: 12px 20px !important; font-size: 11px; text-transform: uppercase; color: rgba(255,255,255,0.5); }
       `}</style>
 
       <SimpleBar style={{ maxHeight: "100%" }} ref={ref}>
         <div id="sidebar-menu">
-          {/* Busca */}
-          <div className="px-3 py-2 mb-2">
+          <div className="px-3 py-3 mb-1">
             <div className="position-relative">
               <input
                 type="text"
@@ -240,25 +206,22 @@ const SidebarContent = props => {
                 value={searchText}
                 onChange={e => setSearchText(e.target.value)}
                 style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.07)",
-                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  backgroundColor: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
                   color: "white",
-                  boxShadow: "none"
+                  boxShadow: "none",
+                  borderRadius: "6px"
                 }}
               />
               <i className="mdi mdi-magnify position-absolute top-50 start-0 translate-middle-y ms-2 text-white-50"></i>
               {searchText && (
-                <i
-                  className="mdi mdi-close position-absolute top-50 end-0 translate-middle-y me-2 text-white-50 cursor-pointer"
-                  onClick={() => setSearchText("")}
-                ></i>
+                <i className="mdi mdi-close position-absolute top-50 end-0 translate-middle-y me-2 text-white-50 cursor-pointer" onClick={() => setSearchText("")}></i>
               )}
             </div>
           </div>
 
           <ul className="metismenu list-unstyled" id="side-menu">
             <li className="menu-title">{t("Menu")}</li>
-
             {filteredMenu.map(item => {
               if (item.id === 'help') {
                 return (
@@ -271,11 +234,8 @@ const SidebarContent = props => {
               }
               return renderItem(item)
             })}
-
             {filteredMenu.length === 0 && searchText && (
-              <li className="text-center text-white-50 mt-4">
-                <small>Nenhum menu encontrado.</small>
-              </li>
+              <li className="text-center text-white-50 mt-4"><small>Nenhum resultado.</small></li>
             )}
           </ul>
         </div>
@@ -284,10 +244,9 @@ const SidebarContent = props => {
   )
 }
 
-// Validação de Props (JS Padrão)
 SidebarContent.propTypes = {
   router: PropTypes.object,
-  t: PropTypes.func, // 't' é uma função de tradução
+  t: PropTypes.func,
 }
 
 export default withRouter(withTranslation()(SidebarContent))
