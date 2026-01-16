@@ -98,107 +98,108 @@ const PlanningEventsPage = ({ setBreadcrumbItems }) => {
     )
   }
 
+  if (isLoading('page') && !events.length) {
+    return <PageLoader />
+  }
+
   return (
     <Container fluid className="event-planning">
-      {isLoading('page') && !events.length ? (
-        <PageLoader />
-      ) : (
-        <Row className="g-4">
-          <Col lg="4">
-            <SideMenu
-              title="Eventos"
-              description="Selecione um evento para editar."
-              items={(events || []).map(ev => ({
-                id: ev.id,
-                title: ev.title,
-                subtitle:
-                  ev.startDate && ev.endDate
-                    ? `${formatDate(ev.startDate)} - ${formatDate(ev.endDate)}`
-                    : ev.startDate ? formatDate(ev.startDate) : "Sem data",
-                meta: ev.status || "planejado",
-                helper: ev.type === "teste" ? "Teste" : ev.type === "outro" ? "Outro" : "Avaliação",
-              }))}
-              selectedId={activeEventId}
-              onSelect={setActiveEventId}
-              emptyLabel="Nenhum evento encontrado."
-              onDelete={handleDelete}
-              onEdit={id => setActiveEventId(id)}
-              headerActions={
-                <ButtonLoader color="primary" size="sm" onClick={handleNew} loading={isLoading('save')}>
-                  <i className="mdi mdi-plus" /> Novo
-                </ButtonLoader>
-              }
-            />
-          </Col>
+      <Row className="g-4">
+        <Col lg="4">
+          <SideMenu
+            title="Eventos"
+            description="Selecione um evento para editar."
+            items={(events || []).map(ev => ({
+              id: ev.id,
+              title: ev.title,
+              subtitle:
+                ev.startDate && ev.endDate
+                  ? `${formatDate(ev.startDate)} - ${formatDate(ev.endDate)}`
+                  : ev.startDate ? formatDate(ev.startDate) : "Sem data",
+              meta: ev.status || "planejado",
+              helper: ev.type === "teste" ? "Teste" : ev.type === "outro" ? "Outro" : "Avaliação",
+            }))}
+            selectedId={activeEventId}
+            onSelect={setActiveEventId}
+            emptyLabel="Nenhum evento encontrado."
+            onDelete={handleDelete}
+            onEdit={id => setActiveEventId(id)}
+            headerActions={
+              <ButtonLoader color="primary" size="sm" onClick={handleNew} loading={isLoading('save')}>
+                <i className="mdi mdi-plus" /> Novo
+              </ButtonLoader>
+            }
+          />
+        </Col>
 
-          <Col lg="8">
-            <Card className="shadow-sm h-100">
-              <CardHeader className="bg-white">
-                <div className="client-contracts__tabs">
-                  {[PLANNING_TABS.AVALIACAO, PLANNING_TABS.TESTES, PLANNING_TABS.OUTRO].map(key => (
-                    <button
-                      key={key}
-                      type="button"
-                      className={`client-profile__tab ${tab === key ? "client-profile__tab--active" : ""}`}
-                      onClick={() => setTab(key)}
-                    >
-                      {key === PLANNING_TABS.AVALIACAO ? "Avaliação" : key === PLANNING_TABS.TESTES ? "Testes" : "Outro"}
-                    </button>
-                  ))}
+        <Col lg="8">
+          <Card className="shadow-sm h-100">
+            <CardHeader className="bg-white">
+              <div className="client-contracts__tabs">
+                {[PLANNING_TABS.AVALIACAO, PLANNING_TABS.TESTES, PLANNING_TABS.OUTRO].map(key => (
+                  <button
+                    key={key}
+                    type="button"
+                    className={`client-profile__tab ${tab === key ? "client-profile__tab--active" : ""}`}
+                    onClick={() => setTab(key)}
+                  >
+                    {key === PLANNING_TABS.AVALIACAO ? "Avaliação" : key === PLANNING_TABS.TESTES ? "Testes" : "Outro"}
+                  </button>
+                ))}
+              </div>
+            </CardHeader>
+            <CardBody>
+              <Form>
+                <Row className="g-3">
+                  {tab === PLANNING_TABS.OUTRO && (
+                    <Col md="12" className="d-flex justify-content-center mb-3">
+                      <PhotoPreview
+                        inputId="eventPhoto"
+                        preview={form.photo}
+                        placeholder={PLACEHOLDER_CAMERA}
+                        onChange={handlePhotoChange}
+                        size={120}
+                      />
+                    </Col>
+                  )}
+                  <Col md="6">
+                    <FormGroup>
+                      <Label>Nome</Label>
+                      <Input value={form.name} onChange={e => updateField("name", e.target.value)} />
+                    </FormGroup>
+                  </Col>
+                  <Col md="6">
+                    <FormGroup>
+                      <Label>Descrição</Label>
+                      <Input value={form.description} onChange={e => updateField("description", e.target.value)} />
+                    </FormGroup>
+                  </Col>
+                  <Col md="4">
+                    <FormGroup>
+                      <Label>Data início</Label>
+                      <Input type="date" value={form.startDate} onChange={e => updateField("startDate", e.target.value)} />
+                    </FormGroup>
+                  </Col>
+                  <Col md="4">
+                    <FormGroup>
+                      <Label>Data fim</Label>
+                      <Input type="date" value={form.endDate} onChange={e => updateField("endDate", e.target.value)} />
+                    </FormGroup>
+                  </Col>
+                  {tab === PLANNING_TABS.TESTES && renderTestSpecificFields()}
+                </Row>
+
+                <div className="d-flex justify-content-end mt-3">
+                  <ButtonLoader color="primary" onClick={handleSave} loading={isLoading('save') || uploading}>
+                    Salvar
+                  </ButtonLoader>
                 </div>
-              </CardHeader>
-              <CardBody>
-                <Form>
-                  <Row className="g-3">
-                    {tab === PLANNING_TABS.OUTRO && (
-                      <Col md="12" className="d-flex justify-content-center mb-3">
-                        <PhotoPreview
-                          inputId="eventPhoto"
-                          preview={form.photo}
-                          placeholder={PLACEHOLDER_CAMERA}
-                          onChange={handlePhotoChange}
-                          size={120}
-                        />
-                      </Col>
-                    )}
-                    <Col md="6">
-                      <FormGroup>
-                        <Label>Nome</Label>
-                        <Input value={form.name} onChange={e => updateField("name", e.target.value)} />
-                      </FormGroup>
-                    </Col>
-                    <Col md="6">
-                      <FormGroup>
-                        <Label>Descrição</Label>
-                        <Input value={form.description} onChange={e => updateField("description", e.target.value)} />
-                      </FormGroup>
-                    </Col>
-                    <Col md="4">
-                      <FormGroup>
-                        <Label>Data início</Label>
-                        <Input type="date" value={form.startDate} onChange={e => updateField("startDate", e.target.value)} />
-                      </FormGroup>
-                    </Col>
-                    <Col md="4">
-                      <FormGroup>
-                        <Label>Data fim</Label>
-                        <Input type="date" value={form.endDate} onChange={e => updateField("endDate", e.target.value)} />
-                      </FormGroup>
-                    </Col>
-                    {tab === PLANNING_TABS.TESTES && renderTestSpecificFields()}
-                  </Row>
+              </Form>
+            </CardBody>
+          </Card>
+        </Col>
+      </Row>
 
-                  <div className="d-flex justify-content-end mt-3">
-                    <ButtonLoader color="primary" onClick={handleSave} loading={isLoading('save') || uploading}>
-                      Salvar
-                    </ButtonLoader>
-                  </div>
-                </Form>
-              </CardBody>
-            </Card>
-          </Col>
-        </Row>
-      )}
 
       <ConfirmDialog
         isOpen={isDeleteModalOpen}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { Container, Row, Col, Card, CardBody, CardHeader, Spinner } from "reactstrap"
+import { Container, Row, Col, Card, CardBody, CardHeader } from "reactstrap"
 import { connect } from "react-redux"
 
 // Components
@@ -12,6 +12,9 @@ import { TRIGGER_LABELS, TRIGGER_CONFIG } from "./constants/triggers"
 
 // Actions
 import { setBreadcrumbItems } from "../../../store/actions"
+
+// Custom Components
+import PageLoader from "../../../components/Common/PageLoader"
 
 const AutomationsPage = ({ setBreadcrumbItems }) => {
     const { automations, loading, saveAutomation } = useAutomations()
@@ -74,39 +77,39 @@ const AutomationsPage = ({ setBreadcrumbItems }) => {
         formattedItems.push(item)
     })
 
+    if (loading && automations.length === 0) {
+        return <PageLoader />
+    }
+
     return (
         <Container fluid>
-            {loading && automations.length === 0 ? (
-                <div className="text-center my-4"><Spinner color="primary" /></div>
-            ) : (
-                <Row className="g-4">
-                    <Col lg={4}>
-                        <SideMenu
-                            title="Gatilhos"
-                            description="Selecione um evento para configurar a automação."
-                            items={formattedItems}
-                            selectedId={selectedId}
-                            onSelect={setSelectedId}
-                            emptyLabel="Nenhum gatilho disponível."
-                        />
-                    </Col>
+            <Row className="g-4">
+                <Col lg={4}>
+                    <SideMenu
+                        title="Gatilhos"
+                        description="Selecione um evento para configurar a automação."
+                        items={formattedItems}
+                        selectedId={selectedId}
+                        onSelect={setSelectedId}
+                        emptyLabel="Nenhum gatilho disponível."
+                    />
+                </Col>
 
-                    <Col lg={8}>
-                        <Card className="shadow-sm h-100">
-                            <CardHeader className="bg-white">
-                                <h5 className="mb-0">Configuração</h5>
-                            </CardHeader>
-                            <CardBody>
-                                <AutomationDetail
-                                    automation={selectedAutomation}
-                                    onSave={saveAutomation}
-                                    triggerLabels={TRIGGER_LABELS}
-                                />
-                            </CardBody>
-                        </Card>
-                    </Col>
-                </Row>
-            )}
+                <Col lg={8}>
+                    <Card className="shadow-sm h-100">
+                        <CardHeader className="bg-white">
+                            <h5 className="mb-0">Configuração</h5>
+                        </CardHeader>
+                        <CardBody>
+                            <AutomationDetail
+                                automation={selectedAutomation}
+                                onSave={saveAutomation}
+                                triggerLabels={TRIGGER_LABELS}
+                            />
+                        </CardBody>
+                    </Card>
+                </Col>
+            </Row>
         </Container>
     )
 }

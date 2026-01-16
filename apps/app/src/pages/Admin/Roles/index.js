@@ -266,24 +266,25 @@ const RolesPage = ({ setBreadcrumbItems }) => {
     </>
   )
 
+  if (isLoading('page') && !roles.length) {
+    return <PageLoader />
+  }
+
   return (
     <React.Fragment>
       <Container fluid>
-        {isLoading('page') && !roles.length ? (
-          <PageLoader />
-        ) : (
-          <PermissionsMatrix
-            permissions={permissions}
-            roles={sortedRoles}
-            editMode={editMode}
-            selectedRoles={selectedRoles}
-            onSelectRole={handleSelectRole}
-            onTogglePermission={handleTogglePermission}
-            actions={matrixActions}
-            loading={isLoading('page')}
-          />
-        )}
+        <PermissionsMatrix
+          permissions={permissions}
+          roles={sortedRoles}
+          editMode={editMode}
+          selectedRoles={selectedRoles}
+          onSelectRole={handleSelectRole}
+          onTogglePermission={handleTogglePermission}
+          actions={matrixActions}
+          loading={isLoading('page')}
+        />
       </Container>
+
 
       <RoleModal
         isOpen={modalOpen}

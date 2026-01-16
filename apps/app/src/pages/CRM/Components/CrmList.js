@@ -2,6 +2,9 @@ import React, { useState } from "react"
 import PropTypes from "prop-types"
 import { Button, Card, CardBody, CardHeader, Input } from "reactstrap"
 
+// Generic CRM List Component
+
+
 // Helper: Date Object -> "YYYY-MM-DD"
 const toInputDate = (date) => {
   if (!date) return ""
@@ -59,7 +62,7 @@ const DateFilter = ({ dateRange, onSearch }) => {
   )
 }
 
-const CrmList = ({ title, description, clients, selectedId, onSelect, dateRange, onChangeRange, loading }) => {
+const CrmList = ({ title, description, clients = [], selectedId, onSelect, dateRange = [null, null], onChangeRange, loading = false }) => {
   return (
     <Card className="shadow-sm h-100 position-relative">
       <CardHeader className="d-flex align-items-start justify-content-between gap-2">
@@ -76,16 +79,7 @@ const CrmList = ({ title, description, clients, selectedId, onSelect, dateRange,
       </CardHeader>
 
       <CardBody className="p-0 position-relative" style={{ minHeight: "200px" }}>
-        {loading && (
-          <div
-            className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white"
-            style={{ zIndex: 10, opacity: 0.8 }}
-          >
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Carregando...</span>
-            </div>
-          </div>
-        )}
+
 
         {clients.length ? (
           <div className="d-flex flex-column">
@@ -146,10 +140,6 @@ CrmList.propTypes = {
   loading: PropTypes.bool,
 }
 
-CrmList.defaultProps = {
-  clients: [],
-  dateRange: [null, null],
-  loading: false,
-}
+
 
 export default CrmList

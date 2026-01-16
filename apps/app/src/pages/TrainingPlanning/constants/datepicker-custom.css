@@ -17,10 +17,22 @@
 .training-calendar .react-datepicker__day-name,
 .training-calendar .react-datepicker__day,
 .training-calendar .react-datepicker__time-name {
-    width: 3rem !important;
-    line-height: 3rem !important;
-    margin: 0.2rem !important;
-    font-size: 1rem;
+    width: 2.5rem !important;
+    line-height: 2.5rem !important;
+    margin: 0.15rem !important;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 576px) {
+
+    .training-calendar .react-datepicker__day-name,
+    .training-calendar .react-datepicker__day,
+    .training-calendar .react-datepicker__time-name {
+        width: 2rem !important;
+        line-height: 2rem !important;
+        margin: 0.1rem !important;
+        font-size: 0.8rem;
+    }
 }
 
 .training-calendar .react-datepicker__current-month {

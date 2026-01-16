@@ -4,7 +4,7 @@ import ReactDatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { listTrainingPlans } from "../../../services/TrainingPlanning/trainingPlanning.service";
 import { formatDateKey } from "../utils/trainingUtils";
-import CenterLoader from "../../../components/Common/CenterLoader";
+import PageLoader from "../../../components/Common/PageLoader";
 import logoSwim from "../../../assets/images/logoSwim.png";
 
 // Custom Input for DatePicker (Icon) - Moved outside to prevent re-creation
@@ -83,9 +83,7 @@ const TrainingTVView = () => {
             {/* Main Content: Workouts */}
             <div className="flex-grow-1 p-5 container-fluid">
                 {loading ? (
-                    <div className="h-100 d-flex flex-column align-items-center justify-content-center" style={{ minHeight: '60vh' }}>
-                        <CenterLoader label="Carregando treinos..." />
-                    </div>
+                    <PageLoader />
                 ) : workouts.length === 0 ? (
                     <div className="h-100 d-flex flex-column align-items-center justify-content-center text-muted opacity-50" style={{ minHeight: '60vh' }}>
                         <i className="mdi mdi-swim text-primary font-size-100 mb-4 opacity-25"></i>

@@ -206,6 +206,10 @@ const AuditLogPage = ({ setBreadcrumbItems }) => {
         </div>
     )
 
+    if (loading) {
+        return <PageLoader />
+    }
+
     return (
         <React.Fragment>
             <Container fluid>
@@ -222,20 +226,16 @@ const AuditLogPage = ({ setBreadcrumbItems }) => {
                                     </div>
                                 </div>
 
-                                {loading ? (
-                                    <PageLoader />
-                                ) : (
-                                    <BasicTable
-                                        columns={columns}
-                                        data={logs}
-                                        paginationPosition="bottom"
-                                        hideSearch={true}
-                                        hideNew={true}
-                                        topContent={dateFilterInput}
-                                        searchPlaceholder="Buscar logs..."
-                                        wrapWithCard={false}
-                                    />
-                                )}
+                                <BasicTable
+                                    columns={columns}
+                                    data={logs}
+                                    paginationPosition="bottom"
+                                    hideSearch={true}
+                                    hideNew={true}
+                                    topContent={dateFilterInput}
+                                    searchPlaceholder="Buscar logs..."
+                                    wrapWithCard={false}
+                                />
                             </CardBody>
                         </Card>
                     </Col>

@@ -130,29 +130,27 @@ const AreasPage = ({ setBreadcrumbItems }) => {
         }
     }
 
+    if (isLoading('page') && !areas.length) {
+        return <PageLoader />
+    }
+
     return (
         <Row>
             <Col>
-                {isLoading('page') && !areas.length ? (
-                    <PageLoader />
-                ) : (
-                    <>
-                        <BasicTable
-                            columns={columns}
-                            data={areas}
-                            searchKeys={["name", "status"]}
-                            searchPlaceholder="Buscar áreas..."
-                            onNewClick={() => setModalOpen(true)}
-                            loading={isLoading('page')}
-                        />
-                        <AreaModal
-                            isOpen={modalOpen}
-                            toggle={() => setModalOpen(false)}
-                            onSubmit={handleModalSubmit}
-                            submitting={isLoading('submit')}
-                        />
-                    </>
-                )}
+                <BasicTable
+                    columns={columns}
+                    data={areas}
+                    searchKeys={["name", "status"]}
+                    searchPlaceholder="Buscar áreas..."
+                    onNewClick={() => setModalOpen(true)}
+                    loading={isLoading('page')}
+                />
+                <AreaModal
+                    isOpen={modalOpen}
+                    toggle={() => setModalOpen(false)}
+                    onSubmit={handleModalSubmit}
+                    submitting={isLoading('submit')}
+                />
             </Col>
         </Row>
     )

@@ -90,39 +90,39 @@ const ContractsPage = ({ setBreadcrumbItems }) => {
     setSelectedId("new")
   }
 
+  if (isLoading("page") && contracts.length === 0) {
+    return <PageLoader />
+  }
+
   return (
     <Container fluid>
-      {isLoading("page") && contracts.length === 0 ? (
-        <PageLoader />
-      ) : (
-        <Row className="g-4">
-          <Col lg="4">
-            <SideMenu
-              title="Contratos"
-              description="Gerencie os modelos de contratos."
-              items={sideMenuItems}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-              emptyLabel="Nenhum contrato cadastrado."
-              headerActions={
-                <Button color="primary" size="sm" onClick={handleNew}>
-                  Novo Contrato
-                </Button>
-              }
-            />
-          </Col>
+      <Row className="g-4">
+        <Col lg="4">
+          <SideMenu
+            title="Contratos"
+            description="Gerencie os modelos de contratos."
+            items={sideMenuItems}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            emptyLabel="Nenhum contrato cadastrado."
+            headerActions={
+              <Button color="primary" size="sm" onClick={handleNew}>
+                Novo Contrato
+              </Button>
+            }
+          />
+        </Col>
 
-          <Col lg="8">
-            <ContractForm
-              value={selectedId === "new" ? {} : selectedContract}
-              onChange={handleChange}
-              onSave={handleSave}
-              showSaveButton={!!selectedId}
-              saving={isLoading("save")}
-            />
-          </Col>
-        </Row>
-      )}
+        <Col lg="8">
+          <ContractForm
+            value={selectedId === "new" ? {} : selectedContract}
+            onChange={handleChange}
+            onSave={handleSave}
+            showSaveButton={!!selectedId}
+            saving={isLoading("save")}
+          />
+        </Col>
+      </Row>
     </Container>
   )
 }

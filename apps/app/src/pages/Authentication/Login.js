@@ -50,10 +50,6 @@ const Login = props => {
   } = useSelector(LoginProperties);
 
 
-
-
-
-
   return (
     <React.Fragment>
       <div

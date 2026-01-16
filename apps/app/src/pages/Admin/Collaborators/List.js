@@ -180,31 +180,31 @@ const CollaboratorsList = ({ setBreadcrumbItems }) => {
     }
   }
 
+  if (isLoading('page') && !staff.length) {
+    return <PageLoader />
+  }
+
   return (
     <Row>
       <Col>
-        {isLoading('page') && !staff.length ? (
-          <PageLoader />
-        ) : (
-          <>
-            <BasicTable
-              columns={columns}
-              data={staff}
-              searchKeys={["name", "email", "phone", "role", "status"]}
-              searchPlaceholder="Buscar colaboradores..."
-              onNewClick={() => setModalOpen(true)}
-              loading={isLoading('page')}
-            />
-            <CollaboratorAddModal
-              isOpen={modalOpen}
-              toggle={() => setModalOpen(false)}
-              onSubmit={handleModalSubmit}
-              submitting={isLoading('submit') || uploading}
-              roles={roles}
-              isLoadingRoles={isLoading('roles')}
-            />
-          </>
-        )}
+        <>
+          <BasicTable
+            columns={columns}
+            data={staff}
+            searchKeys={["name", "email", "phone", "role", "status"]}
+            searchPlaceholder="Buscar colaboradores..."
+            onNewClick={() => setModalOpen(true)}
+            loading={isLoading('page')}
+          />
+          <CollaboratorAddModal
+            isOpen={modalOpen}
+            toggle={() => setModalOpen(false)}
+            onSubmit={handleModalSubmit}
+            submitting={isLoading('submit') || uploading}
+            roles={roles}
+            isLoadingRoles={isLoading('roles')}
+          />
+        </>
       </Col>
     </Row>
   )

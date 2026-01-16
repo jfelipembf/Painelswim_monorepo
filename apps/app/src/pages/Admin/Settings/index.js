@@ -85,6 +85,10 @@ const SettingsPage = ({ setBreadcrumbItems }) => {
     }
   }
 
+  if (isLoading('page')) {
+    return <PageLoader />
+  }
+
   return (
     <Container fluid className="client-profile client-settings">
       <Card className="shadow-sm">
@@ -113,31 +117,27 @@ const SettingsPage = ({ setBreadcrumbItems }) => {
           </ButtonLoader>
         </CardHeader>
         <CardBody>
-          {isLoading('page') ? (
-            <PageLoader />
-          ) : (
-            <>
-              {activeTab === "geral" && (
-                <SettingsGeneral
-                  value={general}
-                  logoPreview={logoPreview}
-                  onLogoChange={handleLogoChange}
-                  onChange={updateGeneral}
-                />
-              )}
+          <>
+            {activeTab === "geral" && (
+              <SettingsGeneral
+                value={general}
+                logoPreview={logoPreview}
+                onLogoChange={handleLogoChange}
+                onChange={updateGeneral}
+              />
+            )}
 
-              {activeTab === "config" && (
-                <SettingsConfig
-                  finance={finance}
-                  sales={sales}
-                  onFinanceChange={updateFinance}
-                  onSalesChange={updateSales}
-                  onAddBankAccount={addBankAccount}
-                  onSelectBankAccount={val => updateFinance("selectedBankAccount", val)}
-                />
-              )}
-            </>
-          )}
+            {activeTab === "config" && (
+              <SettingsConfig
+                finance={finance}
+                sales={sales}
+                onFinanceChange={updateFinance}
+                onSalesChange={updateSales}
+                onAddBankAccount={addBankAccount}
+                onSelectBankAccount={val => updateFinance("selectedBankAccount", val)}
+              />
+            )}
+          </>
         </CardBody>
       </Card>
     </Container>

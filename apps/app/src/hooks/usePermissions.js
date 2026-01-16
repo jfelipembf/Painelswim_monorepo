@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     getAuthUser,
     isOwner,
@@ -23,12 +23,17 @@ export const usePermissions = () => {
         return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
 
+    const isOwnerFunc = useCallback(() => isOwner(), []);
+    const hasPermissionFunc = useCallback((id) => hasPermission(id), []);
+    const hasAnyPermissionFunc = useCallback((ids) => hasAnyPermission(ids), []);
+    const hasAllPermissionsFunc = useCallback((ids) => hasAllPermissions(ids), []);
+
     return {
         user,
-        isOwner: () => isOwner(),
-        hasPermission: (id) => hasPermission(id),
-        hasAnyPermission: (ids) => hasAnyPermission(ids),
-        hasAllPermissions: (ids) => hasAllPermissions(ids),
+        isOwner: isOwnerFunc,
+        hasPermission: hasPermissionFunc,
+        hasAnyPermission: hasAnyPermissionFunc,
+        hasAllPermissions: hasAllPermissionsFunc,
         role: user?.role || user?.staff?.role
     };
 };

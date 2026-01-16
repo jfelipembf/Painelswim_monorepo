@@ -10,6 +10,7 @@ import { setBreadcrumbItems } from "../../store/actions"
 
 import { CRM_SEGMENTS } from "./Constants/crmSegments"
 import { useCrmData } from "./Hooks/useCrmData"
+import PageLoader from "../../components/Common/PageLoader"
 
 const CRMPage = ({ setBreadcrumbItems }) => {
   const [activeSegment, setActiveSegment] = useState(CRM_SEGMENTS[0].id)
@@ -40,6 +41,10 @@ const CRMPage = ({ setBreadcrumbItems }) => {
   }, [filteredClients])
 
   const selectedClient = filteredClients.find(c => c.id === selectedClientId) || null
+
+  if (loading) {
+    return <PageLoader />
+  }
 
   return (
     <Container fluid className="crm-page">

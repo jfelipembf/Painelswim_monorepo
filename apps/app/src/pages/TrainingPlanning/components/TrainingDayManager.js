@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { Card, CardBody } from "reactstrap";
 import WorkoutList from "./WorkoutList";
 import TrainingForm from "./TrainingForm";
 import {
@@ -7,7 +8,7 @@ import {
     updateTrainingPlan,
     deleteTrainingPlan
 } from "../../../services/TrainingPlanning/trainingPlanning.service";
-import CenterLoader from "../../../components/Common/CenterLoader";
+import PageLoader from "../../../components/Common/PageLoader";
 import { useToast } from "../../../components/Common/ToastProvider";
 import ConfirmDialog from "../../../components/Common/ConfirmDialog";
 import { formatDateKey } from "../utils/trainingUtils";
@@ -136,7 +137,13 @@ const TrainingDayManager = ({ date }) => {
         }
 
         if (loading && viewMode === "LIST" && workouts.length === 0) {
-            return <CenterLoader />;
+            return (
+                <Card className="h-100 shadow-sm border-0">
+                    <CardBody className="d-flex align-items-center justify-content-center">
+                        <PageLoader minHeight="auto" />
+                    </CardBody>
+                </Card>
+            );
         }
 
         if (viewMode === "FORM") {

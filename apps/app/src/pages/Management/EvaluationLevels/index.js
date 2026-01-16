@@ -35,86 +35,87 @@ const EvaluationLevelsPage = ({ setBreadcrumbItems }) => {
         setBreadcrumbItems("Níveis de avaliação", breadcrumbs)
     }, [setBreadcrumbItems])
 
+    if (isLoading('page') && !levels.length) {
+        return <PageLoader />
+    }
+
     return (
         <Container fluid className="event-planning">
-            {isLoading('page') && !levels.length ? (
-                <PageLoader />
-            ) : (
-                <Row className="g-4">
-                    <Col lg="4">
-                        <SideMenu
-                            title="Níveis"
-                            description="Arraste para ordenar ou clique para editar."
-                            items={sideMenuItems}
-                            selectedId={selectedId}
-                            onSelect={handleSelect}
-                            onDelete={handleDelete}
-                            headerActions={
-                                <Button color="primary" size="sm" onClick={handleNew} className="d-flex align-items-center gap-1">
-                                    <i className="mdi mdi-plus" /> Novo
-                                </Button>
-                            }
-                            extraControls={
-                                <div className="small text-muted d-flex align-items-center gap-2">
-                                    <i className="mdi mdi-hand-back-right" />
-                                    Arraste para mudar a ordem
-                                </div>
-                            }
-                            onDragStart={onDragStart}
-                            onDragOver={onDragOver}
-                            onDragEnd={onDragEnd}
-                        />
-                    </Col>
+            <Row className="g-4">
+                <Col lg="4">
+                    <SideMenu
+                        title="Níveis"
+                        description="Arraste para ordenar ou clique para editar."
+                        items={sideMenuItems}
+                        selectedId={selectedId}
+                        onSelect={handleSelect}
+                        onDelete={handleDelete}
+                        headerActions={
+                            <Button color="primary" size="sm" onClick={handleNew} className="d-flex align-items-center gap-1">
+                                <i className="mdi mdi-plus" /> Novo
+                            </Button>
+                        }
+                        extraControls={
+                            <div className="small text-muted d-flex align-items-center gap-2">
+                                <i className="mdi mdi-hand-back-right" />
+                                Arraste para mudar a ordem
+                            </div>
+                        }
+                        onDragStart={onDragStart}
+                        onDragOver={onDragOver}
+                        onDragEnd={onDragEnd}
+                    />
+                </Col>
 
-                    <Col lg="8">
-                        <Card className="shadow-sm h-100">
-                            <CardHeader className="bg-white d-flex align-items-center justify-content-between">
-                                <div>
-                                    <h5 className="mb-0">{selected ? selected.title : "Novo Nível"}</h5>
-                                    {selected && (
-                                        <p className="text-muted mb-0 small">Ordem {levels.findIndex(l => l.id === selectedId) + 1}</p>
-                                    )}
-                                </div>
+                <Col lg="8">
+                    <Card className="shadow-sm h-100">
+                        <CardHeader className="bg-white d-flex align-items-center justify-content-between">
+                            <div>
+                                <h5 className="mb-0">{selected ? selected.title : "Novo Nível"}</h5>
                                 {selected && (
-                                    <Badge color="primary" pill>
-                                        {selected.value}
-                                    </Badge>
+                                    <p className="text-muted mb-0 small">Ordem {levels.findIndex(l => l.id === selectedId) + 1}</p>
                                 )}
-                            </CardHeader>
-                            <CardBody>
-                                <Form onSubmit={handleSave}>
-                                    <Row className="g-3">
-                                        <Col md="6">
-                                            <FormGroup>
-                                                <Label>Nome</Label>
-                                                <Input value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))} required />
-                                            </FormGroup>
-                                        </Col>
-                                        <Col md="6">
-                                            <FormGroup>
-                                                <Label>Valor</Label>
-                                                <Input
-                                                    type="number"
-                                                    min="0"
-                                                    step="1"
-                                                    value={form.value}
-                                                    onChange={e => setForm(prev => ({ ...prev, value: e.target.value }))}
-                                                    required
-                                                />
-                                            </FormGroup>
-                                        </Col>
-                                    </Row>
-                                    <div className="d-flex justify-content-end mt-3">
-                                        <ButtonLoader color="primary" type="submit" loading={isLoading('save')}>
-                                            Salvar nível
-                                        </ButtonLoader>
-                                    </div>
-                                </Form>
-                            </CardBody>
-                        </Card>
-                    </Col>
-                </Row>
-            )}
+                            </div>
+                            {selected && (
+                                <Badge color="primary" pill>
+                                    {selected.value}
+                                </Badge>
+                            )}
+                        </CardHeader>
+                        <CardBody>
+                            <Form onSubmit={handleSave}>
+                                <Row className="g-3">
+                                    <Col md="6">
+                                        <FormGroup>
+                                            <Label>Nome</Label>
+                                            <Input value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))} required />
+                                        </FormGroup>
+                                    </Col>
+                                    <Col md="6">
+                                        <FormGroup>
+                                            <Label>Valor</Label>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                step="1"
+                                                value={form.value}
+                                                onChange={e => setForm(prev => ({ ...prev, value: e.target.value }))}
+                                                required
+                                            />
+                                        </FormGroup>
+                                    </Col>
+                                </Row>
+                                <div className="d-flex justify-content-end mt-3">
+                                    <ButtonLoader color="primary" type="submit" loading={isLoading('save')}>
+                                        Salvar nível
+                                    </ButtonLoader>
+                                </div>
+                            </Form>
+                        </CardBody>
+                    </Card>
+                </Col>
+            </Row>
+
 
         </Container>
     )

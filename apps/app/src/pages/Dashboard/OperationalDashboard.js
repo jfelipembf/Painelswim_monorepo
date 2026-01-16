@@ -10,6 +10,8 @@ import OperationalAlerts from "./Components/OperationalAlerts"
 import { setBreadcrumbItems } from "../../store/actions"
 import { useOperationalDashboardLogic } from "./Hooks/useOperationalDashboardLogic"
 
+import PageLoader from "../../components/Common/PageLoader"
+
 const OperationalDashboard = ({ setBreadcrumbItems }) => {
     document.title = "Dashboard Operacional | Painel Swim"
     const { reports, experimentals, tasks, birthdays, expirations, refreshTasks, markTaskAsCompleted, isLoading } = useOperationalDashboardLogic()
@@ -22,6 +24,10 @@ const OperationalDashboard = ({ setBreadcrumbItems }) => {
     useEffect(() => {
         setBreadcrumbItems('Dashboard Operacional', breadcrumbItems)
     }, [setBreadcrumbItems, breadcrumbItems])
+
+    if (isLoading) {
+        return <PageLoader />
+    }
 
     return (
         <React.Fragment>

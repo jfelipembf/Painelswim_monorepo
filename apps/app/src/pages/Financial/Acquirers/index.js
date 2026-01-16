@@ -38,48 +38,48 @@ const AcquirersPage = ({ setBreadcrumbItems }) => {
     setBreadcrumbItems("Adquirentes", breadcrumbs)
   }, [setBreadcrumbItems])
 
+  if (isLoading('page') && !initialized) {
+    return <PageLoader />
+  }
+
   return (
     <Container fluid>
-      {isLoading('page') && !initialized ? (
-        <PageLoader />
-      ) : (
-        <Row className="g-4">
-          <Col lg="4">
-            <SideMenu
-              title="Adquirentes"
-              description="Gerencie operadoras e suas taxas."
-              items={sideMenuItems}
-              selectedId={selectedId}
-              onSelect={handleSelect}
-              onDelete={handleDelete}
-              onEdit={handleSelect}
-              emptyLabel="Nenhuma adquirente cadastrada."
-              headerActions={
-                <Button color="primary" size="sm" onClick={handleNew}>
-                  <i className="mdi mdi-plus" /> Nova
-                </Button>
-              }
-            />
-          </Col>
+      <Row className="g-4">
+        <Col lg="4">
+          <SideMenu
+            title="Adquirentes"
+            description="Gerencie operadoras e suas taxas."
+            items={sideMenuItems}
+            selectedId={selectedId}
+            onSelect={handleSelect}
+            onDelete={handleDelete}
+            onEdit={handleSelect}
+            emptyLabel="Nenhuma adquirente cadastrada."
+            headerActions={
+              <Button color="primary" size="sm" onClick={handleNew}>
+                <i className="mdi mdi-plus" /> Nova
+              </Button>
+            }
+          />
+        </Col>
 
-          <Col lg="8">
-            <AcquirerForm
-              value={formState}
-              onChange={setFormState}
-              onSave={handleSave}
-              onClear={handleClear}
-              onToggleActive={toggleActive}
-              onToggleBrand={toggleBrand}
-              onToggleAnticipate={toggleAnticipate}
-              onInstallmentChange={handleInstallmentChange}
-              onAddInstallment={handleAddInstallment}
-              onRemoveInstallment={handleRemoveInstallment}
-              brandOptions={BRAND_OPTIONS}
-              saving={isLoading('save')}
-            />
-          </Col>
-        </Row>
-      )}
+        <Col lg="8">
+          <AcquirerForm
+            value={formState}
+            onChange={setFormState}
+            onSave={handleSave}
+            onClear={handleClear}
+            onToggleActive={toggleActive}
+            onToggleBrand={toggleBrand}
+            onToggleAnticipate={toggleAnticipate}
+            onInstallmentChange={handleInstallmentChange}
+            onAddInstallment={handleAddInstallment}
+            onRemoveInstallment={handleRemoveInstallment}
+            brandOptions={BRAND_OPTIONS}
+            saving={isLoading('save')}
+          />
+        </Col>
+      </Row>
     </Container>
   )
 }

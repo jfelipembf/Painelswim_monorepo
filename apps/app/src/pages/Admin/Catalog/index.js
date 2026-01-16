@@ -19,6 +19,7 @@ import { getCatalogSearchKeys, filterCatalogItems } from "./Utils/index"
 const CatalogPage = ({ setBreadcrumbItems }) => {
   const [activeTab, setActiveTab] = useState("products")
   const [searchTerm, setSearchTerm] = useState("")
+  const [isInitializing, setIsInitializing] = useState(true)
   const toast = useToast()
   const { isLoading, withLoading } = useLoading()
 
@@ -39,12 +40,14 @@ const CatalogPage = ({ setBreadcrumbItems }) => {
       const { products, services } = await catalog.load()
       if (!mounted) return
       selection.ensureSelection(products, services)
+      setIsInitializing(false)
     }
     run()
     return () => {
       mounted = false
     }
-  }, [catalog, selection])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [catalog.load, selection.ensureSelection])
 
   const isProductsTab = selection.isProductsTab
   const dataset = isProductsTab ? catalog.products : catalog.services
@@ -136,7 +139,7 @@ const CatalogPage = ({ setBreadcrumbItems }) => {
     />
   )
 
-  const showPageLoader = isLoading("page") && !catalog.products.length && !catalog.services.length
+  const showPageLoader = (isLoading("page") || isInitializing) && !catalog.products.length && !catalog.services.length
 
   return (
     <Container fluid>

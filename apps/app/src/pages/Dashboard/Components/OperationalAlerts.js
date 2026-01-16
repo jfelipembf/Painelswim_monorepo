@@ -80,7 +80,7 @@ const OperationalAlerts = ({ tasks = [], birthdays = [], expirations = [], refre
                                                     src={item.photo}
                                                     alt=""
                                                     className="avatar-xs rounded-circle"
-                                                    style={{ objectFit: "cover" }}
+                                                    style={{ objectFit: "cover", width: "32px", height: "32px", flexShrink: 0 }}
                                                 />
                                             )}
 

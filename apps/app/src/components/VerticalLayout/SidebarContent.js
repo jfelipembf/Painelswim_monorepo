@@ -12,7 +12,7 @@ const SidebarContent = props => {
   const { hasPermission, hasAnyPermission } = usePermissions()
 
   const [searchText, setSearchText] = useState("")
-  const [expandedMenuItems, setExpandedMenuItems] = useState([])
+
 
   const tenant = router?.params?.tenant
   const branch = router?.params?.branch
@@ -111,6 +111,15 @@ const SidebarContent = props => {
 
   // --- 4. Gerenciamento de Estado ---
 
+  // --- 4. State (Lazy Init) ---
+  const [expandedMenuItems, setExpandedMenuItems] = useState(() => {
+    // Initial Load: Correctly identify the active parent to prevent flicker
+    const parentToOpen = menuConfig.find(item =>
+      item.subMenu && item.subMenu.some(sub => buildPath(sub.link) === currentPath)
+    )
+    return parentToOpen ? [parentToOpen.id] : []
+  })
+
   const toggleMenu = (itemId) => {
     setExpandedMenuItems(prev => {
       if (prev.includes(itemId)) {
@@ -120,7 +129,7 @@ const SidebarContent = props => {
     })
   }
 
-  // Effect: Rota Inicial
+  // Effect: Rota Inicial e Mudanças
   useEffect(() => {
     if (!searchText) {
       const parentToOpen = menuConfig.find(item =>
@@ -129,11 +138,11 @@ const SidebarContent = props => {
 
       if (parentToOpen) {
         setExpandedMenuItems(prev => {
-          if (prev.includes(parentToOpen.id)) return prev
+          if (prev.includes(parentToOpen.id)) {
+            return prev
+          }
           return [parentToOpen.id]
         })
-      } else {
-        setExpandedMenuItems([])
       }
     }
   }, [currentPath, searchText, menuConfig, buildPath])
@@ -142,7 +151,13 @@ const SidebarContent = props => {
   useEffect(() => {
     if (searchText) {
       const allParentIds = filteredMenu.filter(item => item.subMenu?.length > 0).map(item => item.id)
-      setExpandedMenuItems(allParentIds)
+
+      // Prevent loop: check if arrays are different before updating
+      setExpandedMenuItems(prev => {
+        const isSame = prev.length === allParentIds.length && prev.every((val, index) => val === allParentIds[index])
+        if (isSame) return prev
+        return allParentIds
+      })
     }
   }, [searchText, filteredMenu])
 
