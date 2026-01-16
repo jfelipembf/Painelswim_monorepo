@@ -7,23 +7,24 @@ import usePermissions from "../../hooks/usePermissions"
 import { withTranslation } from "react-i18next"
 
 const SidebarContent = props => {
+  // Desestruturamos 't' e 'router' aqui para usar nas dependências do hooks
+  const { t, router } = props
   const ref = useRef()
   const { hasPermission, hasAnyPermission } = usePermissions()
 
-  // Estado para busca
   const [searchText, setSearchText] = useState("")
-
-  // Estado para controlar QUAIS menus estão abertos (Array de IDs)
+  // Array de IDs dos menus que estão abertos
   const [expandedMenuItems, setExpandedMenuItems] = useState([])
 
-  const tenant = props.router?.params?.tenant
-  const branch = props.router?.params?.branch
+  const tenant = router?.params?.tenant
+  const branch = router?.params?.branch
   const basePath = tenant && branch ? `/${tenant}/${branch}` : ""
-  const currentPath = props.router.location.pathname
+  const currentPath = router.location.pathname
 
   // --- 1. Utilitário de URL ---
   const buildPath = useCallback((path) => {
     if (!path || path === "#") return "#"
+    // Garante que não duplique barras e adiciona o tenant/branch se existir
     return `${basePath}${path}`.replace(/\/+/g, '/')
   }, [basePath])
 
@@ -31,12 +32,13 @@ const SidebarContent = props => {
   const menuConfig = useMemo(() => [
     {
       id: "dashboard",
-      label: props.t("Dashboard"),
+      label: t("Dashboard"),
       icon: "mdi mdi-view-dashboard-outline",
-      // Removemos link direto, é apenas um container agora
+      // Submenu: link deve ser '#' para não navegar, apenas abrir
+      link: "#",
       subMenu: [
-        { id: "operational", label: props.t("Operacional"), icon: "mdi mdi-view-dashboard-outline", link: "/dashboard/operational" },
-        { id: "management", label: props.t("Gerencial"), icon: "mdi mdi-chart-areaspline", link: "/dashboard", permission: "dashboards_management_view" },
+        { id: "operational", label: t("Operacional"), icon: "mdi mdi-view-dashboard-outline", link: "/dashboard/operational" },
+        { id: "management", label: t("Gerencial"), icon: "mdi mdi-chart-areaspline", link: "/dashboard", permission: "dashboards_management_view" },
       ],
     },
     { id: "grade", label: "Grade", icon: "mdi mdi-table-large", link: "/grade", permission: "grade_manage" },
@@ -46,6 +48,7 @@ const SidebarContent = props => {
       id: "admin",
       label: "Administrativos",
       icon: "mdi mdi-office-building-outline",
+      link: "#",
       anyPermission: ["collaborators_manage", "admin_activities", "admin_contracts", "admin_areas", "admin_roles", "admin_catalog", "admin_classes", "admin_settings"],
       subMenu: [
         { id: "collabs", label: "Colaboradores", link: "/collaborators/list", icon: "mdi mdi-account-multiple-check", permission: "collaborators_manage" },
@@ -61,6 +64,7 @@ const SidebarContent = props => {
       id: "financial",
       label: "Financeiro",
       icon: "mdi mdi-cash-multiple",
+      link: "#",
       anyPermission: ["financial_cashier", "financial_cashflow", "financial_acquirers"],
       subMenu: [
         { id: "cashier", label: "Caixa", link: "/financial/cashier", icon: "mdi mdi-cash-register", permission: "financial_cashier" },
@@ -73,6 +77,7 @@ const SidebarContent = props => {
       id: "gerencial",
       label: "Gerencial",
       icon: "mdi mdi-chart-bar",
+      link: "#",
       anyPermission: ["management_event_plan", "management_evaluation_levels", "management_integrations", "management_automations"],
       subMenu: [
         { id: "events", label: "Planejamento de Eventos", link: "/events/planning", icon: "mdi mdi-calendar-star", permission: "management_event_plan" },
@@ -85,17 +90,16 @@ const SidebarContent = props => {
     { id: "settings", label: "Configurações", icon: "mdi mdi-cog-outline", link: "/admin/settings", permission: "admin_settings" },
     { id: "evaluation", label: "Avaliação", icon: "mdi mdi-gesture-tap", link: "/evaluation", permission: "management_evaluation_run" },
     { id: "help", label: "Central de Ajuda", icon: "mdi mdi-help-circle-outline", link: "/help" },
-  ], [props.t])
+  ], [t])
 
   // --- 3. Filtragem (Busca) ---
   const filteredMenu = useMemo(() => {
     const q = searchText.toLowerCase().trim()
 
-    // Função recursiva para filtrar e marcar itens
+    // Função recursiva para filtrar
     const filterItems = (items) => {
       return items
         .filter(item => {
-          // Checagem de permissão
           if (item.permission && !hasPermission(item.permission)) return false
           if (item.anyPermission && !hasAnyPermission(item.anyPermission)) return false
           return true
@@ -108,7 +112,6 @@ const SidebarContent = props => {
             children = filterItems(item.subMenu)
           }
 
-          // Se item combina ou tem filhos que combinam, retorna ele
           if (matchSelf || children.length > 0) {
             return { ...item, subMenu: children.length > 0 ? children : item.subMenu }
           }
@@ -123,22 +126,17 @@ const SidebarContent = props => {
 
   // --- 4. Gerenciamento de Estado (Abertura/Fechamento) ---
 
-  // Ação de Clique no Pai
   const toggleMenu = (itemId) => {
     setExpandedMenuItems(prev => {
-      // Se já está aberto, fecha ele
       if (prev.includes(itemId)) {
-        return prev.filter(id => id !== itemId)
+        return prev.filter(id => id !== itemId) // Fecha
       }
-      // Se está fechado, abre ele e FECHA os outros (Comportamento Accordion)
-      // Se quiser permitir múltiplos abertos, use: return [...prev, itemId]
-      return [itemId]
+      return [itemId] // Abre este e fecha os outros (Efeito Sanfona)
     })
   }
 
-  // Efeito: Monitorar URL para abrir menu correspondente automaticamente
+  // Efeito: Abrir menu baseado na URL atual
   useEffect(() => {
-    // Só roda se NÃO tiver busca ativa (busca controla a abertura sozinha)
     if (!searchText) {
       const parentToOpen = menuConfig.find(item =>
         item.subMenu && item.subMenu.some(sub => buildPath(sub.link) === currentPath)
@@ -150,7 +148,7 @@ const SidebarContent = props => {
     }
   }, [currentPath, searchText, menuConfig, buildPath])
 
-  // Efeito: Monitorar Busca para abrir TODOS os resultados
+  // Efeito: Abrir tudo na busca
   useEffect(() => {
     if (searchText) {
       const allParentIds = filteredMenu
@@ -166,22 +164,19 @@ const SidebarContent = props => {
     const hasChildren = item.subMenu && item.subMenu.length > 0
     const isExpanded = expandedMenuItems.includes(item.id)
 
-    // Lógica "Active":
-    // 1. É a rota atual exata?
-    // 2. Ou é um pai cujo filho é a rota atual?
+    // Verifica se é rota ativa ou pai de rota ativa
     const isExactRoute = buildPath(item.link) === currentPath
     const isParentOfActive = hasChildren && item.subMenu.some(sub => buildPath(sub.link) === currentPath)
 
-    // Classes CSS manuais para simular o MetisMenu
     const liClass = [
-      isExpanded ? "mm-active" : "", // Mantém a seta virada
-      (isExactRoute || isParentOfActive) ? "mm-active" : "" // Mantém destacado se for o pai ativo
+      isExpanded ? "mm-active" : "",
+      (isExactRoute || isParentOfActive) ? "mm-active" : ""
     ].join(" ")
 
     const linkClass = [
       hasChildren ? "has-arrow" : "",
       "waves-effect",
-      isExactRoute ? "active" : "" // Texto azul/branco brilhante
+      isExactRoute ? "active" : ""
     ].join(" ")
 
     return (
@@ -191,7 +186,7 @@ const SidebarContent = props => {
           className={linkClass}
           onClick={(e) => {
             if (hasChildren) {
-              e.preventDefault() // Impede navegação e # na URL
+              e.preventDefault()
               toggleMenu(item.id)
             }
           }}
@@ -203,7 +198,6 @@ const SidebarContent = props => {
         {hasChildren && (
           <ul
             className="sub-menu"
-            // Controlamos a visibilidade com CSS inline baseado no estado React
             style={{
               display: isExpanded ? "block" : "none",
               height: isExpanded ? "auto" : "0",
@@ -219,34 +213,24 @@ const SidebarContent = props => {
 
   return (
     <React.Fragment>
-      {/* CSS Crítico para substituir o MetisMenu CSS JS */}
       <style>{`
-        /* Remove animações conflitantes e garante comportamento sólido */
-        .sub-menu { 
-          list-style: none; 
-          padding: 0; 
-        }
+        /* CSS Essencial para substituir o JS do MetisMenu */
+        .sub-menu { list-style: none; padding: 0; }
         
-        /* Destaque do Item Ativo */
-        #sidebar-menu ul li a.active {
-          color: #fff !important;
-          background-color: rgba(255, 255, 255, 0.15);
+        #sidebar-menu ul li a.active { 
+          color: #fff !important; 
+          background-color: rgba(255, 255, 255, 0.15); 
         }
-        #sidebar-menu ul li a.active i {
-          color: #fff !important;
-        }
-
-        /* Input de Busca */
+        #sidebar-menu ul li a.active i { color: #fff !important; }
+        
         .sidebar-search-input::placeholder { color: rgba(255, 255, 255, 0.5) !important; }
         .cursor-pointer { cursor: pointer; }
-        
-        /* Divisor do Ajuda */
         .menu-divider { border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0; }
       `}</style>
 
       <SimpleBar style={{ maxHeight: "100%" }} ref={ref}>
         <div id="sidebar-menu">
-          {/* Campo de Busca */}
+          {/* Busca */}
           <div className="px-3 py-2 mb-2">
             <div className="position-relative">
               <input
@@ -273,7 +257,7 @@ const SidebarContent = props => {
           </div>
 
           <ul className="metismenu list-unstyled" id="side-menu">
-            <li className="menu-title">{props.t("Menu")}</li>
+            <li className="menu-title">{t("Menu")}</li>
 
             {filteredMenu.map(item => {
               if (item.id === 'help') {
@@ -288,7 +272,6 @@ const SidebarContent = props => {
               return renderItem(item)
             })}
 
-            {/* Feedback Visual se a busca não encontrar nada */}
             {filteredMenu.length === 0 && searchText && (
               <li className="text-center text-white-50 mt-4">
                 <small>Nenhum menu encontrado.</small>
@@ -299,6 +282,12 @@ const SidebarContent = props => {
       </SimpleBar>
     </React.Fragment>
   )
+}
+
+// Validação de Props (JS Padrão)
+SidebarContent.propTypes = {
+  router: PropTypes.object,
+  t: PropTypes.func, // 't' é uma função de tradução
 }
 
 export default withRouter(withTranslation()(SidebarContent))
