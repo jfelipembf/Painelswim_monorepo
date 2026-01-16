@@ -52,24 +52,24 @@ const TrainingTVView = () => {
         <div className="min-vh-100 bg-light d-flex flex-column" style={{ overflowX: "hidden" }}>
 
             {/* Header Bar */}
-            <div className="d-flex justify-content-between align-items-center px-5 py-2 bg-white shadow-sm sticky-top" style={{ zIndex: 100 }}>
-                {/* Left: Logo */}
-                <div>
-                    <img src={logoSwim} alt="Logo" height="120" />
+            <div className="bg-white shadow-sm sticky-top position-relative" style={{ zIndex: 100, height: '80px' }}>
+                {/* Left: Logo (Absolute) */}
+                <div style={{ position: 'absolute', left: '10px', top: '-15px', zIndex: 101 }}>
+                    <img src={logoSwim} alt="Logo" height="120" style={{ filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.1))' }} />
                 </div>
 
-                {/* Center: Current Date Title */}
-                <div className="text-center">
-                    <h2 className="mb-0 text-primary fw-bold text-uppercase" style={{ letterSpacing: '1px' }}>
+                {/* Center: Current Date Title (Centered) */}
+                <div className="d-flex flex-column align-items-center justify-content-center h-100 w-100">
+                    <h2 className="mb-0 text-primary fw-bold text-uppercase" style={{ letterSpacing: '1px', fontSize: '1.8rem' }}>
                         {selectedDate.toLocaleDateString('pt-BR', { weekday: 'long' })}
                     </h2>
-                    <span className="text-muted fs-4">
+                    <span className="text-muted fs-5">
                         {selectedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
                     </span>
                 </div>
 
-                {/* Right: DatePicker */}
-                <div>
+                {/* Right: DatePicker (Absolute) */}
+                <div style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', zIndex: 101 }}>
                     <ReactDatePicker
                         selected={selectedDate}
                         onChange={(date) => setSelectedDate(date)}
